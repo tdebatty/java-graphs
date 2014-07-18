@@ -15,7 +15,7 @@ public class NNDescent {
      */
     public static void main(String[] args) {
         Random r = new Random();
-        int count = 1000;
+        int count = 10000;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
@@ -56,7 +56,8 @@ public class NNDescent {
             System.out.println(n);
             System.out.println(nl);
         }
-
+        
+        nnd.Print();
     }
 
     public ArrayList<Node> nodes;
@@ -367,7 +368,7 @@ public class NNDescent {
         System.out.println("Delta: " + this.delta);
         System.out.println("Iterations: " + this.iterations);
         System.out.println("Rho: " + this.rho);
-        System.out.println("Running time: " + this.running_time);
+        System.out.println("Running time: " + this.running_time + "ms");
         
     }
 }
