@@ -30,7 +30,7 @@ public class NNDescent {
         nnd.rho = 0.5;
         nnd.delta = 0.001;
         
-        nnd.callback= new CallbackInterface() {
+        nnd.callback= new NNDescentCallbackInterface() {
 
             @Override
             public void call(int iteration, int computed_similarities, int c) {
@@ -69,7 +69,7 @@ public class NNDescent {
     
     public int max_iterations = Integer.MAX_VALUE;
     
-    public CallbackInterface callback = null;
+    public NNDescentCallbackInterface callback = null;
 
     /**
      * Contains one NeighborList for each Node
@@ -153,9 +153,9 @@ public class NNDescent {
                         // l←− σ(u1,u2)
                         // c←− c+UpdateNN(B[u1], u2, l, true)
                         // c←− c+UpdateNN(B[u2], u1, l, true)
-                        double similarity = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, similarity);
-                        c += UpdateNL(neighborlists.get(u2), u1, similarity);
+                        double s = Similarity(u1, u2);
+                        c += UpdateNL(neighborlists.get(u1), u2, s);
+                        c += UpdateNL(neighborlists.get(u2), u1, s);
                     }
 
                     // or u1 ∈ new[v], u2 ∈ old[v] do
@@ -167,9 +167,9 @@ public class NNDescent {
                         }
                         
                         //int u2_i = Find(u2);
-                        double similarity = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, similarity);
-                        c += UpdateNL(neighborlists.get(u2), u1, similarity);
+                        double s = Similarity(u1, u2);
+                        c += UpdateNL(neighborlists.get(u1), u2, s);
+                        c += UpdateNL(neighborlists.get(u2), u1, s);
                     }
                 }
             }
@@ -216,8 +216,8 @@ public class NNDescent {
         while (nl.size() < K) {
             Node node = nodes.get(r.nextInt(nodes.size()));
             if (! node.equals(for_node)) {
-                double similarity = Similarity(node, for_node);
-                nl.add(new Neighbor(node, similarity));
+                double s = Similarity(node, for_node);
+                nl.add(new Neighbor(node, s));
             }
         }
         
@@ -271,33 +271,6 @@ public class NNDescent {
                 R.get(other_node).add(node);
             }
         }
-        
-        /*
-        // For each node
-        for (int i = 0; i < nodes.size(); i++) {
-            Node this_node = nodes.get(i);
-            R[i] = new ArrayList<Node>();
-
-            // For each other node
-            for (int j = 0; j < nodes.size(); j++) {
-                if (i == j) {
-                    continue;
-                }
-                Node other_node = nodes.get(j);
-                ArrayList<Node> other_neighborlist = lists[j];
-                for (Node n : other_neighborlist) {
-
-                    if (n.equals(this_node)) {
-                        // this_node is a neighbor of other_node
-                        // => make other_node a neighbor of this_node
-                        R[i].add(other_node);
-                        break;
-                    }
-
-                }
-
-            }
-        }*/
 
         return R;
     }

@@ -1,5 +1,6 @@
 package info.debatty.graphs;
 
+import info.debatty.util.BoundedPriorityQueue;
 import java.util.Iterator;
 
 /**
