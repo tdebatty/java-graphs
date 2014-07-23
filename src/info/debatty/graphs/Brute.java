@@ -12,7 +12,7 @@ public class Brute {
     
     public static void main(String[] args) {
         Random r = new Random();
-        int count = 10000;
+        int count = 1000;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {

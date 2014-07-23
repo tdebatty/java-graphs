@@ -15,14 +15,13 @@ public class NNDescent {
      */
     public static void main(String[] args) {
         Random r = new Random();
-        int count = 10000;
+        int count = 1000;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
             nodes.add(new Node(String.valueOf(i), r.nextInt(10 * count)));
         }
-        
         
         NNDescent nnd = new NNDescent();
         nnd.K = 10;

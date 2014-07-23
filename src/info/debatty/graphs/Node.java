@@ -3,10 +3,11 @@ package info.debatty.graphs;
 /**
  *
  * @author tibo
+ * @param <T> Type of value field
  */
-public class Node implements Comparable<Node>, Cloneable {
+public class Node<T>  {
     public String id = "";
-    public Object value;
+    public T value;
     
     public static final String DELIMITER = "___";
     
@@ -14,36 +15,13 @@ public class Node implements Comparable<Node>, Cloneable {
         
     }
     
-    public Node(String id, Object value) {
+    public Node(String id) {
+        this.id = id;
+    }
+    
+    public Node(String id, T value) {
         this.id = id;
         this.value = value;
-    }
-    
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
-    
-    @Override
-    public int compareTo(Node other) {
-        return id.compareTo(other.id);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!other.getClass().getName().equals(this.getClass().getName())) {
-            return false;
-        }
-        
-        Node other_node = (Node) other;
-        return other_node.id.equals(this.id);
-    }    
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 29 * hash + (this.id != null ? this.id.hashCode() : 0);
-        return hash;
     }
 
     @Override

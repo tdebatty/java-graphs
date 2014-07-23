@@ -7,10 +7,10 @@ import java.util.Iterator;
  *
  * @author tibo
  */
-public class NeighborList implements Iterable<Neighbor>, Cloneable {
+public class NeighborList implements Iterable<Neighbor> {
     public static final String DELIMITER = ";;;";
 
-    BoundedPriorityQueue<Neighbor> neighbors;
+    protected BoundedPriorityQueue neighbors;
 
     public NeighborList() {
         neighbors = new BoundedPriorityQueue<Neighbor>();
@@ -31,8 +31,8 @@ public class NeighborList implements Iterable<Neighbor>, Cloneable {
         }
         
         StringBuilder builder = new StringBuilder();
-        for (Neighbor n : neighbors) {
-            builder.append(n.toString()).append(DELIMITER);
+        for (Object n : neighbors) {
+            builder.append( ((Neighbor)n).toString() ).append(DELIMITER);
         }
         builder.delete(builder.length()-3, Integer.MAX_VALUE);
         
@@ -68,11 +68,11 @@ public class NeighborList implements Iterable<Neighbor>, Cloneable {
     public int CountCommons(NeighborList other) throws CloneNotSupportedException {
         NeighborList copy = (NeighborList) other.clone();
         int count = 0;
-        for (Neighbor n : this.neighbors) {
-            Object this_value = n.node.value;
+        for (Object n : this.neighbors) {
+            Object this_value = ((Neighbor) n).node.value;
             
-            for (Neighbor other_n : copy.neighbors) {
-                if (other_n.node.value.equals(this_value)) {
+            for (Object other_n : copy.neighbors) {
+                if ( ((Neighbor) other_n).node.value.equals(this_value)) {
                     count++;
                     copy.neighbors.remove(other_n);
                     break;
@@ -82,22 +82,11 @@ public class NeighborList implements Iterable<Neighbor>, Cloneable {
         
         return count;
     }
-    
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        NeighborList new_nl = new NeighborList();
-        for (Neighbor n : this.neighbors) {
-            new_nl.add((Neighbor) n.clone());
-        }
-        
-        return new_nl;
-        
-    }
 
     public String NodeIds() {
         StringBuilder sb = new StringBuilder();
-        for (Neighbor n : neighbors) {
-            sb.append(n.node.id);
+        for (Object n : neighbors) {
+            sb.append( ((Neighbor) n).node.id);
             sb.append(";");
         }
         

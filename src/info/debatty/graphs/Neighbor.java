@@ -1,10 +1,12 @@
 package info.debatty.graphs;
 
+import java.security.InvalidParameterException;
+
 /**
  *
  * @author tibo
  */
-public class Neighbor implements Comparable<Neighbor>, Cloneable {
+public class Neighbor implements Comparable {
     public Node node;
     public double similarity;
     
@@ -12,24 +14,15 @@ public class Neighbor implements Comparable<Neighbor>, Cloneable {
 
     public static final String DELIMITER = ",,,";
     
+    public Neighbor() {
+        node = new Node();
+    }
+    
     public Neighbor(Node node, double similarity) {
         this.node = node;
         this.similarity = similarity;
     }
 
-    public Neighbor() {
-        node = new Node();
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return new Neighbor(
-                (Node) node.clone(),
-                similarity);
-        
-        
-    }
-    
     @Override
     public String toString() {
         return node.toString() + DELIMITER + String.valueOf(similarity);
@@ -59,15 +52,15 @@ public class Neighbor implements Comparable<Neighbor>, Cloneable {
     }
     
     @Override
-    public int compareTo(Neighbor other) {
-        //if (this.node.equals(other.node)) {
-        //    return 0;
-        //}
+    public int compareTo(Object other) {
+        if (! other.getClass().isInstance(this)) {
+            throw new InvalidParameterException();
+        }
         
-        if (this.similarity == other.similarity) {
+        if (this.similarity == ((Neighbor)other).similarity) {
             return 0;
         }
         
-        return this.similarity > other.similarity ? 1 : -1;
+        return this.similarity > ((Neighbor)other).similarity ? 1 : -1;
     }    
 }
