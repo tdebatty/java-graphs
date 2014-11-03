@@ -21,7 +21,7 @@ public class ThreadedNNDescent {
      */
     public static void main(String[] args) {
         Random r = new Random();
-        int count = 100000;
+        int count = 10000;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
@@ -235,7 +235,7 @@ public class ThreadedNNDescent {
                 break;
             }
         }
-        
+        executor.shutdown();
         running_time = (System.currentTimeMillis() - start_time);
     }
 
