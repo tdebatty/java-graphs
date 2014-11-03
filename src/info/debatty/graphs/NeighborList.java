@@ -1,6 +1,7 @@
 package info.debatty.graphs;
 
 import info.debatty.util.BoundedPriorityQueue;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
@@ -20,7 +21,7 @@ public class NeighborList implements Iterable<Neighbor> {
         neighbors = new BoundedPriorityQueue<Neighbor>(size);
     }
 
-    public boolean add(Neighbor neighbor) {
+    public synchronized boolean add(Neighbor neighbor) {
         return neighbors.add(neighbor);
     }
 
@@ -65,31 +66,34 @@ public class NeighborList implements Iterable<Neighbor> {
         return neighbors.size();
     }
     
-    public int CountCommons(NeighborList other) throws CloneNotSupportedException {
-        NeighborList copy = (NeighborList) other.clone();
+    
+    /**
+     * Count common values between this NeighborList and the other.
+     * Both neighborlists are not modified.
+     * 
+     * @param other_nl
+     * @return 
+     */
+    public int CountCommonValues(NeighborList other_nl) {
+        //NeighborList copy = (NeighborList) other.clone();
+        ArrayList other_values = new ArrayList();
+        for (Neighbor n : other_nl) {
+            other_values.add(n.node.value);
+        }
+        
         int count = 0;
         for (Object n : this.neighbors) {
             Object this_value = ((Neighbor) n).node.value;
             
-            for (Object other_n : copy.neighbors) {
-                if ( ((Neighbor) other_n).node.value.equals(this_value)) {
+            for (Object other_value : other_values) {
+                if ( other_value.equals(this_value)) {
                     count++;
-                    copy.neighbors.remove(other_n);
+                    other_values.remove(other_value);
                     break;
                 }
             }
         }
         
         return count;
-    }
-
-    public String NodeIds() {
-        StringBuilder sb = new StringBuilder();
-        for (Object n : neighbors) {
-            sb.append( ((Neighbor) n).node.id);
-            sb.append(";");
-        }
-        
-        return sb.toString();
-    }    
+    }  
 }

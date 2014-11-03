@@ -3,13 +3,16 @@ package info.debatty.graphs;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author tibo
  */
-public class NNDescent {
-    
+public class ThreadedNNDescent {
+
     /**
      * @param args the command line arguments
      */
@@ -22,14 +25,13 @@ public class NNDescent {
             // The value of our nodes will be an int
             nodes.add(new Node(String.valueOf(i), r.nextInt(10 * count)));
         }
+        ThreadedNNDescent tnnd = new ThreadedNNDescent();
+        tnnd.K = 10;
+        tnnd.nodes = nodes;
+        tnnd.rho = 0.5;
+        tnnd.delta = 0.001;
         
-        NNDescent nnd = new NNDescent();
-        nnd.K = 10;
-        nnd.nodes = nodes;
-        nnd.rho = 0.5;
-        nnd.delta = 0.001;
-        
-        nnd.callback= new NNDescentCallbackInterface() {
+        tnnd.callback= new NNDescentCallbackInterface() {
 
             @Override
             public void call(int iteration, int computed_similarities, int c) {
@@ -40,7 +42,7 @@ public class NNDescent {
             }
         };
         
-        nnd.similarity = new SimilarityInterface() {
+        tnnd.similarity = new SimilarityInterface() {
 
             @Override
             public double similarity(Node n1, Node n2) {
@@ -48,17 +50,72 @@ public class NNDescent {
             }
         };
                 
-        nnd.Run();
+        tnnd.Run();
         
         /*
         for (Node n : nodes) {
-            NeighborList nl = nnd.neighborlists.get(n);
+            NeighborList nl = tnnd.neighborlists.get(n);
             System.out.println(n);
             System.out.println(nl);
         }
         */
         
-        nnd.Print();
+        tnnd.Print();
+    }
+    
+    class NNThread extends Thread {
+        int id;
+        
+        public NNThread(int id) {
+            this.id = id;
+        }
+        
+        public void run() {
+            // for v ∈ V do
+            int start = id * nodes.size()/thread_count;
+            int end = (id + 1) * nodes.size()/thread_count;
+            for (int i = start; i < end; i++) {
+                Node v = nodes.get(i);
+                // old[v]←− old[v] ∪ Sample(old′[v], ρK)
+                // new[v]←− new[v] ∪ Sample(new′[v], ρK)
+                old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * K))));
+                new_lists.put(v, Union(new_lists.get(v), Sample(new_lists_2.get(v), (int) (rho * K))));
+
+                // for u1,u2 ∈ new[v], u1 < u2 do
+                for (int j = 0; j < new_lists.get(v).size(); j++) {
+                    Node u1 = (Node) new_lists.get(v).get(j);
+                    
+                    //int u1_i = Find(u1); // position of u1 in nodes
+
+                    for (int k = j + 1; k < new_lists.get(u1).size(); k++) {
+                        Node u2 = (Node) new_lists.get(u1).get(k);
+                        //int u2_i = Find(u2);
+
+                        // l←− σ(u1,u2)
+                        // c←− c+UpdateNN(B[u1], u2, l, true)
+                        // c←− c+UpdateNN(B[u2], u1, l, true)
+                        double s = Similarity(u1, u2);
+                        cs[id] += UpdateNL(neighborlists.get(u1), u2, s);
+                        cs[id] += UpdateNL(neighborlists.get(u2), u1, s);
+                    }
+
+                    // or u1 ∈ new[v], u2 ∈ old[v] do
+                    for (int k = 0; k < old_lists.get(v).size(); k++) {
+                        Node u2 = (Node) old_lists.get(v).get(k);
+            
+                        if (u1.equals(u2)) {
+                            continue;
+                        }
+                        
+                        //int u2_i = Find(u2);
+                        double s = Similarity(u1, u2);
+                        cs[id] += UpdateNL(neighborlists.get(u1), u2, s);
+                        cs[id] += UpdateNL(neighborlists.get(u2), u1, s);
+                    }
+                }
+            }
+        }
+        
     }
 
     public ArrayList<Node> nodes;
@@ -69,6 +126,7 @@ public class NNDescent {
     public SimilarityInterface similarity;
     
     public int max_iterations = Integer.MAX_VALUE;
+    public int thread_count = 4;
     
     public NNDescentCallbackInterface callback = null;
 
@@ -76,13 +134,16 @@ public class NNDescent {
      * Contains one NeighborList for each Node
      *
      */
-    public HashMap<Node, NeighborList> neighborlists;
+    public ConcurrentHashMap<Node, NeighborList> neighborlists;
 
     public int iterations = 0;
     public int computed_similarities = 0;
     public long running_time = 0;
     
-    public NNDescent() {
+    HashMap<Node, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
+    int[] cs;
+    
+    public ThreadedNNDescent() {
         similarity = new SimilarityInterface() {
 
             @Override
@@ -94,15 +155,16 @@ public class NNDescent {
 
     public void Run() {
         long start_time = System.currentTimeMillis();
-        neighborlists = new HashMap<Node, NeighborList>(nodes.size());
+        cs = new int[thread_count];
+        neighborlists = new ConcurrentHashMap<Node, NeighborList>(nodes.size());
         
         if (nodes.size() <= (K+1)) {
             MakeFullyLinked();
             return;
         }
         
-        HashMap<Node, ArrayList> old_lists = new HashMap<Node, ArrayList>(nodes.size());
-        HashMap<Node, ArrayList> new_lists = new HashMap<Node, ArrayList>(nodes.size());
+        old_lists = new HashMap<Node, ArrayList>(nodes.size());
+        new_lists = new HashMap<Node, ArrayList>(nodes.size());
     
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
@@ -127,53 +189,30 @@ public class NNDescent {
 
             // old′ ←Reverse(old)
             // new′ ←Reverse(new)
-            HashMap<Node, ArrayList> old_lists_2 = Reverse(old_lists);
-            HashMap<Node, ArrayList> new_lists_2 = Reverse(new_lists);
+            old_lists_2 = Reverse(old_lists);
+            new_lists_2 = Reverse(new_lists);
             
             // c←− 0 update counter
             int c = 0;
-
-            // for v ∈ V do
-            for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
-                // old[v]←− old[v] ∪ Sample(old′[v], ρK)
-                // new[v]←− new[v] ∪ Sample(new′[v], ρK)
-                old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * K))));
-                new_lists.put(v, Union(new_lists.get(v), Sample(new_lists_2.get(v), (int) (rho * K))));
-
-                // for u1,u2 ∈ new[v], u1 < u2 do
-                for (int j = 0; j < new_lists.get(v).size(); j++) {
-                    Node u1 = (Node) new_lists.get(v).get(j);
-                    
-                    //int u1_i = Find(u1); // position of u1 in nodes
-
-                    for (int k = j + 1; k < new_lists.get(u1).size(); k++) {
-                        Node u2 = (Node) new_lists.get(u1).get(k);
-                        //int u2_i = Find(u2);
-
-                        // l←− σ(u1,u2)
-                        // c←− c+UpdateNN(B[u1], u2, l, true)
-                        // c←− c+UpdateNN(B[u2], u1, l, true)
-                        double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
-                    }
-
-                    // or u1 ∈ new[v], u2 ∈ old[v] do
-                    for (int k = 0; k < old_lists.get(v).size(); k++) {
-                        Node u2 = (Node) old_lists.get(v).get(k);
             
-                        if (u1.equals(u2)) {
-                            continue;
-                        }
-                        
-                        //int u2_i = Find(u2);
-                        double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
-                    }
+
+            // Start threads...
+            NNThread[] threads = new NNThread[thread_count];
+            for (int t = 0; t < thread_count; t++) {
+                cs[t] = 0;
+                threads[t] = new NNThread(t);
+                threads[t].start();
+            }
+            
+            for (int t = 0; t < thread_count; t++) {
+                try {
+                    threads[t].join();
+                    c += cs[t];
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(ThreadedNNDescent.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+            
             
             //System.out.println("C : " + c);
             if (callback != null) {
