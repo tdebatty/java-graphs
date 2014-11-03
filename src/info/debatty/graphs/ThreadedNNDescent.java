@@ -3,9 +3,12 @@ package info.debatty.graphs;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  *
@@ -63,14 +66,17 @@ public class ThreadedNNDescent {
         tnnd.Print();
     }
     
-    class NNThread extends Thread {
+    class NNThread implements Callable<Integer> {
         int id;
         
         public NNThread(int id) {
             this.id = id;
         }
         
-        public void run() {
+
+        @Override
+        public Integer call() {
+            int c = 0;
             // for v ∈ V do
             int start = id * nodes.size()/thread_count;
             int end = (id + 1) * nodes.size()/thread_count;
@@ -95,8 +101,8 @@ public class ThreadedNNDescent {
                         // c←− c+UpdateNN(B[u1], u2, l, true)
                         // c←− c+UpdateNN(B[u2], u1, l, true)
                         double s = Similarity(u1, u2);
-                        cs[id] += UpdateNL(neighborlists.get(u1), u2, s);
-                        cs[id] += UpdateNL(neighborlists.get(u2), u1, s);
+                        c += UpdateNL(neighborlists.get(u1), u2, s);
+                        c += UpdateNL(neighborlists.get(u2), u1, s);
                     }
 
                     // or u1 ∈ new[v], u2 ∈ old[v] do
@@ -109,11 +115,12 @@ public class ThreadedNNDescent {
                         
                         //int u2_i = Find(u2);
                         double s = Similarity(u1, u2);
-                        cs[id] += UpdateNL(neighborlists.get(u1), u2, s);
-                        cs[id] += UpdateNL(neighborlists.get(u2), u1, s);
+                        c += UpdateNL(neighborlists.get(u1), u2, s);
+                        c += UpdateNL(neighborlists.get(u2), u1, s);
                     }
                 }
             }
+            return c;
         }
         
     }
@@ -141,7 +148,6 @@ public class ThreadedNNDescent {
     public long running_time = 0;
     
     HashMap<Node, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
-    int[] cs;
     
     public ThreadedNNDescent() {
         similarity = new SimilarityInterface() {
@@ -155,7 +161,7 @@ public class ThreadedNNDescent {
 
     public void Run() {
         long start_time = System.currentTimeMillis();
-        cs = new int[thread_count];
+        
         neighborlists = new ConcurrentHashMap<Node, NeighborList>(nodes.size());
         
         if (nodes.size() <= (K+1)) {
@@ -171,6 +177,9 @@ public class ThreadedNNDescent {
         for (Node v : nodes) {
             neighborlists.put(v, RandomNeighborList(v));
         }
+        
+        // Create worker threads
+        ExecutorService executor = Executors.newFixedThreadPool(thread_count);
 
         // loop
         while (true) {
@@ -195,21 +204,20 @@ public class ThreadedNNDescent {
             // c←− 0 update counter
             int c = 0;
             
-
+            ArrayList<Future<Integer>> list = new ArrayList<Future<Integer>>();
             // Start threads...
-            NNThread[] threads = new NNThread[thread_count];
             for (int t = 0; t < thread_count; t++) {
-                cs[t] = 0;
-                threads[t] = new NNThread(t);
-                threads[t].start();
+                list.add(executor.submit(new NNThread(t)));
+                
             }
             
-            for (int t = 0; t < thread_count; t++) {
+            for (Future<Integer> future : list) {
                 try {
-                    threads[t].join();
-                    c += cs[t];
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(ThreadedNNDescent.class.getName()).log(Level.SEVERE, null, ex);
+                    c += future.get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
                 }
             }
             
