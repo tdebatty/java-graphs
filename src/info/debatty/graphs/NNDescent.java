@@ -1,8 +1,10 @@
 package info.debatty.graphs;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -10,12 +12,9 @@ import java.util.Random;
  */
 public class NNDescent {
     
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
         Random r = new Random();
-        int count = 100000;
+        int count = 10000;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
@@ -24,12 +23,9 @@ public class NNDescent {
         }
         
         NNDescent nnd = new NNDescent();
-        nnd.K = 10;
-        nnd.nodes = nodes;
-        nnd.rho = 0.5;
-        nnd.delta = 0.001;
+        nnd.setNodes(nodes);
         
-        nnd.callback= new NNDescentCallbackInterface() {
+        nnd.setCallback(new NNDescentCallbackInterface() {
 
             @Override
             public void call(int iteration, int computed_similarities, int c) {
@@ -38,15 +34,15 @@ public class NNDescent {
                         computed_similarities + " similarities " +
                         "c = " + c);
             }
-        };
+        });
         
-        nnd.similarity = new SimilarityInterface() {
+        nnd.setSimilarity(new SimilarityInterface() {
 
             @Override
             public double similarity(Node n1, Node n2) {
                 return 1.0 / (1.0 + Math.abs((Integer) n1.value - (Integer) n2.value));
             }
-        };
+        });
                 
         nnd.Run();
         
@@ -61,28 +57,160 @@ public class NNDescent {
         nnd.Print();
     }
 
-    public ArrayList<Node> nodes;
-    public int K = 10;
-    // Standard : 1, Fast: 0.5
-    public double rho = 1.0;
-    public double delta = 0.001;
-    public SimilarityInterface similarity;
+    protected ArrayList<Node> nodes;
+    protected int K = 10;
+    protected double rho = 0.5; // Standard : 1, Fast: 0.5
+    protected double delta = 0.001;
+    protected SimilarityInterface similarity;
+    protected int max_iterations = Integer.MAX_VALUE;
+    protected NNDescentCallbackInterface callback = null;
     
-    public int max_iterations = Integer.MAX_VALUE;
-    
-    public NNDescentCallbackInterface callback = null;
+    protected HashMap<Node, NeighborList> neighborlists; //Contains one NeighborList for each Node
+    protected int iterations = 0;
+    protected AtomicInteger computed_similarities;
+    protected long running_time = 0;
+    protected int c;
+
+    protected HashMap<Node, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
 
     /**
-     * Contains one NeighborList for each Node
-     *
+     * Get the execution time (in ms)
+     * @return 
      */
-    public HashMap<Node, NeighborList> neighborlists;
+    public long getRunningTime() {
+        return running_time;
+    }
+    
+    /**
+     * Get the number of edges modified at the last iteration
+     * @return 
+     */
+    public int getC() {
+        return c;
+    }
+    
+    /**
+     * Get the number of computed similarities
+     * @return 
+     */
+    public int getComputedSimilarities() {
+        return computed_similarities.get();
+    }
+    
+    /**
+     * Get the number of executed iterations
+     * @return 
+     */
+    public int getIterations() {
+        return iterations;
+    }
+    
+    /**
+     * Get the NeighborList of each Node
+     * @return 
+     */
+    public HashMap<Node, NeighborList> getNeighborlists() {
+        return neighborlists;
+    }
+    
+    public ArrayList<Node> getNodes() {
+        return nodes;
+    }
 
-    public int iterations = 0;
-    public int computed_similarities = 0;
-    public long running_time = 0;
+    public void setNodes(ArrayList<Node> nodes) {
+        this.nodes = nodes;
+    }
+
+    public int getK() {
+        return K;
+    }
+
+    public void setK(int K) {
+        this.K = K;
+    }
+
+    public double getRho() {
+        return rho;
+    }
+
+    /**
+     * Sampling coefficient.
+     * In interval ]0, 1.0]
+     * Typical value for fast computation is 0.5
+     * Use 1.0 for precise computation
+     * Default is 0.5
+     * @param rho 
+     */
+    public void setRho(double rho) {
+        if (rho > 1.0 || rho <= 0.0) {
+            throw new InvalidParameterException("0 < rho <= 1.0");
+        }
+        this.rho = rho;
+    }
+
+    public double getDelta() {
+        return delta;
+    }
+
+    /**
+     * Early termination coefficient.
+     * The algorithm stops when less then this proportion of edges are modified
+     * Should be in ]0, 1.0[
+     * Default is 0.001
+     * @param delta 
+     */
+    public void setDelta(double delta) {
+        if (rho >= 1.0 || rho <= 0.0) {
+            throw new InvalidParameterException("0 < delta < 1.0");
+        }
+        this.delta = delta;
+    }
+
+    public SimilarityInterface getSimilarity() {
+        return similarity;
+    }
+
+    /**
+     * Set the similarity metric between nodes.
+     * Default is 
+     * @param similarity 
+     */
+    public void setSimilarity(SimilarityInterface similarity) {
+        this.similarity = similarity;
+    }
+
+    public int getMaxIterations() {
+        return max_iterations;
+    }
+
+    /**
+     * Set the maximum number of iterations
+     * Default is no max (Integer.MAX_VALUE)
+     * @param max_iterations 
+     */
+    public void setMaxIterations(int max_iterations) {
+        if (max_iterations < 0) {
+            throw new InvalidParameterException("max_iterations should be positive!");
+        }
+        this.max_iterations = max_iterations;
+    }
+
+    public NNDescentCallbackInterface getCallback() {
+        return callback;
+    }
+
+    /**
+     * Set a callback function that will be called after each iteration
+     * @param callback 
+     */
+    public void setCallback(NNDescentCallbackInterface callback) {
+        this.callback = callback;
+    }
     
     public NNDescent() {
+        computed_similarities = new AtomicInteger();
+        
+        // Default similarity...
         similarity = new SimilarityInterface() {
 
             @Override
@@ -101,8 +229,8 @@ public class NNDescent {
             return;
         }
         
-        HashMap<Node, ArrayList> old_lists = new HashMap<Node, ArrayList>(nodes.size());
-        HashMap<Node, ArrayList> new_lists = new HashMap<Node, ArrayList>(nodes.size());
+        old_lists = new HashMap<Node, ArrayList>(nodes.size());
+        new_lists = new HashMap<Node, ArrayList>(nodes.size());
     
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
@@ -112,72 +240,14 @@ public class NNDescent {
 
         // loop
         while (true) {
-            this.iterations++;
-
-            // for v ∈ V do
-            // old[v]←− all items in B[v] with a false flag
-            // new[v]←− ρK items in B[v] with a true flag
-            // Mark sampled items in B[v] as false;
-            for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
-                old_lists.put(v, PickFalses(neighborlists.get(v)));
-                new_lists.put(v, PickTruesAndMark(neighborlists.get(v)));
-
-            }
-
-            // old′ ←Reverse(old)
-            // new′ ←Reverse(new)
-            HashMap<Node, ArrayList> old_lists_2 = Reverse(old_lists);
-            HashMap<Node, ArrayList> new_lists_2 = Reverse(new_lists);
+            iterations++;
+            c = 0;
             
-            // c←− 0 update counter
-            int c = 0;
-
-            // for v ∈ V do
-            for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
-                // old[v]←− old[v] ∪ Sample(old′[v], ρK)
-                // new[v]←− new[v] ∪ Sample(new′[v], ρK)
-                old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * K))));
-                new_lists.put(v, Union(new_lists.get(v), Sample(new_lists_2.get(v), (int) (rho * K))));
-
-                // for u1,u2 ∈ new[v], u1 < u2 do
-                for (int j = 0; j < new_lists.get(v).size(); j++) {
-                    Node u1 = (Node) new_lists.get(v).get(j);
-                    
-                    //int u1_i = Find(u1); // position of u1 in nodes
-
-                    for (int k = j + 1; k < new_lists.get(u1).size(); k++) {
-                        Node u2 = (Node) new_lists.get(u1).get(k);
-                        //int u2_i = Find(u2);
-
-                        // l←− σ(u1,u2)
-                        // c←− c+UpdateNN(B[u1], u2, l, true)
-                        // c←− c+UpdateNN(B[u2], u1, l, true)
-                        double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
-                    }
-
-                    // or u1 ∈ new[v], u2 ∈ old[v] do
-                    for (int k = 0; k < old_lists.get(v).size(); k++) {
-                        Node u2 = (Node) old_lists.get(v).get(k);
-            
-                        if (u1.equals(u2)) {
-                            continue;
-                        }
-                        
-                        //int u2_i = Find(u2);
-                        double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
-                    }
-                }
-            }
+            doIteration();
             
             //System.out.println("C : " + c);
             if (callback != null) {
-                callback.call(iterations, computed_similarities, c);
+                callback.call(iterations, computed_similarities.get(), c);
             }
 
             if (c <= (delta * nodes.size() * K)) {
@@ -192,7 +262,7 @@ public class NNDescent {
         running_time = (System.currentTimeMillis() - start_time);
     }
 
-    private ArrayList<Node> Union(ArrayList<Node> l1, ArrayList<Node> l2) {
+    protected ArrayList<Node> Union(ArrayList<Node> l1, ArrayList<Node> l2) {
         ArrayList<Node> r = new ArrayList<Node>();
         for (Node n : l1) {
             if (!r.contains(n)) {
@@ -209,7 +279,7 @@ public class NNDescent {
         return r;
     }
 
-    private NeighborList RandomNeighborList(Node for_node) {
+    protected NeighborList RandomNeighborList(Node for_node) {
         //System.out.println("Random NL for node " + for_node);
         NeighborList nl = new NeighborList(K);
         Random r = new Random();
@@ -226,7 +296,7 @@ public class NNDescent {
         return nl;
     }
 
-    private ArrayList<Node> PickFalses(NeighborList neighborList) {
+    protected ArrayList<Node> PickFalses(NeighborList neighborList) {
         ArrayList<Node> falses = new ArrayList<Node>();
         for (Neighbor n : neighborList) {
             if (!n.is_new) {
@@ -243,7 +313,7 @@ public class NNDescent {
      * @param neighborList
      * @return
      */
-    private ArrayList<Node> PickTruesAndMark(NeighborList neighborList) {
+    protected ArrayList<Node> PickTruesAndMark(NeighborList neighborList) {
         ArrayList<Node> r = new ArrayList<Node>();
         for (Neighbor n : neighborList) {
             if (n.is_new && Math.random() < rho) {
@@ -256,7 +326,7 @@ public class NNDescent {
     }
 
 
-    private HashMap<Node, ArrayList> Reverse(HashMap<Node, ArrayList> lists) {
+    protected HashMap<Node, ArrayList> Reverse(HashMap<Node, ArrayList> lists) {
 
         HashMap<Node, ArrayList> R = new HashMap<Node, ArrayList>(nodes.size());
         
@@ -280,9 +350,12 @@ public class NNDescent {
      * Reverse NN array R[v] is the list of elements (u) for which v is a
      * neighbor (v is in B[u])
      *
+     * @param nodes
+     * @param count
+     * @return 
      */
 
-    private ArrayList<Node> Sample(ArrayList<Node> nodes, int count) {
+    protected ArrayList<Node> Sample(ArrayList<Node> nodes, int count) {
         Random r = new Random();
         while (nodes.size() > count) {
             nodes.remove(r.nextInt(nodes.size()));
@@ -292,14 +365,14 @@ public class NNDescent {
 
     }
 
-    private int UpdateNL(NeighborList nl, Node n, double similarity) {
+    protected int UpdateNL(NeighborList nl, Node n, double similarity) {
         Neighbor neighbor = new Neighbor(n, similarity);
         return nl.add(neighbor) ? 1 : 0;
     }
 
 
-    private double Similarity(Node n1, Node n2) {
-        computed_similarities++;
+    protected double Similarity(Node n1, Node n2) {
+        computed_similarities.incrementAndGet();
         return similarity.similarity(n1, n2);
         
     }
@@ -336,13 +409,75 @@ public class NNDescent {
         }
     }
 
-    void Print() {
+    /**
+     * Display information about 
+     */
+    public void Print() {
         System.out.println("K: " + this.K);
-        System.out.println("Computed similarities: " + this.computed_similarities);
+        System.out.println("Computed similarities: " + this.computed_similarities.get());
         System.out.println("Delta: " + this.delta);
         System.out.println("Iterations: " + this.iterations);
         System.out.println("Rho: " + this.rho);
         System.out.println("Running time: " + this.running_time + "ms");
+        System.out.println("" + Math.round(this.computed_similarities.get()/this.running_time) + " x 10^3 sims/sec");        
+    }
+
+    protected void doIteration() {
+        // for v ∈ V do
+        // old[v]←− all items in B[v] with a false flag
+        // new[v]←− ρK items in B[v] with a true flag
+        // Mark sampled items in B[v] as false;
+        for (int i = 0; i < nodes.size(); i++) {
+            Node v = nodes.get(i);
+            old_lists.put(v, PickFalses(neighborlists.get(v)));
+            new_lists.put(v, PickTruesAndMark(neighborlists.get(v)));
+
+        }
+
+        // old′ ←Reverse(old)
+        // new′ ←Reverse(new)
+        old_lists_2 = Reverse(old_lists);
+        new_lists_2 = Reverse(new_lists);
         
+        // for v ∈ V do
+        for (int i = 0; i < nodes.size(); i++) {
+            Node v = nodes.get(i);
+            // old[v]←− old[v] ∪ Sample(old′[v], ρK)
+            // new[v]←− new[v] ∪ Sample(new′[v], ρK)
+            old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * K))));
+            new_lists.put(v, Union(new_lists.get(v), Sample(new_lists_2.get(v), (int) (rho * K))));
+
+            // for u1,u2 ∈ new[v], u1 < u2 do
+            for (int j = 0; j < new_lists.get(v).size(); j++) {
+                Node u1 = (Node) new_lists.get(v).get(j);
+
+                    //int u1_i = Find(u1); // position of u1 in nodes
+                for (int k = j + 1; k < new_lists.get(u1).size(); k++) {
+                    Node u2 = (Node) new_lists.get(u1).get(k);
+                        //int u2_i = Find(u2);
+
+                        // l←− σ(u1,u2)
+                    // c←− c+UpdateNN(B[u1], u2, l, true)
+                    // c←− c+UpdateNN(B[u2], u1, l, true)
+                    double s = Similarity(u1, u2);
+                    c += UpdateNL(neighborlists.get(u1), u2, s);
+                    c += UpdateNL(neighborlists.get(u2), u1, s);
+                }
+
+                // or u1 ∈ new[v], u2 ∈ old[v] do
+                for (int k = 0; k < old_lists.get(v).size(); k++) {
+                    Node u2 = (Node) old_lists.get(v).get(k);
+
+                    if (u1.equals(u2)) {
+                        continue;
+                    }
+
+                    //int u2_i = Find(u2);
+                    double s = Similarity(u1, u2);
+                    c += UpdateNL(neighborlists.get(u1), u2, s);
+                    c += UpdateNL(neighborlists.get(u2), u1, s);
+                }
+            }
+        }
     }
 }
