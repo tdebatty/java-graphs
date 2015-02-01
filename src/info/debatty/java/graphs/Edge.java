@@ -1,12 +1,13 @@
-package info.debatty.graphs;
+package info.debatty.java.graphs;
 
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 
 /**
  *
  * @author tibo
  */
-public class Edge implements Comparable {
+public class Edge implements Comparable, Serializable {
     public Node n1;
     public Node n2;
     public double similarity = 0;

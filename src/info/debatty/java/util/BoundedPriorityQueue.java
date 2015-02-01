@@ -1,4 +1,4 @@
-package info.debatty.util;
+package info.debatty.java.util;
 
 import java.util.PriorityQueue;
 
@@ -10,7 +10,6 @@ import java.util.PriorityQueue;
  * @param <E>
  */
 public class BoundedPriorityQueue<E> extends PriorityQueue<E> {
-    protected int CAPACITY = Integer.MAX_VALUE;
     
     public static void main(String [] args) {
         BoundedPriorityQueue<Integer> q = new BoundedPriorityQueue(4);
@@ -24,6 +23,8 @@ public class BoundedPriorityQueue<E> extends PriorityQueue<E> {
             System.out.println(i);
         }
     }
+    
+    protected int CAPACITY = Integer.MAX_VALUE;
     
     /**
      * Create a bounded priority queue with given maximum capacity
@@ -46,9 +47,9 @@ public class BoundedPriorityQueue<E> extends PriorityQueue<E> {
      * element already in the queue.
      * 
      * It the element is not comparable, throws a ClassCastException
-     * Returns true if the element was added
+     * 
      * @param element
-     * @return 
+     * @return true if element was added
      */
     @Override
     public boolean add(E element) {

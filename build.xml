@@ -7,7 +7,7 @@
 <!-- the Compile on Save feature is turned off for the project. -->
 <!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
 <!-- in the project's Project Properties dialog box.-->
-<project name="graphs" default="default" basedir=".">
+<project name="java-graphs" default="default" basedir=".">
     <description>Builds, tests, and runs the project graphs.</description>
     <import file="nbproject/build-impl.xml"/>
     <!--
@@ -70,4 +70,10 @@
     nbproject/build-impl.xml file. 
 
     -->
+    
+    <target depends="-javadoc-build" description="bundle javadoc in a jar" name="package-doc">
+        <jar basedir="dist/javadoc" destfile="dist/${ant.project.name}-javadoc.jar"/>
+    </target>
+    
+    <target name="-post-jar" depends="package-doc" />
 </project>

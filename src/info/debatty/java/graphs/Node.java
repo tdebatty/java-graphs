@@ -1,18 +1,17 @@
-package info.debatty.graphs;
+package info.debatty.java.graphs;
+
+import java.io.Serializable;
 
 /**
  *
- * @author tibo
+ * @author Thibault Debatty
  * @param <T> Type of value field
  */
-public class Node<T>  {
+public class Node<T> implements Serializable {
     public String id = "";
     public T value;
     
-    public static final String DELIMITER = "___";
-    
     public Node() {
-        
     }
     
     public Node(String id) {
@@ -26,15 +25,7 @@ public class Node<T>  {
 
     @Override
     public String toString() {
-        return id.toString() + DELIMITER + value.toString();
-    }
-    
-    public static Node parseString(String string) {
-        String[] values = string.split(DELIMITER, 2);
-        Node n = new Node();
-        n.id = values[0];
-        n.value = (Object) values[1];
-        return n;
+        return "(" + id + " => " + value.toString() + ")";
     }
 
     @Override

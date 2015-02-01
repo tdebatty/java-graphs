@@ -1,18 +1,18 @@
-package info.debatty.graphs;
+package info.debatty.java.graphs;
 
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 
 /**
  *
- * @author tibo
+ * @author Thibault Debatty
  */
-public class Neighbor implements Comparable {
+public class Neighbor implements Comparable, Serializable {
     public Node node;
     public double similarity;
     
     public boolean is_new = true; // only used by sequential nndescent...
 
-    public static final String DELIMITER = ",,,";
     
     public Neighbor() {
         node = new Node();
@@ -23,16 +23,15 @@ public class Neighbor implements Comparable {
         this.similarity = similarity;
     }
 
+    /**
+     * 
+     * @return (node.id,node.value,similarity)
+     */
     @Override
     public String toString() {
-        return node.toString() + DELIMITER + String.valueOf(similarity);
+        return "(" + node.id + "," + node.value + "," + similarity + ")";
     }
-    
-    public static Neighbor parseString(String s) {
-        String[] values = s.split(DELIMITER, 2);
-        return new Neighbor(Node.parseString(values[0]), Double.valueOf(values[1]));
-        
-    }
+
 
     @Override
     public boolean equals(Object other) {

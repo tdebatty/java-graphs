@@ -1,4 +1,4 @@
-package info.debatty.graphs;
+package info.debatty.java.graphs;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
