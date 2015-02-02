@@ -7,7 +7,7 @@ import java.util.Random;
 
 /**
  *
- * @author tibo
+ * @author Thibault Debatty
  */
 public class Brute extends GraphBuilder {
     
@@ -23,31 +23,34 @@ public class Brute extends GraphBuilder {
             nodes.add(new Node(String.valueOf(i), r.nextInt(10 * count)));
         }
         
-        
         // Instantiate and configure the brute-force graph building algorithm
-        Brute brute = new Brute();
-        
         // The minimum is to define k (number of edges per node)
-        // and a similarity between nodes
+        // and a similarity metric between nodes
+        Brute brute = new Brute();
         brute.setK(10);
-        brute.setSimilarity(new SimilarityInterface() {
-            @Override
-            public double similarity(Node n1, Node n2) {
-                return 1.0 / (1.0 + Math.abs((Integer) n1.value - (Integer) n2.value));
-            }
-        });
+        brute.setSimilarity(
+                new SimilarityInterface() {
+                    @Override
+                    public double similarity(Node n1, Node n2) {
+                        return 1.0 / (1.0 + Math.abs((Integer) n1.value - (Integer) n2.value));
+                    }
+                }
+        );
         
         // Optionaly, we can define a callback, to get some feedback...
         brute.setCallback(new CallbackInterface() {
+
             @Override
-            public void call(String node_id, int computed_similarities) {
-                System.out.println("Node: " + node_id + " => " + computed_similarities); 
+            public void call(HashMap<String, Object> data) {
+                System.out.println(data);
             }
+          
         });
         
         // Run the algorithm, and get the resulting neighbor lists
         HashMap<Node, NeighborList> neighbor_lists = brute.computeGraph(nodes);
         
+        // Display the computed neighbor lists
         for (Node n : nodes) {
             NeighborList nl = neighbor_lists.get(n);
             System.out.println(n);
@@ -66,10 +69,11 @@ public class Brute extends GraphBuilder {
             neighborlists.put(node, new NeighborList(k));
         }
         
-        computed_similaritites = 0;
+        computed_similarities = 0;
         double sim;
         Node n1;
         Node n2;
+        HashMap<String, Object> data = new HashMap<String, Object>();
         
         for (int i = 0; i < n; i++) {
             
@@ -77,14 +81,17 @@ public class Brute extends GraphBuilder {
             for (int j = 0; j < i; j++) {
                 n2 = nodes.get(j);
                 sim = similarity.similarity(n1, n2);
-                computed_similaritites++;
+                computed_similarities++;
                 
                 neighborlists.get(n1).add(new Neighbor(n2, sim));
                 neighborlists.get(n2).add(new Neighbor(n1, sim));
             }
             
             if (callback != null) {
-                callback.call(n1.id, computed_similaritites);
+                data.put("node_id", n1.id);
+                data.put("computed_similarities", computed_similarities);
+                callback.call(data);
+                
             }
         }
         
