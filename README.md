@@ -1,5 +1,5 @@
 #java-graphs
-Implementation of some k nearest neighbors graph (k-nn graph) building algorithms.
+Algorithms that build k-nearest neighbors graph (k-nn graph): Brute-force, NN-Descent,...
 
 ##Download
 https://github.com/tdebatty/java-graphs/releases
