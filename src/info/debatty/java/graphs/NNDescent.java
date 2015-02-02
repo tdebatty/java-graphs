@@ -50,7 +50,7 @@ public class NNDescent extends GraphBuilder {
         // Display neighborlists
         for (Node n : nodes) {
             NeighborList nl = neighborlists.get(n);
-            System.out.println(n);
+            System.out.print(n);
             System.out.println(nl);
         }
         
@@ -63,7 +63,6 @@ public class NNDescent extends GraphBuilder {
     protected int iterations = 0;
     protected int c;
     
-
     
     /**
      * Get the number of edges modified at the last iteration
@@ -355,7 +354,7 @@ public class NNDescent extends GraphBuilder {
         
     }
 
-    private HashMap<Node, NeighborList> MakeFullyLinked(List<Node> nodes) {
+    protected HashMap<Node, NeighborList> MakeFullyLinked(List<Node> nodes) {
         HashMap<Node, NeighborList> neighborlists = new HashMap<Node, NeighborList>(nodes.size());
         for (Node node : nodes) {
             NeighborList neighborlist = new NeighborList(k);

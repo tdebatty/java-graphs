@@ -53,7 +53,7 @@ public class Brute extends GraphBuilder {
         // Display the computed neighbor lists
         for (Node n : nodes) {
             NeighborList nl = neighbor_lists.get(n);
-            System.out.println(n);
+            System.out.print(n);
             System.out.println(nl);
         }
     }

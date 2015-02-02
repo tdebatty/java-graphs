@@ -2,6 +2,8 @@ package info.debatty.java.graphs;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -20,7 +22,7 @@ public class ThreadedNNDescent extends NNDescent {
      */
     public static void main(String[] args) {
         Random r = new Random();
-        int count = 10000;
+        int count = 1000;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
@@ -28,29 +30,34 @@ public class ThreadedNNDescent extends NNDescent {
             nodes.add(new Node(String.valueOf(i), r.nextInt(10 * count)));
         }
         
-        
+        // Instantiate and configure the algorithm
         ThreadedNNDescent tnnd = new ThreadedNNDescent();
-        tnnd.setNodes(nodes);
-        tnnd.setThreadCount(4);
-        
+        tnnd.setThreadCount(3);
+        tnnd.setK(4);
         tnnd.setSimilarity(new SimilarityInterface() {
             @Override
             public double similarity(Node n1, Node n2) {
                 return 1.0 / (1.0 + Math.abs((Integer) n1.value - (Integer) n2.value));
             }
         });
-                
-        tnnd.Run();
         
-        /*
+        // Optionnally, define callback
+        tnnd.setCallback(new CallbackInterface() {
+            @Override
+            public void call(HashMap<String, Object> data) {
+                System.out.println(data);
+            }
+        });
+        
+        // Run the algorithm and get computed neighbor lists
+        HashMap<Node, NeighborList> neighborlists = tnnd.computeGraph(nodes);
+        
+        // Display neighbor lists
         for (Node n : nodes) {
-            NeighborList nl = tnnd.neighborlists.get(n);
-            System.out.println(n);
+            NeighborList nl = neighborlists.get(n);
+            System.out.print(n);
             System.out.println(nl);
         }
-        */
-        
-        tnnd.Print();
     }
     
     protected int thread_count = 4;
@@ -74,6 +81,106 @@ public class ThreadedNNDescent extends NNDescent {
     
     private ExecutorService executor;
     
+    // Internal state, used by worker objects
+    List<Node> nodes;
+    HashMap<Node, NeighborList> neighborlists;
+    HashMap<Node, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
+
+    @Override
+    public HashMap<Node, NeighborList> computeGraph(List<Node> nodes) {
+        
+        // Create worker threads
+        executor = Executors.newFixedThreadPool(thread_count);
+        
+        iterations = 0;
+        
+        if (nodes.size() <= (k+1)) {
+            return MakeFullyLinked(nodes);
+        }
+        
+        // Initialize state...
+        this.nodes = nodes;
+        this.neighborlists = new HashMap<Node, NeighborList>(nodes.size());
+        this.old_lists = new HashMap<Node, ArrayList>(nodes.size());
+        this.new_lists = new HashMap<Node, ArrayList>(nodes.size());
+        
+        HashMap<String, Object> data = new HashMap<String, Object>();
+    
+        // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
+        // For each node, create a random neighborlist
+        for (Node v : nodes) {
+            neighborlists.put(v, RandomNeighborList(nodes, v));
+        }
+
+        // loop
+        while (true) {
+            iterations++;
+            c = 0;
+            
+            // for v ∈ V do
+            // old[v]←− all items in B[v] with a false flag
+            // new[v]←− ρK items in B[v] with a true flag
+            // Mark sampled items in B[v] as false;
+            for (int i = 0; i < nodes.size(); i++) {
+                Node v = nodes.get(i);
+                old_lists.put(v, PickFalses(neighborlists.get(v)));
+                new_lists.put(v, PickTruesAndMark(neighborlists.get(v)));
+
+            }
+
+            // old′ ←Reverse(old)
+            // new′ ←Reverse(new)
+            old_lists_2 = Reverse(nodes, old_lists);
+            new_lists_2 = Reverse(nodes, new_lists);
+
+            ArrayList<Future<Integer>> list = new ArrayList<Future<Integer>>();
+            // Start threads...
+            for (int t = 0; t < thread_count; t++) {
+                list.add(executor.submit(new ThreadedNNDescent.NNThread(t)));
+
+            }
+
+            for (Future<Integer> future : list) {
+                try {
+                    c += future.get();
+                } catch (InterruptedException e) {
+                } catch (ExecutionException e) {
+                }
+            }
+            
+            //System.out.println("C : " + c);
+            if (callback != null) {
+                data.put("c", c);
+                data.put("computed_similarities", computed_similarities);
+                data.put("iterations", iterations);
+                
+                callback.call(data);
+            }
+
+            if (c <= (delta * nodes.size() * k)) {
+                break;
+            }
+            
+            if (iterations >= max_iterations) {
+                break;
+            }
+        }
+        
+        executor.shutdown();
+        
+        // Clear local state
+        HashMap<Node, NeighborList> n = this.neighborlists;
+        this.neighborlists = null;
+        this.new_lists = null;
+        this.new_lists_2 = null;
+        this.nodes = null;
+        this.old_lists = null;
+        this.old_lists_2 = null;
+        
+        return n;
+    }
+    
+    
     class NNThread implements Callable<Integer> {
         int slice;
         
@@ -87,18 +194,22 @@ public class ThreadedNNDescent extends NNDescent {
             // for v ∈ V do
             int start = slice * nodes.size()/thread_count;
             int end = (slice + 1) * nodes.size()/thread_count;
+            
+            // Last slice should go to the end...
+            if (slice == (thread_count - 1)) {
+                end = nodes.size();
+            }
+            
             for (int i = start; i < end; i++) {
                 Node v = nodes.get(i);
                 // old[v]←− old[v] ∪ Sample(old′[v], ρK)
                 // new[v]←− new[v] ∪ Sample(new′[v], ρK)
-                old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * K))));
-                new_lists.put(v, Union(new_lists.get(v), Sample(new_lists_2.get(v), (int) (rho * K))));
+                old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * k))));
+                new_lists.put(v, Union(new_lists.get(v), Sample(new_lists_2.get(v), (int) (rho * k))));
 
                 // for u1,u2 ∈ new[v], u1 < u2 do
                 for (int j = 0; j < new_lists.get(v).size(); j++) {
                     Node u1 = (Node) new_lists.get(v).get(j);
-                    
-                    //int u1_i = Find(u1); // position of u1 in nodes
 
                     for (int k = j + 1; k < new_lists.get(u1).size(); k++) {
                         Node u2 = (Node) new_lists.get(u1).get(k);
@@ -129,50 +240,5 @@ public class ThreadedNNDescent extends NNDescent {
             }
             return c;
         }
-    }
-
-    @Override
-    public void Run() {
-        // Create worker threads
-        executor = Executors.newFixedThreadPool(thread_count);
-        super.Run(); //To change body of generated methods, choose Tools | Templates.
-        executor.shutdown();
-        
-    }
-    
-    @Override
-    protected void doIteration() {
-        // for v ∈ V do
-            // old[v]←− all items in B[v] with a false flag
-            // new[v]←− ρK items in B[v] with a true flag
-            // Mark sampled items in B[v] as false;
-            for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
-                old_lists.put(v, PickFalses(neighborlists.get(v)));
-                new_lists.put(v, PickTruesAndMark(neighborlists.get(v)));
-
-            }
-
-            // old′ ←Reverse(old)
-            // new′ ←Reverse(new)
-            old_lists_2 = Reverse(old_lists);
-            new_lists_2 = Reverse(new_lists);
-            
-            ArrayList<Future<Integer>> list = new ArrayList<Future<Integer>>();
-            // Start threads...
-            for (int t = 0; t < thread_count; t++) {
-                list.add(executor.submit(new ThreadedNNDescent.NNThread(t)));
-                
-            }
-            
-            for (Future<Integer> future : list) {
-                try {
-                    c += future.get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-            }
     }
 }
