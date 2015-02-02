@@ -19,9 +19,7 @@ public class BoundedPriorityQueue<E> extends PriorityQueue<E> {
         q.add(6);
         q.add(2);
         
-        for (Integer i : q) {
-            System.out.println(i);
-        }
+        System.out.println(q);
     }
     
     protected int CAPACITY = Integer.MAX_VALUE;

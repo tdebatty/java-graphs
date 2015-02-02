@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
 
 /**
  *
- * @author tibo
+ * @author Thibault Debatty
  */
 public class ThreadedNNDescent extends NNDescent {
 

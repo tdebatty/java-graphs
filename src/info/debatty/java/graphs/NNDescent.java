@@ -106,7 +106,7 @@ public class NNDescent extends GraphBuilder {
 
     /**
      * Early termination coefficient.
-     * The algorithm stops when less then this proportion of edges are modified
+     * The algorithm stops when less than this proportion of edges are modified
      * Should be in ]0, 1.0[
      * Default is 0.001
      * @param delta 
@@ -204,8 +204,8 @@ public class NNDescent extends GraphBuilder {
                     }
 
                     // or u1 ∈ new[v], u2 ∈ old[v] do
-                    for (int k = 0; k < old_lists.get(v).size(); k++) {
-                        Node u2 = (Node) old_lists.get(v).get(k);
+                    for (int l = 0; l < old_lists.get(v).size(); l++) {
+                        Node u2 = (Node) old_lists.get(v).get(l);
 
                         if (u1.equals(u2)) {
                             continue;
