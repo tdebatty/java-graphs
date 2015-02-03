@@ -1,8 +1,19 @@
 #java-graphs
 Algorithms that build k-nearest neighbors graph (k-nn graph): Brute-force, NN-Descent,...
 
-##Download
-https://github.com/tdebatty/java-graphs/releases
+##Installation
+
+Using maven:
+```
+<dependency>
+    <groupId>info.debatty</groupId>
+    <artifactId>java-graphs</artifactId>
+    <version>0.1</version>
+</dependency>
+```
+
+Or from the [releases page](https://github.com/tdebatty/java-graphs/releases).
+
 
 ##NN-Descent
 Implementation of NN-Descent, as proposed by Dong, Moses and Li; [Efficient k-nearest neighbor graph construction for generic similarity measures](http://portal.acm.org/citation.cfm?doid=1963405.1963487); Proceedings of the 20th international conference on World wide web.
