@@ -42,8 +42,6 @@ public class NNDescent extends GraphBuilder {
             }
         });
         
-        
-        
         // Run the algorithm and get computed neighborlists
         HashMap<Node, NeighborList> neighborlists = nnd.computeGraph(nodes);
         
@@ -223,6 +221,8 @@ public class NNDescent extends GraphBuilder {
             if (callback != null) {
                 data.put("c", c);
                 data.put("computed_similarities", computed_similarities);
+                data.put("computed_similarities_ratio",
+                        (double) computed_similarities / (nodes.size() * (nodes.size() - 1) / 2));
                 data.put("iterations", iterations);
                 
                 callback.call(data);

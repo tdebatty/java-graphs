@@ -153,7 +153,8 @@ public class ThreadedNNDescent extends NNDescent {
                 data.put("c", c);
                 data.put("computed_similarities", computed_similarities);
                 data.put("iterations", iterations);
-                
+                data.put("computed_similarities_ratio",
+                        (double) computed_similarities / (nodes.size() * (nodes.size() - 1) / 2));
                 callback.call(data);
             }
 
