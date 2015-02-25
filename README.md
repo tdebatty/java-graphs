@@ -8,7 +8,7 @@ Using maven:
 <dependency>
     <groupId>info.debatty</groupId>
     <artifactId>java-graphs</artifactId>
-    <version>0.1</version>
+    <version>RELEASE</version>
 </dependency>
 ```
 

@@ -59,7 +59,7 @@ public class Brute extends GraphBuilder {
     }
     
     @Override
-    public HashMap<Node, NeighborList> computeGraph(List<Node> nodes) {
+    public HashMap<Node, NeighborList> _computeGraph(List<Node> nodes) {
         
         int n = nodes.size();
         HashMap<Node, NeighborList> neighborlists = new HashMap<Node, NeighborList>(n);

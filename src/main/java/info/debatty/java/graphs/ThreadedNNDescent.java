@@ -87,7 +87,7 @@ public class ThreadedNNDescent extends NNDescent {
     HashMap<Node, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
 
     @Override
-    public HashMap<Node, NeighborList> computeGraph(List<Node> nodes) {
+    protected HashMap<Node, NeighborList> _computeGraph(List<Node> nodes) {
         
         // Create worker threads
         executor = Executors.newFixedThreadPool(thread_count);

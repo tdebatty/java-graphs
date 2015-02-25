@@ -49,6 +49,19 @@ public abstract class GraphBuilder {
     public int getComputedSimilarities() {
         return computed_similarities;
     }
+    
+    public HashMap<Node, NeighborList> computeGraph(List<Node> nodes) {
+        if (nodes.isEmpty()) {
+            throw new InvalidParameterException("Nodes list is empty");
+        }
+        
+        if (similarity == null) {
+            throw new InvalidParameterException("Similarity is not defined");
+        }
+        
+        return _computeGraph(nodes);
+        
+    }
 
-    public abstract HashMap<Node, NeighborList> computeGraph(List<Node> nodes);
+    protected abstract HashMap<Node, NeighborList> _computeGraph(List<Node> nodes);
 }

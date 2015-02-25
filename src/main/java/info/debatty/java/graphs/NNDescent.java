@@ -134,7 +134,8 @@ public class NNDescent extends GraphBuilder {
 
     
     @Override
-    public HashMap<Node, NeighborList> computeGraph(List<Node> nodes) {
+    protected HashMap<Node, NeighborList> _computeGraph(List<Node> nodes) {
+        
         iterations = 0;
         
         if (nodes.size() <= (k+1)) {
