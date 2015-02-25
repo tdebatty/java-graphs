@@ -10,7 +10,7 @@
     <version>0.3</version>  
     <packaging>jar</packaging>
   
-    <name>${project.groupId}:${project.artifactId}</name>
+    <name>${project.artifactId}</name>
     <url>https://github.com/tdebatty/java-graphs</url>
     <description>Algorithms that build k-nearest neighbors graph (k-nn graph): Brute-force, NN-Descent,...</description>
   
