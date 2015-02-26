@@ -56,6 +56,10 @@ public class Neighbor implements Comparable, Serializable {
             throw new InvalidParameterException();
         }
         
+        if (((Neighbor) other).node.equals(this.node)) {
+            return 0;
+        }
+        
         if (this.similarity == ((Neighbor)other).similarity) {
             return 0;
         }

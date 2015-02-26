@@ -1,10 +1,11 @@
-package info.debatty.java.graphs;
+package info.debatty.java.graphs.build;
 
+import info.debatty.java.graphs.NeighborList;
+import info.debatty.java.graphs.Node;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -15,50 +16,7 @@ import java.util.concurrent.Future;
  *
  * @author Thibault Debatty
  */
-public class ThreadedNNDescent extends NNDescent {
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        Random r = new Random();
-        int count = 1000;
-        
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
-        for (int i = 0; i < count; i++) {
-            // The value of our nodes will be an int
-            nodes.add(new Node(String.valueOf(i), r.nextInt(10 * count)));
-        }
-        
-        // Instantiate and configure the algorithm
-        ThreadedNNDescent tnnd = new ThreadedNNDescent();
-        tnnd.setThreadCount(3);
-        tnnd.setK(4);
-        tnnd.setSimilarity(new SimilarityInterface() {
-            @Override
-            public double similarity(Node n1, Node n2) {
-                return 1.0 / (1.0 + Math.abs((Integer) n1.value - (Integer) n2.value));
-            }
-        });
-        
-        // Optionnally, define callback
-        tnnd.setCallback(new CallbackInterface() {
-            @Override
-            public void call(HashMap<String, Object> data) {
-                System.out.println(data);
-            }
-        });
-        
-        // Run the algorithm and get computed neighbor lists
-        HashMap<Node, NeighborList> neighborlists = tnnd.computeGraph(nodes);
-        
-        // Display neighbor lists
-        for (Node n : nodes) {
-            NeighborList nl = neighborlists.get(n);
-            System.out.print(n);
-            System.out.println(nl);
-        }
-    }
+public class ThreadedNNDescent<t> extends NNDescent<t> {
     
     protected int thread_count = 4;
     
@@ -82,12 +40,12 @@ public class ThreadedNNDescent extends NNDescent {
     private ExecutorService executor;
     
     // Internal state, used by worker objects
-    List<Node> nodes;
-    HashMap<Node, NeighborList> neighborlists;
-    HashMap<Node, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
+    List<Node<t>> nodes;
+    HashMap<Node<t>, NeighborList> neighborlists;
+    HashMap<Node<t>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
 
     @Override
-    protected HashMap<Node, NeighborList> _computeGraph(List<Node> nodes) {
+    protected HashMap<Node<t>, NeighborList> _computeGraph(List<Node<t>> nodes) {
         
         // Create worker threads
         executor = Executors.newFixedThreadPool(thread_count);
@@ -100,9 +58,9 @@ public class ThreadedNNDescent extends NNDescent {
         
         // Initialize state...
         this.nodes = nodes;
-        this.neighborlists = new HashMap<Node, NeighborList>(nodes.size());
-        this.old_lists = new HashMap<Node, ArrayList>(nodes.size());
-        this.new_lists = new HashMap<Node, ArrayList>(nodes.size());
+        this.neighborlists = new HashMap<Node<t>, NeighborList>(nodes.size());
+        this.old_lists = new HashMap<Node<t>, ArrayList>(nodes.size());
+        this.new_lists = new HashMap<Node<t>, ArrayList>(nodes.size());
         
         HashMap<String, Object> data = new HashMap<String, Object>();
     
@@ -170,7 +128,7 @@ public class ThreadedNNDescent extends NNDescent {
         executor.shutdown();
         
         // Clear local state
-        HashMap<Node, NeighborList> n = this.neighborlists;
+        HashMap<Node<t>, NeighborList> n = this.neighborlists;
         this.neighborlists = null;
         this.new_lists = null;
         this.new_lists_2 = null;

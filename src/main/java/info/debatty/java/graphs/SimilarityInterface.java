@@ -5,7 +5,8 @@ import java.io.Serializable;
 /**
  *
  * @author tibo
+ * @param <t>
  */
-public interface SimilarityInterface extends Serializable {
-    public double similarity(Node n1, Node n2);
+public interface SimilarityInterface<t> extends Serializable {
+    public double similarity(t value1, t value2);
 }
