@@ -30,8 +30,6 @@ import info.debatty.java.graphs.Node;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The number of stages (n_stages) and the number of partitions (n_partitions)
@@ -108,43 +106,22 @@ public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
             neighborlists.put(node, new NeighborList(k));
         }
         
+        internal_builder.setK(k);
+        internal_builder.setSimilarity(similarity);
+        
         // Loop over all stages and partitions
         for (int s = 0; s < n_stages; s++) {
             
-            // Can be executed in parallel
+            // Could be executed in parallel
             for (int p = 0; p < n_partitions; p++) {
                 
-                // Use NNDescent to compute edges
-                /*NNDescent nnd = new NNDescent();
-                nnd.setK(k);
-                nnd.setSimilarity(similarity);
-                HashMap<Node, NeighborList> subgraph = nnd.computeGraph(partitioning[s][p]);
-                computed_similarities += nnd.getComputedSimilarities();
-                        */
-                
-                GraphBuilder builder;
-                try {
-                    builder = (GraphBuilder) internal_builder.clone();
-                } catch (CloneNotSupportedException ex) {
-                    Logger.getLogger(PartitioningGraphBuilder.class.getName()).log(Level.SEVERE, null, ex);
-                    return null;
-                }
-                builder.setK(k);
-                builder.setSimilarity(similarity);
-                HashMap<Node, NeighborList> subgraph = builder.computeGraph(partitioning[s][p]);
-                computed_similarities += builder.getComputedSimilarities();
+                HashMap<Node, NeighborList> subgraph = internal_builder.computeGraph(partitioning[s][p]);
+                computed_similarities += internal_builder.getComputedSimilarities();
                 
                 // Add to current neighborlists
-                //neighborlists.putAll(subgraph);
                 for (Entry<Node, NeighborList> e : subgraph.entrySet()) {
-                    //neighborlists.get(e.getKey()).addAll(e.getValue());
-                    Node node = e.getKey();
-                    for (Neighbor neighbor : e.getValue()) {
-                        neighborlists.get(node).add(neighbor);
-                    }
+                    neighborlists.get(e.getKey()).addAll(e.getValue());
                 }
-                
-                //return neighborlists;
             }
         }
         

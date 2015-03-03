@@ -62,8 +62,8 @@ public class StringCTPHExample {
         StringCTPH builder = new StringCTPH();
         builder.setK(k);
         builder.setSimilarity(similarity);
-        builder.setNStages(3);
-        builder.setNPartitions(30);
+        builder.setNStages(2);
+        builder.setNPartitions(6);
         HashMap<Node<String>, NeighborList> graph = builder.computeGraph(nodes);
         
         System.out.println("Estimated speedup: " + builder.estimatedSpeedup());
