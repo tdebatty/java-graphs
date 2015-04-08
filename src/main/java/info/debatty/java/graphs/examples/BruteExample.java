@@ -55,9 +55,7 @@ public class BruteExample {
             public double similarity(Integer value1, Integer value2) {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
-        }
-        );
-        
+        });
         
         
         // Optionaly, we can define a callback, to get some feedback...

@@ -24,6 +24,7 @@
 
 package info.debatty.java.graphs.examples;
 
+import info.debatty.java.graphs.CallbackInterface;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
@@ -32,7 +33,6 @@ import info.debatty.java.graphs.build.GraphBuilder;
 import info.debatty.java.graphs.build.NNDescent;
 import info.debatty.java.graphs.build.StringMinHash;
 import info.debatty.java.stringsimilarity.QGram;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -76,12 +76,20 @@ public class StringMinHashExample {
         internal_nndescent.setRho(1.0);
         builder.setInternalBuilder(internal_nndescent);
         
+        // Optionnally, get some feedback
+        builder.setCallback(new CallbackInterface() {
+
+            public void call(HashMap<String, Object> data) {
+                System.out.println(data);
+            }
+        });
+        
         builder.setK(k);
         builder.setSimilarity(similarity);
         
         // Compute graph
         HashMap<Node<String>, NeighborList> graph = builder.computeGraph(nodes);
-        
+        System.out.println("Done!");
         
         // Use Brute force to compare results
         Brute brute = new Brute();

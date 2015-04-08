@@ -29,6 +29,7 @@ import info.debatty.java.lsh.LSH;
 import info.debatty.java.lsh.MinHash;
 import info.debatty.java.stringsimilarity.KShingling;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -54,13 +55,18 @@ public class StringMinHash extends PartitioningGraphBuilder<String> {
 
     @Override
     protected List<Node<String>>[][] _partition(List<Node<String>> nodes) {
-        
+        HashMap<String, Object> feedback_data = new HashMap<String, Object>();
         // Compute the dictionary of all shingles (4-grams)
         KShingling ks = new KShingling(shingle_size);
         for (Node node : nodes) {
             ks.parse((String) node.value);
         }
-        //System.out.println("Found " + ks.size() + " different " + shingle_size + "-shingles...\n");
+        
+        if (callback != null) {
+            feedback_data.put("step", "Dictionary computation");
+            feedback_data.put("dictionary-size", ks.size());
+            callback.call(feedback_data);
+        }
         
         ArrayList<Node<String>>[][] partitions = new ArrayList[n_stages][n_partitions];
         
@@ -73,10 +79,12 @@ public class StringMinHash extends PartitioningGraphBuilder<String> {
         lsh.setS(n_stages);
         lsh.setB(n_partitions);
         
+        int computed_hashes = 0;
         for (Node node : nodes) {
             Set<Integer> set = ks.integerSetOf((String) node.value);
             int[] signature = mh.hash(set);
             int[] lsh_hash = lsh.hash(signature);
+            computed_hashes++;
             
             for (int i = 0; i < n_stages; i++) {
                 int bucket = lsh_hash[i];
@@ -85,6 +93,12 @@ public class StringMinHash extends PartitioningGraphBuilder<String> {
                 }
                 
                 partitions[i][bucket].add(node);
+            }
+            
+            if (callback != null) {
+                feedback_data.put("step", "Hashes computation");
+                feedback_data.put("computed-hashes", computed_hashes);
+                callback.call(feedback_data);
             }
         }
         
