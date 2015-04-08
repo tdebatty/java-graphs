@@ -38,7 +38,7 @@ import java.util.List;
 
 /**
  *
- * @author tibo
+ * @author Thibault Debatty
  */
 public class StringMinHashExample {
 
@@ -102,16 +102,20 @@ public class StringMinHashExample {
             correct += graph.get(node).CountCommonValues(ground_truth.get(node));
         }
         
-        System.out.println("Theoretial speedup: " + builder.estimatedSpeedup());
-        System.out.println("Computed similarities: " + builder.getComputedSimilarities());
-        double speedup_ratio = (double) (nodes.size() * (nodes.size() - 1) / 2) / builder.getComputedSimilarities();
+        System.out.println("Theoretial speedup: " + 
+                builder.estimatedSpeedup());
+        System.out.println("Computed similarities: " + 
+                builder.getComputedSimilarities());
+        double speedup_ratio = 
+                (double) (nodes.size() * (nodes.size() - 1) / 2) / 
+                builder.getComputedSimilarities();
         System.out.println("Speedup ratio: " + speedup_ratio);
         
         double correct_ratio = (double) correct / (nodes.size() * k);
         System.out.println("Correct edges: " + correct + 
                 "(" + correct_ratio * 100 + "%)");
         
-        System.out.println("Quality-equivalent speedup: " + speedup_ratio * correct_ratio);
+        System.out.println("Quality-equivalent speedup: " 
+                + speedup_ratio * correct_ratio);
     }
-    
 }

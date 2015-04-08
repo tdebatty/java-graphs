@@ -77,6 +77,5 @@ public class BruteExample {
             System.out.print(n);
             System.out.println(nl);
         }
-    }
-    
+    }   
 }

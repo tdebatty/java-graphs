@@ -34,7 +34,14 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
+ * Builds an approximate knn graph from strings using LSH MinHash algorithm.
+ * MinHash is used to bin the input strings into buckets, where similar strings 
+ * (with a high Jaccard index) have a high probability to fall in the same bucket.
+ * 
+ * This algorithm is best used when the strings are represented as sets of 
+ * n-grams (sequences of n characters), and the similarity between strings is 
+ * computed using the Jaccard index (|A inter B| / |A union B|)
+ * 
  * @author Thibault Debatty
  */
 public class StringMinHash extends PartitioningGraphBuilder<String> {
@@ -56,7 +63,8 @@ public class StringMinHash extends PartitioningGraphBuilder<String> {
     @Override
     protected List<Node<String>>[][] _partition(List<Node<String>> nodes) {
         HashMap<String, Object> feedback_data = new HashMap<String, Object>();
-        // Compute the dictionary of all shingles (4-grams)
+        
+        // Compute the dictionary of all shingles (n-grams)
         KShingling ks = new KShingling(shingle_size);
         for (Node node : nodes) {
             ks.parse((String) node.value);
