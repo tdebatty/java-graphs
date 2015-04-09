@@ -9,7 +9,6 @@ Some of these algorithms are independant of the data type and similarity metric:
 Some algorithms are dedicated to String datasets:
 * MinHash
 * SuperBit
-<!-- * K-Medoids  * CTPH * BOW -->
 
 ##Installation
 
