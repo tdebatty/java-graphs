@@ -75,6 +75,9 @@ public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
     }
 
     /**
+     * Set the number of partitions to build for each stage.
+     * Attention: the number of strings per partition should be at least 100 to get 
+     * relevant results!
      * Default = 4
      * @param n_partitions 
      */
@@ -115,12 +118,15 @@ public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
             // Could be executed in parallel
             for (int p = 0; p < n_partitions; p++) {
                 
-                HashMap<Node, NeighborList> subgraph = internal_builder.computeGraph(partitioning[s][p]);
-                computed_similarities += internal_builder.getComputedSimilarities();
-                
-                // Add to current neighborlists
-                for (Entry<Node, NeighborList> e : subgraph.entrySet()) {
-                    neighborlists.get(e.getKey()).addAll(e.getValue());
+                if (partitioning[s][p] != null && !partitioning[s][p].isEmpty()) {
+
+                    HashMap<Node, NeighborList> subgraph = internal_builder.computeGraph(partitioning[s][p]);
+                    computed_similarities += internal_builder.getComputedSimilarities();
+
+                    // Add to current neighborlists
+                    for (Entry<Node, NeighborList> e : subgraph.entrySet()) {
+                        neighborlists.get(e.getKey()).addAll(e.getValue());
+                    }
                 }
                 
                 if (callback != null) {
@@ -137,6 +143,7 @@ public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
         
     }
     
+    @Override
     public double estimatedSpeedup() {
         return (double) n_partitions / n_stages;
     }

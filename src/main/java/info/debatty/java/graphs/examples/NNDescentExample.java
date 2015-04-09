@@ -28,7 +28,6 @@ import info.debatty.java.graphs.CallbackInterface;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
-import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.NNDescent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +69,7 @@ public class NNDescentExample {
             }
         });
         
+        // Optionnallly, define a callback to get some feedback...
         builder.setCallback(new CallbackInterface() {
 
             @Override
@@ -88,37 +88,9 @@ public class NNDescentExample {
             System.out.println(nl);
         }
         
-        // Compare with brute-force algorithm
-        Brute brute = new Brute<Integer>();
-        brute.setK(k);
-        brute.setSimilarity(new SimilarityInterface<Integer>() {
-
-            @Override
-            public double similarity(Integer v1, Integer v2) {
-                return 1.0 / (1.0 + Math.abs(v1 - v2));
-            }
-        });
-        
-        HashMap<Node, NeighborList> ground_truth_graph = brute.computeGraph(nodes);
-        
-        int correct = 0;
-        for (Node node : nodes) {            
-            correct += graph.get(node).CountCommonValues(ground_truth_graph.get(node));
-        }
-        
-        System.out.println(
-                "Computed similarities: " + builder.getComputedSimilarities());
-        double speedup_ratio =
-                (double) (nodes.size() * (nodes.size() - 1) / 2) / 
-                builder.getComputedSimilarities();
-        System.out.println("Speedup ratio: " + speedup_ratio);
-        
-        double correct_ratio = (double) correct / (nodes.size() * k);
-        System.out.println("Correct edges: " + correct + 
-                "(" + correct_ratio * 100 + "%)");
-        
-        System.out.println("Quality-equivalent speedup: " + 
-                speedup_ratio * correct_ratio);
-    }
-    
+        // Optionnally, we can test the builder
+        // This will compute the approximate graph, and then the exact graph
+        // and compare results...
+        builder.test(nodes);
+    }   
 }

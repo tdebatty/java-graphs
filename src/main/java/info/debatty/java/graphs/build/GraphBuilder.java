@@ -72,8 +72,45 @@ public abstract class GraphBuilder<t> implements Cloneable {
         }
         computed_similarities = 0;
         
-        return _computeGraph(nodes);
+        return _computeGraph(nodes);   
+    }
+    
+    /**
+     * Build the approximate graph, then use brute-force to build the exact 
+     * graph and compare the results
+     * @param nodes
+     */
+    public void test(List<Node<t>> nodes) {
+        HashMap<Node<t>, NeighborList> approximate_graph = this.computeGraph(nodes);
         
+        // Use Brute force to build the exact graph
+        Brute brute = new Brute();
+        brute.setK(k);
+        brute.setSimilarity(similarity);
+        HashMap<Node, NeighborList> exact_graph = brute.computeGraph(nodes);
+        
+        int correct = 0;
+        for (Node node : nodes) {            
+            correct += approximate_graph.get(node).CountCommonValues(exact_graph.get(node));
+        }
+        
+        System.out.println("Theoretial speedup: " + this.estimatedSpeedup());
+        System.out.println("Computed similarities: " + this.getComputedSimilarities());
+        double speedup_ratio = 
+                (double) (nodes.size() * (nodes.size() - 1) / 2) / 
+                this.getComputedSimilarities();
+        System.out.println("Speedup ratio: " + speedup_ratio);
+        
+        double correct_ratio = (double) correct / (nodes.size() * k);
+        System.out.println("Correct edges: " + correct + 
+                "(" + correct_ratio * 100 + "%)");
+        
+        System.out.println("Quality-equivalent speedup: " 
+                + speedup_ratio * correct_ratio);
+    }
+    
+    public double estimatedSpeedup() {
+        return 1.0;
     }
     
     public static List<Node<String>> readFile(String path) {

@@ -129,18 +129,18 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>java-lsh</artifactId>
-            <version>RELEASE</version>
+            <artifactId>java-string-similarity</artifactId>
+            <version>0.8</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>java-string-similarity</artifactId>
-            <version>RELEASE</version>
+            <artifactId>java-lsh</artifactId>
+            <version>0.4</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>java-spamsum</artifactId>
-            <version>RELEASE</version>
+            <version>0.1</version>
         </dependency>
     </dependencies>
 </project>

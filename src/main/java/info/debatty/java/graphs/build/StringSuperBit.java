@@ -25,24 +25,19 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Node;
-import info.debatty.java.lsh.LSHMinHash;
+import info.debatty.java.lsh.LSHSuperBit;
 import info.debatty.java.stringsimilarity.KShingling;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 /**
- * Builds an approximate knn graph from strings using LSH MinHash algorithm.
- * MinHash is used to bin the input strings into buckets, where similar strings 
- * (with a high Jaccard index) have a high probability to fall in the same bucket.
+ * Builds an approximate knn graph from strings using LSH SuperBit algorithm.
  * 
- * This algorithm is best used when the strings are considered as sets of 
- * n-grams (sequences of n characters), and the similarity between strings is 
- * computed using the Jaccard index (|A inter B| / |A union B|)
  * 
  * @author Thibault Debatty
  */
-public class StringMinHash extends PartitioningGraphBuilder<String> {
+public class StringSuperBit extends PartitioningGraphBuilder<String> {
     
     private int shingle_size = 4;
     
@@ -76,11 +71,11 @@ public class StringMinHash extends PartitioningGraphBuilder<String> {
         
         ArrayList<Node<String>>[][] partitions = new ArrayList[n_stages][n_partitions];
         
-        LSHMinHash lsh = new LSHMinHash(n_stages, n_partitions, ks.size());
+        LSHSuperBit lsh = new LSHSuperBit(n_stages, n_partitions, ks.size());
         
         int computed_hashes = 0;
         for (Node node : nodes) {
-            boolean[] set = ks.booleanVectorOf((String) node.value);
+            int[] set = ks.profileOf((String) node.value);
             int[] lsh_hash = lsh.hash(set);
             computed_hashes++;
             

@@ -1,5 +1,6 @@
 #java-graphs
-Implementation of various algorithms that build k-nearest neighbors graph (k-nn graph).
+
+Java implementation of various algorithms that build k-nearest neighbors graph (k-nn graph).
 
 Some of these algorithms are independant of the data type and similarity metric:
 * Brute-force
@@ -28,6 +29,8 @@ Or from the [releases page](https://github.com/tdebatty/java-graphs/releases).
 The brute-force algorithm builds the k-nn graph by computing all pairwize similarities between nodes. This can be extremely expensive as it requires the computation of n . (n-1) / 2 similarities, where n is the number of nodes.
 
 ```java
+package info.debatty.java.graphs.examples;
+
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.*;
 import java.util.ArrayList;
@@ -119,17 +122,18 @@ It takes two additional parameters to speed-up processing:
 
 ```java
 import info.debatty.java.graphs.*;
-import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.NNDescent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+
 
 public class NNDescentExample {
 
     public static void main(String[] args) {
         Random r = new Random();
         int count = 1000;
+        
         int k = 10;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
@@ -157,8 +161,8 @@ public class NNDescentExample {
                 return 1.0 / (1.0 + Math.abs(v1 - v2));
             }
         });
-
-		// Optioannlly, set a callback to get some feedback...
+        
+        // Optionnallly, define a callback to get some feedback...
         builder.setCallback(new CallbackInterface() {
 
             @Override
@@ -177,54 +181,29 @@ public class NNDescentExample {
             System.out.println(nl);
         }
         
-        // Compare with brute-force algorithm
-        Brute brute = new Brute<Integer>();
-        brute.setK(k);
-        brute.setSimilarity(new SimilarityInterface<Integer>() {
-
-            @Override
-            public double similarity(Integer v1, Integer v2) {
-                return 1.0 / (1.0 + Math.abs(v1 - v2));
-            }
-        });
-        
-        HashMap<Node, NeighborList> ground_truth_graph = brute.computeGraph(nodes);
-        
-        int correct = 0;
-        for (Node node : nodes) {            
-            correct += graph.get(node).CountCommonValues(ground_truth_graph.get(node));
-        }
-        
-        System.out.println(
-                "Computed similarities: " + builder.getComputedSimilarities());
-        double speedup_ratio =
-                (double) (nodes.size() * (nodes.size() - 1) / 2) / 
-                builder.getComputedSimilarities();
-        System.out.println("Speedup ratio: " + speedup_ratio);
-        
-        double correct_ratio = (double) correct / (nodes.size() * k);
-        System.out.println("Correct edges: " + correct + 
-                "(" + correct_ratio * 100 + "%)");
-        
-        System.out.println("Quality-equivalent speedup: " + 
-                speedup_ratio * correct_ratio);
-    }
-    
+        // Optionnally, we can test the builder
+        // This will compute the approximate graph, and then the exact graph
+        // and compare results...
+        builder.test(nodes);
+    }   
 }
 ```
 
+This will produce something like:
+
 ```
 ...
-(994 => 2319)[(225,2253,0.014925373134328358), (977,2382,0.015625), (294,2302,0.05555555555555555),... 
-(995 => 8744)[(296,8836,0.010752688172043012), (15,8835,0.010869565217391304), (238,8688,0.01754385...
-(996 => 3675)[(43,3555,0.008264462809917356), (126,3768,0.010638297872340425), (563,3757,0.01204819...
-(997 => 862)[(410,838,0.04), (775,841,0.045454545454545456), (212,841,0.045454545454545456), (590...
-(998 => 2120)[(585,2157,0.02631578947368421), (66,2138,0.05263157894736842), (61,2140,0.04761904761...
-(999 => 1496)[(5,1579,0.011904761904761904), (9,1433,0.015625), (275,1578,0.012048192771084338), ...
-Computed similarities: 108451
-Speedup ratio: 4.605766659597422
-Correct edges: 8255(82.55%)
-Quality-equivalent speedup: 3.802060377497672
+{computed_similarities=55217, c=4898, iterations=5, computed_similarities_ratio=0.11054454454454454}
+{computed_similarities=65261, c=4372, iterations=6, computed_similarities_ratio=0.13065265265265266}
+{computed_similarities=76109, c=3774, iterations=7, computed_similarities_ratio=0.15237037037037038}
+{computed_similarities=86955, c=3024, iterations=8, computed_similarities_ratio=0.17408408408408407}
+{computed_similarities=98366, c=2277, iterations=9, computed_similarities_ratio=0.19692892892892894}
+{computed_similarities=109581, c=1491, iterations=10, computed_similarities_ratio=0.21938138138138139}
+Theoretial speedup: 1.0
+Computed similarities: 109581
+Speedup ratio: 4.5582719632053
+Correct edges: 8379(83.78999999999999%)
+Quality-equivalent speedup: 3.8193760779697206
 
 ```
 ##Multi-threaded NN-Descent
@@ -232,17 +211,18 @@ The library also implements a multi-threaded version of NN-Descent:
 
 ```java
 import info.debatty.java.graphs.*;
-import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.ThreadedNNDescent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+
 
 public class ThreadedNNDescentExample {
 
     public static void main(String[] args) {
         Random r = new Random();
         int count = 1000;
+        
         int k = 10;
         
         ArrayList<Node<Double>> nodes = new ArrayList<Node<Double>>(count);
@@ -263,6 +243,9 @@ public class ThreadedNNDescentExample {
         builder.setThreadCount(3);
         builder.setK(k);
         builder.setSimilarity(similarity);
+        builder.setMaxIterations(20);
+        builder.setDelta(0.1);
+        builder.setRho(0.5);
         
         // Optionnally, define callback
         builder.setCallback(new CallbackInterface() {
@@ -282,80 +265,68 @@ public class ThreadedNNDescentExample {
             System.out.println(nl);
         }
         
-        // Compare with brute-force algorithm
-        Brute brute = new Brute<Double>();
-        brute.setK(k);
-        brute.setSimilarity(similarity);
-        HashMap<Node, NeighborList> ground_truth_graph = brute.computeGraph(nodes);
-        
-        int correct = 0;
-        for (Node node : nodes) {            
-            correct += graph.get(node).CountCommonValues(ground_truth_graph.get(node));
-        }
-        
-        System.out.println("Computed similarities: " 
-                + builder.getComputedSimilarities());
-        double speedup_ratio = 
-                (double) (nodes.size() * (nodes.size() - 1) / 2) / 
-                builder.getComputedSimilarities();
-        System.out.println("Speedup ratio: " + speedup_ratio);
-        
-        double correct_ratio = (double) correct / (nodes.size() * k);
-        System.out.println("Correct edges: " + correct + 
-                "(" + correct_ratio * 100 + "%)");
-        
-        System.out.println("Quality-equivalent speedup: " + 
-                speedup_ratio * correct_ratio);
+        // Optionnally, we can test the builder
+        // This will compute the approximate graph, and then the exact graph
+        // and compare results...
+        builder.test(nodes);
     }
 }
 ```
 
 ##MinHash
-Builds an approximate knn graph from strings using LSH MinHash algorithm. MinHash is used to bin the input strings into buckets, where similar strings (with a high Jaccard index) have a high probability to fall in the same bucket.
+Builds an approximate knn graph from strings using LSH MinHash algorithm.
 
-This algorithm is best used when the strings are represented as sets of n-grams (sequences of n characters), and the similarity between strings is computed using the Jaccard index (|A ∩ B| / |A ∪ B|)
+The graph builder first creates a dictionary of all k-shingles (sequences of k characters) in the dataset. Then each string is converted into a set of k-shingles. The MinHash algorithm is used to bin the input strings into buckets, where similar strings (with a high Jaccard index) have a high probability to fall in the same bucket.
+
+Inside each bucket, a classical graph building algorithm (Brute force or NN-Descent) can be used.
+
+This algorithm is thus best used when the strings are considered as sets of n-grams (sequences of n characters), and the similarity between strings is computed using the Jaccard index (|A ∩ B| / |A ∪ B|)
 
 ```java
-import info.debatty.java.graphs.*;
-import info.debatty.java.graphs.build.Brute;
+import info.debatty.java.graphs.CallbackInterface;
+import info.debatty.java.graphs.NeighborList;
+import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.GraphBuilder;
-import info.debatty.java.graphs.build.NNDescent;
 import info.debatty.java.graphs.build.StringMinHash;
-import info.debatty.java.stringsimilarity.QGram;
+import info.debatty.java.stringsimilarity.Jaccard;
 import java.util.HashMap;
 import java.util.List;
+
 
 public class StringMinHashExample {
 
     public static void main(String[] args) {
         
         // Read the nodes from file...
-        List<Node<String>> nodes = GraphBuilder.readFile(args[0]);
+        List<Node<String>> nodes = GraphBuilder.readFile("/home/tibo/Desktop/726-unique-spams");
         
-        // Parameters
+        // Number of edges per node (the k in k-nn graph)
         int k = 10;
         
+        // MinHash is the recommended LSH binning algorithm for Jaccard index
+        // similarity
         SimilarityInterface similarity = new SimilarityInterface<String>() {
-            QGram qg = new QGram(4);
+            Jaccard jaccard = new Jaccard(4);
 
             public double similarity(String v1, String v2) {
-                return qg.similarity(v1, v2);
+                return jaccard.similarity(v1, v2);
             }
         };
         
         // Create and configure graph builder
-        // By default, all partitioning graph builders use
+        // By default, all partitioning graph builders use 
         // Brute force inside the partitions
         StringMinHash builder = new StringMinHash();
         builder.setNStages(3);
-        builder.setNPartitions(30);
+        builder.setNPartitions(8);
         builder.setShingleSize(4);
         
         // Or we can use any graph builder...
-        NNDescent internal_nndescent = new NNDescent();
-        internal_nndescent.setDelta(0.1);
-        internal_nndescent.setRho(1.0);
-        builder.setInternalBuilder(internal_nndescent);
+        //NNDescent internal_nndescent = new NNDescent();
+        //internal_nndescent.setDelta(0.1);
+        //internal_nndescent.setRho(1.0);
+        //builder.setInternalBuilder(internal_nndescent);
         
         // Optionnally, get some feedback
         builder.setCallback(new CallbackInterface() {
@@ -370,34 +341,82 @@ public class StringMinHashExample {
         
         // Compute graph
         HashMap<Node<String>, NeighborList> graph = builder.computeGraph(nodes);
-        System.out.println("Done!");
         
-        // Use Brute force to compare results
-        Brute brute = new Brute();
-        brute.setK(k);
-        brute.setSimilarity(similarity);
-        HashMap<Node, NeighborList> ground_truth = brute.computeGraph(nodes);
+        // Optionnally, we can test the builder
+        // This will compute the approximate graph, and then the exact graph
+        // and compare results...
+        builder.test(nodes);
+    }
+}
+```
+
+## Super-Bit
+Super-Bit is an improvement of Random Projection, an algorithm from the LSH family that will bin items together with a high probability if they have a high cosine similarity.
+
+This graph builder works by converting the strings into a vector indicating the number of occurences of each n-gram (sequence of n characters). This is sometimes called the q-gram profile of the string. Then SuperBit LSH is used to bin similar strings (with a high cosine similarity) in the same bucket. Finally, another graph building algorithm (Brute-force or NN-Descent) is used to build the subgraphs inside the buckets.
+
+This builder is thus best used when the strings are considered as sets of n-grams, and the cosine similarity is used.
+
+```java
+import info.debatty.java.graphs.*;
+import info.debatty.java.graphs.build.GraphBuilder;
+import info.debatty.java.graphs.build.StringSuperBit;
+import info.debatty.java.stringsimilarity.Cosine;
+import java.util.HashMap;
+import java.util.List;
+
+
+public class StringSuperBitExample {
+
+    public static void main(String[] args) {
+        // Read the nodes from file...
+        List<Node<String>> nodes = GraphBuilder.readFile("/home/tibo/Desktop/726-unique-spams");
         
-        int correct = 0;
-        for (Node node : nodes) {
-            correct += graph.get(node).CountCommonValues(ground_truth.get(node));
-        }
+        // Number of edges per node (the k in k-nn graph)
+        int k = 10;
         
-        System.out.println("Theoretial speedup: " + 
-                builder.estimatedSpeedup());
-        System.out.println("Computed similarities: " + 
-                builder.getComputedSimilarities());
-        double speedup_ratio = 
-                (double) (nodes.size() * (nodes.size() - 1) / 2) / 
-                builder.getComputedSimilarities();
-        System.out.println("Speedup ratio: " + speedup_ratio);
+        // SuperBit is the recommended LSH algorihm when the similarity metric
+        // used is cosine similarity
+        SimilarityInterface similarity = new SimilarityInterface<String>() {
+            Cosine cosine = new Cosine(4);
+
+            public double similarity(String v1, String v2) {
+                return cosine.similarity(v1, v2);
+            }
+        };
         
-        double correct_ratio = (double) correct / (nodes.size() * k);
-        System.out.println("Correct edges: " + correct + 
-                "(" + correct_ratio * 100 + "%)");
+        // Create and configure graph builder
+        // By default, all partitioning graph builders use 
+        // Brute force inside the partitions
+        StringSuperBit builder = new StringSuperBit();
+        builder.setNStages(2);
+        builder.setNPartitions(4);
+        builder.setShingleSize(4);
         
-        System.out.println("Quality-equivalent speedup: " 
-                + speedup_ratio * correct_ratio);
+        // Or we can use any graph builder...
+        //NNDescent internal_nndescent = new NNDescent();
+        //internal_nndescent.setDelta(0.1);
+        //internal_nndescent.setRho(1.0);
+        //builder.setInternalBuilder(internal_nndescent);
+        
+        // Optionnally, get some feedback
+        builder.setCallback(new CallbackInterface() {
+
+            public void call(HashMap<String, Object> data) {
+                System.out.println(data);
+            }
+        });
+        
+        builder.setK(k);
+        builder.setSimilarity(similarity);
+        
+        // Compute graph
+        HashMap<Node<String>, NeighborList> graph = builder.computeGraph(nodes);
+        
+        // Optionnally, we can test the builder
+        // This will compute the approximate graph, and then the exact graph
+        // and compare results...
+        builder.test(nodes);
     }
 }
 ```

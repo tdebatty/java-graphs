@@ -37,12 +37,11 @@ public class StringCTPH extends PartitioningGraphBuilder<String> {
 
     @Override
     protected List<Node<String>>[][] _partition(List<Node<String>> nodes) {
-        int n = nodes.size();
+        
         ESSum ess = new ESSum(n_stages, n_partitions, 1);
         ArrayList<Node<String>>[][] partitions = new ArrayList[n_stages][n_partitions];
         for (Node node : nodes) {
             int[] signature = ess.HashString((String) node.value);
-            //System.out.println(hash);
             
             // Stage
             for (int s = 0; s < n_stages; s++) {

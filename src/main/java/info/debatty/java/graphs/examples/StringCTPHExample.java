@@ -27,7 +27,6 @@ package info.debatty.java.graphs.examples;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
-import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
 import info.debatty.java.graphs.build.StringCTPH;
 import info.debatty.java.stringsimilarity.QGram;
@@ -58,7 +57,6 @@ public class StringCTPHExample {
             }
         };
         
-        
         StringCTPH builder = new StringCTPH();
         builder.setK(k);
         builder.setSimilarity(similarity);
@@ -66,28 +64,10 @@ public class StringCTPHExample {
         builder.setNPartitions(6);
         HashMap<Node<String>, NeighborList> graph = builder.computeGraph(nodes);
         
-        System.out.println("Estimated speedup: " + builder.estimatedSpeedup());
-        
-        // Use Brute force to compare results
-        Brute brute = new Brute();
-        brute.setK(k);
-        brute.setSimilarity(similarity);
-        HashMap<Node, NeighborList> ground_truth = brute.computeGraph(nodes);
-        
-        int correct = 0;
-        for (Node node : nodes) {            
-            correct += graph.get(node).CountCommonValues(ground_truth.get(node));
-        }
-        
-        System.out.println("Computed similarities: " + builder.getComputedSimilarities());
-        double speedup_ratio = (double) (nodes.size() * (nodes.size() - 1) / 2) / builder.getComputedSimilarities();
-        System.out.println("Speedup ratio: " + speedup_ratio);
-        
-        double correct_ratio = (double) correct / (nodes.size() * k);
-        System.out.println("Correct edges: " + correct + 
-                "(" + correct_ratio * 100 + "%)");
-        
-        System.out.println("Quality-equivalent speedup: " + speedup_ratio * correct_ratio);
+        // Optionnally, we can test the builder
+        // This will compute the approximate graph, and then the exact graph
+        // and compare results...
+        builder.test(nodes);
     }
     
 }
