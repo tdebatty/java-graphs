@@ -29,12 +29,20 @@ public class Node<T> implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (! o.getClass().isInstance(this)) {
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        
+        if (other == null) {
             return false;
         }
         
-        return this.id.equals(((Node) o).id);
+        if (! other.getClass().isInstance(this)) {
+            return false;
+        }
+        
+        return this.id.equals(((Node) other).id);
     }
 
     @Override
