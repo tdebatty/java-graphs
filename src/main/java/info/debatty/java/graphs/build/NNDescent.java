@@ -10,12 +10,18 @@ import java.util.List;
 import java.util.Random;
 
 /**
- *
- * NNDescent is not suitable for small datasets (less than 500 items)!
+ * Implementation of NN-Descent k-nn graph building algorithm.
+ * Based on the paper "Efficient K-Nearest Neighbor Graph Construction for Generic Similarity Measures"
+ * by Dong et al.
+ * http://www.cs.princeton.edu/cass/papers/www11.pdf
+ * 
+ * NN-Descent works by iteratively exploring the neighbors of neighbors...
+ * It is not suitable for small datasets (less than 500 items)!
  * @author Thibault Debatty
+ * @param <T> The type of data to handle
  */
 
-public class NNDescent<t> extends GraphBuilder<t> {
+public class NNDescent<T> extends GraphBuilder<T> {
 
     protected double rho = 0.5; // Standard : 1, Fast: 0.5
     protected double delta = 0.001;
@@ -97,7 +103,7 @@ public class NNDescent<t> extends GraphBuilder<t> {
 
     
     @Override
-    protected HashMap<Node<t>, NeighborList> _computeGraph(List<Node<t>> nodes) {
+    protected HashMap<Node<T>, NeighborList> _computeGraph(List<Node<T>> nodes) {
         
         iterations = 0;
         
@@ -105,11 +111,11 @@ public class NNDescent<t> extends GraphBuilder<t> {
             return MakeFullyLinked(nodes);
         }
         
-        HashMap<Node<t>, NeighborList> neighborlists = new HashMap<Node<t>, NeighborList>(nodes.size());
-        HashMap<Node<t>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
+        HashMap<Node<T>, NeighborList> neighborlists = new HashMap<Node<T>, NeighborList>(nodes.size());
+        HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
         
-        old_lists = new HashMap<Node<t>, ArrayList>(nodes.size());
-        new_lists = new HashMap<Node<t>, ArrayList>(nodes.size());
+        old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
+        new_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
         
         HashMap<String, Object> data = new HashMap<String, Object>();
     
@@ -221,7 +227,7 @@ public class NNDescent<t> extends GraphBuilder<t> {
         return r;
     }
 
-    protected NeighborList RandomNeighborList(List<Node<t>> nodes, Node for_node) {
+    protected NeighborList RandomNeighborList(List<Node<T>> nodes, Node for_node) {
         //System.out.println("Random NL for node " + for_node);
         NeighborList nl = new NeighborList(k);
         Random r = new Random();
@@ -267,9 +273,9 @@ public class NNDescent<t> extends GraphBuilder<t> {
     }
 
 
-    protected HashMap<Node<t>, ArrayList> Reverse(List<Node<t>> nodes, HashMap<Node<t>, ArrayList> lists) {
+    protected HashMap<Node<T>, ArrayList> Reverse(List<Node<T>> nodes, HashMap<Node<T>, ArrayList> lists) {
 
-        HashMap<Node<t>, ArrayList> R = new HashMap<Node<t>, ArrayList>(nodes.size());
+        HashMap<Node<T>, ArrayList> R = new HashMap<Node<T>, ArrayList>(nodes.size());
         
         // Create all arraylists
         for (Node n : nodes) {
@@ -314,12 +320,12 @@ public class NNDescent<t> extends GraphBuilder<t> {
 
     protected double Similarity(Node n1, Node n2) {
         computed_similarities++;
-        return similarity.similarity((t) n1.value, (t) n2.value);
+        return similarity.similarity((T) n1.value, (T) n2.value);
         
     }
 
-    protected HashMap<Node<t>, NeighborList> MakeFullyLinked(List<Node<t>> nodes) {
-        HashMap<Node<t>, NeighborList> neighborlists = new HashMap<Node<t>, NeighborList>(nodes.size());
+    protected HashMap<Node<T>, NeighborList> MakeFullyLinked(List<Node<T>> nodes) {
+        HashMap<Node<T>, NeighborList> neighborlists = new HashMap<Node<T>, NeighborList>(nodes.size());
         for (Node node : nodes) {
             NeighborList neighborlist = new NeighborList(k);
             for (Node other_node : nodes) {

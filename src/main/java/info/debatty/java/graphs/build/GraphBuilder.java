@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import java.util.logging.Logger;
  * @author tibo
  * @param <t>
  */
-public abstract class GraphBuilder<t> implements Cloneable {
+public abstract class GraphBuilder<t> implements Cloneable, Serializable {
     protected int k = 10;
     protected SimilarityInterface<t> similarity;
     protected CallbackInterface callback = null;
