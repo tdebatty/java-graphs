@@ -25,7 +25,13 @@ public class Node<T> implements Serializable {
 
     @Override
     public String toString() {
-        return "(" + id + " => " + value.toString() + ")";
+        
+        String v = "";
+        if (this.value != null) {
+            v = this.value.toString();
+        }
+            
+        return "(" + id + " => " + v + ")";
     }
 
     @Override

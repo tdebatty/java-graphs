@@ -30,7 +30,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor> implements Seri
     }
     
     /**
-     * Count common values between this NeighborList and the other.
+     * Count the values (using node.value) that are present in both neighborlists.
      * Both neighborlists are not modified.
      * 
      * @param other_nl
@@ -57,5 +57,20 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor> implements Seri
         }
         
         return count;
-    }  
+    }
+    
+    /**
+     * Count the nodes (based on node.id) that are present in both neighborlists.
+     * @param other_nl
+     * @return 
+     */
+    public int CountCommons(NeighborList other_nl) {
+        int count = 0;
+        for (Neighbor n : this) {
+            if (other_nl.contains(n)) {
+                count++;
+            }
+        }
+        return count;
+    }
 }
