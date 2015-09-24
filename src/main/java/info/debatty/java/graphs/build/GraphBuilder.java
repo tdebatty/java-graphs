@@ -1,6 +1,7 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.CallbackInterface;
+import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
@@ -18,7 +19,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author tibo
+ * @author Thibault Debatty
  * @param <t>
  */
 public abstract class GraphBuilder<t> implements Cloneable, Serializable {
@@ -63,7 +64,7 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
         return computed_similarities;
     }
     
-    public HashMap<Node<t>, NeighborList> computeGraph(List<Node<t>> nodes) {
+    public Graph<t> computeGraph(List<Node<t>> nodes) {
         if (nodes.isEmpty()) {
             throw new InvalidParameterException("Nodes list is empty");
         }
@@ -95,7 +96,7 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
             correct += approximate_graph.get(node).CountCommonValues(exact_graph.get(node));
         }
         
-        System.out.println("Theoretial speedup: " + this.estimatedSpeedup());
+        System.out.println("Theoretical speedup: " + this.estimatedSpeedup());
         System.out.println("Computed similarities: " + this.getComputedSimilarities());
         double speedup_ratio = 
                 (double) (nodes.size() * (nodes.size() - 1) / 2) / 
@@ -104,7 +105,7 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
         
         double correct_ratio = (double) correct / (nodes.size() * k);
         System.out.println("Correct edges: " + correct + 
-                "(" + correct_ratio * 100 + "%)");
+                " (" + correct_ratio * 100 + "%)");
         
         System.out.println("Quality-equivalent speedup: " 
                 + speedup_ratio * correct_ratio);
@@ -143,5 +144,5 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
         return super.clone();
     }
 
-    protected abstract HashMap<Node<t>, NeighborList> _computeGraph(List<Node<t>> nodes);
+    protected abstract Graph<t> _computeGraph(List<Node<t>> nodes);
 }

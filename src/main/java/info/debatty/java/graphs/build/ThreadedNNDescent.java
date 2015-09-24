@@ -1,5 +1,6 @@
 package info.debatty.java.graphs.build;
 
+import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import java.security.InvalidParameterException;
@@ -16,7 +17,7 @@ import java.util.concurrent.Future;
  *
  * @author Thibault Debatty
  */
-public class ThreadedNNDescent<t> extends NNDescent<t> {
+public class ThreadedNNDescent<T> extends NNDescent<T> {
     
     protected int thread_count = 4;
     
@@ -40,12 +41,12 @@ public class ThreadedNNDescent<t> extends NNDescent<t> {
     private ExecutorService executor;
     
     // Internal state, used by worker objects
-    List<Node<t>> nodes;
-    HashMap<Node<t>, NeighborList> neighborlists;
-    HashMap<Node<t>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
+    List<Node<T>> nodes;
+    Graph<T> neighborlists;
+    HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
 
     @Override
-    protected HashMap<Node<t>, NeighborList> _computeGraph(List<Node<t>> nodes) {
+    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
         
         // Create worker threads
         executor = Executors.newFixedThreadPool(thread_count);
@@ -58,9 +59,9 @@ public class ThreadedNNDescent<t> extends NNDescent<t> {
         
         // Initialize state...
         this.nodes = nodes;
-        this.neighborlists = new HashMap<Node<t>, NeighborList>(nodes.size());
-        this.old_lists = new HashMap<Node<t>, ArrayList>(nodes.size());
-        this.new_lists = new HashMap<Node<t>, ArrayList>(nodes.size());
+        this.neighborlists = new Graph<T>(nodes.size());
+        this.old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
+        this.new_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
         
         HashMap<String, Object> data = new HashMap<String, Object>();
     
@@ -128,7 +129,7 @@ public class ThreadedNNDescent<t> extends NNDescent<t> {
         executor.shutdown();
         
         // Clear local state
-        HashMap<Node<t>, NeighborList> n = this.neighborlists;
+        Graph<T> n = this.neighborlists;
         this.neighborlists = null;
         this.new_lists = null;
         this.new_lists_2 = null;

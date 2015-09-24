@@ -1,5 +1,6 @@
 package info.debatty.java.graphs.build;
 
+import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Neighbor;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
@@ -103,7 +104,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
 
     
     @Override
-    protected HashMap<Node<T>, NeighborList> _computeGraph(List<Node<T>> nodes) {
+    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
         
         iterations = 0;
         
@@ -111,7 +112,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
             return MakeFullyLinked(nodes);
         }
         
-        HashMap<Node<T>, NeighborList> neighborlists = new HashMap<Node<T>, NeighborList>(nodes.size());
+        Graph<T> neighborlists = new Graph<T>(nodes.size());
         HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
         
         old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
@@ -324,8 +325,8 @@ public class NNDescent<T> extends GraphBuilder<T> {
         
     }
 
-    protected HashMap<Node<T>, NeighborList> MakeFullyLinked(List<Node<T>> nodes) {
-        HashMap<Node<T>, NeighborList> neighborlists = new HashMap<Node<T>, NeighborList>(nodes.size());
+    protected Graph<T> MakeFullyLinked(List<Node<T>> nodes) {
+        Graph<T> neighborlists = new Graph<T>(nodes.size());
         for (Node node : nodes) {
             NeighborList neighborlist = new NeighborList(k);
             for (Node other_node : nodes) {

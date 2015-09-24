@@ -69,13 +69,18 @@ public class BruteExample {
         });
         
         // Run the algorithm, and get the resulting neighbor lists
-        HashMap<Node, NeighborList> neighbor_lists = builder.computeGraph(nodes);
+        Graph<Integer> graph = builder.computeGraph(nodes);
         
         // Display the computed neighbor lists
         for (Node n : nodes) {
-            NeighborList nl = neighbor_lists.get(n);
+            NeighborList nl = graph.get(n);
             System.out.print(n);
             System.out.println(nl);
         }
+        
+        graph.prune(0.15);
+        ArrayList<Graph<Integer>> connectedComponents = graph.connectedComponents();
+        System.out.println(connectedComponents.size());
+        System.out.println(connectedComponents.get(0));
     }   
 }

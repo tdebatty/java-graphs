@@ -1,5 +1,6 @@
 package info.debatty.java.graphs.build;
 
+import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Neighbor;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
@@ -13,14 +14,14 @@ import java.util.List;
 public class Brute<t> extends GraphBuilder<t> {
     
     @Override
-    public HashMap<Node<t>, NeighborList> _computeGraph(List<Node<t>> nodes) {
+    protected Graph<t> _computeGraph(List<Node<t>> nodes) {
         
         int n = nodes.size();
         
         // Initialize all NeighborLists
-        HashMap<Node<t>, NeighborList> neighborlists = new HashMap<Node<t>, NeighborList>(n);
+        Graph<t> graph = new Graph<t>(n);
         for (Node node : nodes) {
-            neighborlists.put(node, new NeighborList(k));
+            graph.put(node, new NeighborList(k));
         }
         
         computed_similarities = 0;
@@ -37,8 +38,8 @@ public class Brute<t> extends GraphBuilder<t> {
                 sim = similarity.similarity((t) n1.value, (t) n2.value);
                 computed_similarities++;
                 
-                neighborlists.get(n1).add(new Neighbor(n2, sim));
-                neighborlists.get(n2).add(new Neighbor(n1, sim));
+                graph.get(n1).add(new Neighbor(n2, sim));
+                graph.get(n2).add(new Neighbor(n1, sim));
             }
             
             if (callback != null) {
@@ -49,6 +50,6 @@ public class Brute<t> extends GraphBuilder<t> {
             }
         }
         
-        return neighborlists;
+        return graph;
     }
 }

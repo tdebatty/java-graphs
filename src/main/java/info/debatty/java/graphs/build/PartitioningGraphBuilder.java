@@ -24,6 +24,7 @@
 
 package info.debatty.java.graphs.build;
 
+import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import java.util.HashMap;
@@ -31,6 +32,9 @@ import java.util.List;
 import java.util.Map.Entry;
 
 /**
+ * Abstract class for graph building algorithms that split the dataset into 
+ * partitions (for example using LSH).
+ * 
  * The number of stages (n_stages) and the number of partitions (n_partitions)
  * allow you to control the speedup and precision.
  * 
@@ -46,24 +50,24 @@ import java.util.Map.Entry;
  * The exact relation between precision and these 2 parameters depends on 
  * the algorithm used...
  * 
- * @param <t>
+ * @param <T>
  */
-public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
+public abstract class PartitioningGraphBuilder<T> extends GraphBuilder<T> {
 
-    protected int n_stages = 2;
+    protected int oversampling = 2;
     protected int n_partitions = 4;
     protected GraphBuilder internal_builder = new Brute();
 
-    public int getNStages() {
-        return n_stages;
+    public int getOversampling() {
+        return oversampling;
     }
 
     /**
      * Default = 2
-     * @param n_stages 
+     * @param oversampling 
      */
-    public void setNStages(int n_stages) {
-        this.n_stages = n_stages;
+    public void setOversampling(int oversampling) {
+        this.oversampling = oversampling;
     }
 
     /**
@@ -98,13 +102,13 @@ public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
     }
     
     @Override
-    protected HashMap<Node<t>, NeighborList> _computeGraph(List<Node<t>> nodes) {
+    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
         // Create $n_stages$ x $n_partitions$ partitions
-        List<Node<t>>[][] partitioning = _partition(nodes);
+        List<Node<T>>[] partitioning = _partition(nodes);
         HashMap<String, Object> feedback_data = new HashMap<String, Object>();
         
-        // Initialize all NeighborLists
-        HashMap<Node<t>, NeighborList> neighborlists = new HashMap<Node<t>, NeighborList>(nodes.size());
+        // Initialize the graph
+        Graph<T> neighborlists = new Graph<T>(nodes.size());
         for (Node node : nodes) {
             neighborlists.put(node, new NeighborList(k));
         }
@@ -112,30 +116,26 @@ public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
         internal_builder.setK(k);
         internal_builder.setSimilarity(similarity);
         
-        // Loop over all stages and partitions
-        for (int s = 0; s < n_stages; s++) {
-            
-            // Could be executed in parallel
-            for (int p = 0; p < n_partitions; p++) {
-                
-                if (partitioning[s][p] != null && !partitioning[s][p].isEmpty()) {
+        // Loop over all partitions to compute the subgraphs
+        // Could be executed in parallel...
+        for (int p = 0; p < n_partitions; p++) {
 
-                    HashMap<Node, NeighborList> subgraph = internal_builder.computeGraph(partitioning[s][p]);
-                    computed_similarities += internal_builder.getComputedSimilarities();
+            if (partitioning[p] != null && !partitioning[p].isEmpty()) {
 
-                    // Add to current neighborlists
-                    for (Entry<Node, NeighborList> e : subgraph.entrySet()) {
-                        neighborlists.get(e.getKey()).addAll(e.getValue());
-                    }
+                HashMap<Node, NeighborList> subgraph = internal_builder.computeGraph(partitioning[p]);
+                computed_similarities += internal_builder.getComputedSimilarities();
+
+                // Add to current neighborlists
+                for (Entry<Node, NeighborList> e : subgraph.entrySet()) {
+                    neighborlists.get(e.getKey()).addAll(e.getValue());
                 }
-                
-                if (callback != null) {
-                    feedback_data.put("step", "Building graph inside partition");
-                    feedback_data.put("stage", s);
-                    feedback_data.put("partition", p);
-                    feedback_data.put("computed-similarities", computed_similarities);
-                    callback.call(feedback_data);
-                }
+            }
+
+            if (callback != null) {
+                feedback_data.put("step", "Building graph inside partition");
+                feedback_data.put("partition", p);
+                feedback_data.put("computed-similarities", computed_similarities);
+                callback.call(feedback_data);
             }
         }
         
@@ -145,8 +145,8 @@ public abstract class PartitioningGraphBuilder<t> extends GraphBuilder<t> {
     
     @Override
     public double estimatedSpeedup() {
-        return (double) n_partitions / n_stages;
+        return (double) n_partitions / (oversampling * oversampling);
     }
     
-    abstract protected List<Node<t>>[][] _partition(List<Node<t>> nodes);
+    abstract protected List<Node<T>>[] _partition(List<Node<T>> nodes);
 }
