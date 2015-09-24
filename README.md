@@ -1,5 +1,8 @@
 #java-graphs
 
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs)
+
 Java implementation of various algorithms that build k-nearest neighbors graph (k-nn graph).
 
 Some of these algorithms are independant of the data type and similarity metric:
