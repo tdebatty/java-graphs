@@ -31,7 +31,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
+ * Compute the shortest path (measured as the number of 'hops' from this source 
+ * node to every other node in the graph using Dijkstra algorithm.
  * @author Thibault Debatty
  */
 public class Dijkstra {
@@ -68,16 +69,18 @@ public class Dijkstra {
         }
     }
 
-    /*
-     * This method returns the path from the source to the selected target and
-     * NULL if no path exists
+    /**
+     * Return the path from the source to the selected target
+     * @param target
+     * @return the path from the source to the selected target
+     * @throws java.lang.Exception if no path exists to this target
      */
-    public LinkedList<Node> getPath(Node target) {
+    public LinkedList<Node> getPath(Node target) throws Exception {
         LinkedList<Node> path = new LinkedList<Node>();
         Node step = target;
         // check if a path exists
         if (predecessors.get(step) == null) {
-            return null;
+            throw new Exception("No path found to this target");
         }
         path.add(step);
         while (predecessors.get(step) != null) {
@@ -89,18 +92,23 @@ public class Dijkstra {
         return path;
     }
 
-    public int getBiggestDistance() {
-        int biggest = 0;
+    /**
+     * Return the distance (measured as the number of hops) to the most distant
+     * node
+     * @return the distance (measured as the number of hops) to the most distant
+     * node
+     */
+    public int getLargestDistance() {
+        int largest = 0;
         for (Integer distance : distances.values()) {
-            if (distance > biggest) {
-                biggest = distance;
+            if (distance > largest) {
+                largest = distance;
             }
         }
-        return biggest;
+        return largest;
     }
 
     private void findMinimalDistances(Node node) {
-
         for (Neighbor neighbor : graph.get(node)) {
             Node target = neighbor.node;
 

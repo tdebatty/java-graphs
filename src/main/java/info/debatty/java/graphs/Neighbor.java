@@ -4,13 +4,12 @@ import java.io.Serializable;
 import java.security.InvalidParameterException;
 
 /**
- *
+ * Neighbor of an edge (stores the other node, and the similarity)
  * @author Thibault Debatty
  */
 public class Neighbor implements Comparable, Serializable {
     public Node node;
-    public double similarity;
-    
+    public double similarity; 
     public boolean is_new = true; // only used by sequential nndescent...
 
     

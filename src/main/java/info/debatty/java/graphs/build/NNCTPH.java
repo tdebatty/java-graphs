@@ -30,7 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Builds the k-nn graph by partitioning the graph using Context Triggered 
+ * Piecewize Hashing.
+ * This graph builder is meant for string node values.
  * @author Thibault Debatty
  */
 public class NNCTPH extends PartitioningGraphBuilder<String> {
@@ -60,5 +62,4 @@ public class NNCTPH extends PartitioningGraphBuilder<String> {
         
         return buckets;
     }
-    
 }

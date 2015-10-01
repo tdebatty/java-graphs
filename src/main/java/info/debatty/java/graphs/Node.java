@@ -3,7 +3,7 @@ package info.debatty.java.graphs;
 import java.io.Serializable;
 
 /**
- *
+ * The nodes of a graph have an id (String) and a value (type T)
  * @author Thibault Debatty
  * @param <T> Type of value field
  */

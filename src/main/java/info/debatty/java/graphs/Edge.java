@@ -2,8 +2,8 @@ package info.debatty.java.graphs;
 
 
 /**
- *
- * @author tibo
+ * Represent a weighted edge (a link from node n1 to node n2)
+ * @author Thibault Debatty
  */
 public class Edge {
     public Node n1;

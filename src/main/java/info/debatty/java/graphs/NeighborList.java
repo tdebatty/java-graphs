@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
- * @author tibo
+ * Bounded list of neighbors
+ * @author Thibault Debatty
  */
 public class NeighborList extends BoundedPriorityQueue<Neighbor> implements Serializable {
     
@@ -34,7 +34,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor> implements Seri
      * Both neighborlists are not modified.
      * 
      * @param other_nl
-     * @return 
+     * @return the numver of values that are present in both neighborlists
      */
     public int CountCommonValues(NeighborList other_nl) {
         //NeighborList copy = (NeighborList) other.clone();

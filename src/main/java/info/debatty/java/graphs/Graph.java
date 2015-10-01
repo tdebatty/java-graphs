@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2015 tibo.
+ * Copyright 2015 Thibault Debatty.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,9 +35,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- *
+ * k-nn graph, represented as a mapping node => neighborlist
  * @author Thibault Debatty
- * @param <T>
+ * @param <T> The type of nodes value
  */
 public class Graph<T> extends HashMap<Node<T>, NeighborList> {
     private static String GEXF_START = 
@@ -57,6 +57,11 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         super();
     }
     
+    /**
+     * Get the neighborlist of this node
+     * @param node
+     * @return the neighborlist of this node 
+     */
     public NeighborList get(Node node) {
         return super.get(node);
     }
@@ -181,7 +186,12 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         return neighborList;
     }
     
-    
+    /**
+     * Writes the graph as a GEXF file (to be used in Gephi, for example)
+     * @param filename
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
     public void writeGEXF(String filename) throws FileNotFoundException, IOException {
         Writer out = new OutputStreamWriter(new FileOutputStream(filename));
         out.write(GEXF_START);

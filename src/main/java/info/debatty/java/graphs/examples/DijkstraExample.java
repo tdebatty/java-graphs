@@ -42,7 +42,7 @@ public class DijkstraExample {
      * @param args the command line arguments
      * @throws java.io.IOException
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, Exception {
 
         // Create some nodes
         Random rand = new Random();
@@ -69,8 +69,7 @@ public class DijkstraExample {
         Dijkstra dijkstra = new Dijkstra(graph, nodes.get(0));
 
         System.out.println(dijkstra.getPath(nodes.get(1)));
-
-        System.out.println(dijkstra.getBiggestDistance());
+        System.out.println(dijkstra.getLargestDistance());
         
         graph.writeGEXF("/home/tibo/Desktop/example.gexf");
     }
