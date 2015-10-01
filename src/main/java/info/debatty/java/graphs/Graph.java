@@ -40,14 +40,6 @@ import java.util.Map;
  * @param <T> The type of nodes value
  */
 public class Graph<T> extends HashMap<Node<T>, NeighborList> {
-    private static String GEXF_START = 
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<gexf xmlns=\"http://www.gexf.net/1.2draft\" version=\"1.2\">\n" +
-            "<meta lastmodifieddate=\"2009-03-20\">\n" +
-            "<creator>Gexf.net</creator>\n" +
-            "<description>A hello world! file</description>\n" +
-            "</meta>\n" +
-            "<graph mode=\"static\" defaultedgetype=\"directed\">\n";
             
     public Graph(int n) {
         super(n);
@@ -194,7 +186,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      */
     public void writeGEXF(String filename) throws FileNotFoundException, IOException {
         Writer out = new OutputStreamWriter(new FileOutputStream(filename));
-        out.write(GEXF_START);
+        out.write(this.gexf_header());
         
         // Write nodes
         out.write("<nodes>\n");
@@ -208,7 +200,9 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         int i = 0;
         for (Node source : this.keySet()) {
             for (Neighbor target : this.get(source)) {
-                out.write("<edge id=\"" + i + "\" source=\"" + source.id + "\" target=\"" + target.node.id + "\" />\n");
+                out.write("<edge id=\"" + i + "\" source=\"" + source.id + "\" "
+                        + "target=\"" + target.node.id + "\" "
+                        + "weight=\"" + target.similarity + "\" />\n");
                 i++;
             }
         }
@@ -219,5 +213,15 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         out.write("</graph>\n" +
                 "</gexf>");
         out.close();
+    }
+    
+    private String gexf_header() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<gexf xmlns=\"http://www.gexf.net/1.2draft\" version=\"1.2\">\n" +
+            "<meta>\n" +
+            "<creator>info.debatty.java.graphs.Graph</creator>\n" +
+            "<description></description>\n" +
+            "</meta>\n" +
+            "<graph mode=\"static\" defaultedgetype=\"directed\">\n";
     }
 }
