@@ -28,6 +28,7 @@ import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.Brute;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -39,8 +40,9 @@ public class DijkstraExample {
 
     /**
      * @param args the command line arguments
+     * @throws java.io.IOException
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         // Create some nodes
         Random rand = new Random();
@@ -69,6 +71,8 @@ public class DijkstraExample {
         System.out.println(dijkstra.getPath(nodes.get(1)));
 
         System.out.println(dijkstra.getBiggestDistance());
+        
+        graph.writeGEXF("/home/tibo/Desktop/example.gexf");
     }
 
 }
