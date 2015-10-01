@@ -50,7 +50,7 @@ import java.util.Map.Entry;
  * The exact relation between precision and these 2 parameters depends on 
  * the algorithm used...
  * 
- * @param <T>
+ * @param <T> The type of nodes value
  */
 public abstract class PartitioningGraphBuilder<T> extends GraphBuilder<T> {
 

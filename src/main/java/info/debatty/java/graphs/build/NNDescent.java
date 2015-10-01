@@ -12,14 +12,14 @@ import java.util.Random;
 
 /**
  * Implementation of NN-Descent k-nn graph building algorithm.
- * Based on the paper "Efficient K-Nearest Neighbor Graph Construction for Generic Similarity Measures"
- * by Dong et al.
+ * Based on the paper "Efficient K-Nearest Neighbor Graph Construction for 
+ * Generic Similarity Measures" by Dong et al.
  * http://www.cs.princeton.edu/cass/papers/www11.pdf
  * 
  * NN-Descent works by iteratively exploring the neighbors of neighbors...
  * It is not suitable for small datasets (less than 500 items)!
  * @author Thibault Debatty
- * @param <T> The type of data to handle
+ * @param <T> The type of nodes value
  */
 
 public class NNDescent<T> extends GraphBuilder<T> {
