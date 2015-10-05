@@ -71,7 +71,6 @@ public class DijkstraExample {
         System.out.println(dijkstra.getPath(nodes.get(1)));
         System.out.println(dijkstra.getLargestDistance());
         
-        graph.writeGEXF("/home/tibo/Desktop/example.gexf");
+        graph.writeGEXF("example.gexf");
     }
-
 }
