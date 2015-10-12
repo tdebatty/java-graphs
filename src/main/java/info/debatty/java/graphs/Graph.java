@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Stack;
 
 /**
  * k-nn graph, represented as a mapping node => neighborlist
@@ -103,7 +104,13 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
     
     private void addAndFollow(Graph<T> subgraph, Node<T> node, ArrayList<Node<T>> nodes_to_process) {
         nodes_to_process.remove(node);
-        subgraph.put(node, this.get(node));
+        
+        NeighborList neighborlist = this.get(node);
+        subgraph.put(node, neighborlist);
+        
+        if (neighborlist == null) {
+            return;
+        }
         
         for (Neighbor neighbor : this.get(node)) {
             if (! subgraph.containsKey(neighbor.node)) {
@@ -111,6 +118,107 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             }
         }
     }
+    
+    /**
+     * Computes the strongly connected sub-graphs (where every node is reachable 
+     * from every other node) using Tarjan's algorithm, which has computation
+     * cost O(n).
+     * @return 
+     */
+    public ArrayList<Graph<T>> stronglyConnectedComponents() {
+        Stack<Node> stack = new Stack<Node>();
+        Index index = new Index();
+        HashMap<Node, NodeProperty> bookkeeping = new HashMap<Node, NodeProperty>(this.size());
+        
+        ArrayList<Graph<T>> connected_components = new ArrayList<Graph<T>>();
+        
+        for (Node n : this.keySet()) {
+            
+            if (bookkeeping.containsKey(n)) {
+                continue;
+            }
+            
+            ArrayList<Node> connected_component = this.strongConnect(n, stack, index, bookkeeping);
+            
+            if (connected_component != null) {
+                Graph<T> subgraph = new Graph<T>(connected_component.size());
+                for (Node node : connected_component) {
+                    subgraph.put(node, this.get(node));
+                }
+                connected_components.add(subgraph);
+            }
+        }
+        
+        return connected_components;
+    }
+
+    private ArrayList<Node> strongConnect(Node v, Stack<Node> stack, Index index, HashMap<Node, NodeProperty> bookkeeping) {
+        
+        bookkeeping.put(v, new NodeProperty(index.Value(), index.Value()));
+        index.Inc();
+        stack.add(v);
+        
+        if (! this.containsKey(v) || this.get(v) == null) {
+            return null;
+        }
+        
+        for (Neighbor neighbor : this.get(v)) {
+            Node w = neighbor.node;
+            if (! bookkeeping.containsKey(w)) {
+                strongConnect(w, stack, index, bookkeeping);
+                bookkeeping.get(v).lowlink = Math.min(
+                        bookkeeping.get(v).lowlink,
+                        bookkeeping.get(w).lowlink);
+                
+            } else if(bookkeeping.get(neighbor.node).onstack) {
+                bookkeeping.get(v).lowlink = Math.min(
+                        bookkeeping.get(v).lowlink,
+                        bookkeeping.get(w).index);
+                
+            }
+        }
+        
+        if (bookkeeping.get(v).lowlink == bookkeeping.get(v).index) {
+            ArrayList<Node> connected_component = new ArrayList<Node>();
+            
+            Node w;
+            do {
+                 w = stack.pop();
+                bookkeeping.get(w).onstack = false;
+                connected_component.add(w);
+            } while (v != w);
+            
+            return connected_component;
+        }
+        
+        return null;
+    }
+    
+    private class Index {
+        private int value;
+        
+        public int Value() {
+            return this.value;
+        }
+        
+        public void Inc() {
+            this.value++;
+        }
+    }
+    
+    private class NodeProperty {
+
+        public int index;
+        public int lowlink;
+        public boolean onstack;
+        
+        public NodeProperty(int index, int lowlink) {
+            this.index = index;
+            this.lowlink = lowlink;
+            this.onstack = true;
+        }
+    };
+    
     
     /**
      *
