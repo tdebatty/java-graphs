@@ -109,6 +109,10 @@ public class Dijkstra {
     }
 
     private void findMinimalDistances(Node node) {
+        if (! graph.containsKey(node) || graph.get(node) == null) {
+            return;
+        }
+        
         for (Neighbor neighbor : graph.get(node)) {
             Node target = neighbor.node;
 

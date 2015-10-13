@@ -135,35 +135,42 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         for (Node n : this.keySet()) {
             
             if (bookkeeping.containsKey(n)) {
+                // This node was already processed...
                 continue;
             }
             
             ArrayList<Node> connected_component = this.strongConnect(n, stack, index, bookkeeping);
             
-            if (connected_component != null) {
-                Graph<T> subgraph = new Graph<T>(connected_component.size());
-                for (Node node : connected_component) {
-                    subgraph.put(node, this.get(node));
-                }
-                connected_components.add(subgraph);
+            if (connected_component == null) {
+                continue;
             }
+            
+            // We found a connected component
+            Graph<T> subgraph = new Graph<T>(connected_component.size());
+            for (Node node : connected_component) {
+                subgraph.put(node, this.get(node));
+            }
+            connected_components.add(subgraph);
+            
         }
         
         return connected_components;
     }
 
     private ArrayList<Node> strongConnect(Node v, Stack<Node> stack, Index index, HashMap<Node, NodeProperty> bookkeeping) {
-        
         bookkeeping.put(v, new NodeProperty(index.Value(), index.Value()));
         index.Inc();
         stack.add(v);
         
-        if (! this.containsKey(v) || this.get(v) == null) {
-            return null;
-        }
         
         for (Neighbor neighbor : this.get(v)) {
             Node w = neighbor.node;
+            
+            if (! this.containsKey(w) || this.get(w) == null) {
+                continue;
+            }
+            
+            
             if (! bookkeeping.containsKey(w)) {
                 strongConnect(w, stack, index, bookkeeping);
                 bookkeeping.get(v).lowlink = Math.min(
