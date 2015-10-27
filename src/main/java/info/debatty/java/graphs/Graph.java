@@ -231,7 +231,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
     /**
      * Implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
-     * Neighbor Graph" of Hajebi et al.
+     * Neighbor Graph" by Hajebi et al.
      * 
      * The algorithm is basically a best-first search method with R random 
      * starting points. The higher bound on the number of computed similarities
