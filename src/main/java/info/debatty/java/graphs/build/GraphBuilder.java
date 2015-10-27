@@ -115,14 +115,14 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
         return 1.0;
     }
     
-    public static List<Node<String>> readFile(String path) {
+    public static ArrayList<Node<String>> readFile(String path) {
         try {
             FileReader fileReader;
             fileReader = new FileReader(path);
             
             BufferedReader bufferedReader = new BufferedReader(fileReader);
-            List<Node<String>> nodes = new ArrayList<Node<String>>();
-            String line = null;
+            ArrayList<Node<String>> nodes = new ArrayList<Node<String>>();
+            String line;
             int i = 0;
             while ((line = bufferedReader.readLine()) != null) {
                 nodes.add(new Node(String.valueOf(i), line));

@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Stack;
 
 /**
@@ -228,63 +229,79 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
     
     
     /**
-     *
-     * @param Q query point
-     * @param K number of neighbors to find
-     * @param R number of random restarts
-     * @param T number of greedy steps
-     * @param E number of expansions
-     * @param rho similarity metric
+     * Implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
+     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
+     * Neighbor Graph" of Hajebi et al.
+     * 
+     * The algorithm is basically a best-first search method with R random 
+     * starting points. The higher bound on the number of computed similarities
+     * is restarts * search_depth * k (number of edges per node)
+     * 
+     * @param query query point
+     * @param K number of neighbors to find (the K from K-nn search)
+     * @param restarts number of random restarts
+     * @param search_depth number of greedy steps
+     * @param similarity_measure similarity measure
+     * 
      * @return
      */
-    public NeighborList search(Node<T> Q, int K, int R, int T, int E, SimilarityInterface<T> rho, boolean debug) {
-        HashMap<Node<T>, Double> visited_nodes = new HashMap<Node<T>, Double>();
+    public NeighborList search(
+            Node<T> query, 
+            int K, 
+            int restarts, 
+            int search_depth,
+            SimilarityInterface<T> similarity_measure) {
         
-        int sims = 0;
-        Iterator<Node<T>> nodes_iterator = this.keySet().iterator();
-        for (int r = 0; r < R; r++) {
-            // Select a random node from the graph
-            Node<T> Y = nodes_iterator.next();
-            if (debug) {
-                System.out.println("Starting from node " + Y.id);
-            }
+        // Node => Similarity
+        HashMap<Node<T>, Double> visited_nodes = new HashMap<Node<T>, Double>();
+        int computed_similarities = 0;
+        
+        ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(this.keySet());
+        Random rand = new Random();
+        
+        for (int r = 0; r < restarts; r++) {
             
-            for (int t = 0; t < T; t++) {
-                Iterator<Neighbor> Y_nl_iterator = this.get(Y).iterator();
+            // Select a random node from the graph
+            Node<T> current_node = nodes.get(rand.nextInt(nodes.size()));
+            
+            for (int step = 0; step < search_depth; step++) {
+                NeighborList nl = this.get(current_node);
+                
+                // Node has no neighbor, continue...
+                if (nl == null) {
+                    continue;
+                }
+                Iterator<Neighbor> Y_nl_iterator = nl.iterator();
                 
                 Node<T> most_similar_node = null;
                 double highest_similarity = -1;
                 
-                // From Y, pick E neighbors and add them to th list of visited nodes
-                for (int e = 0; e < E; e++) {
-                    if (! Y_nl_iterator.hasNext()) {
-                        break;
-                    }
+                // From current_node, check all neighbors
+                while (Y_nl_iterator.hasNext()) {
                     
                     Node<T> other_node = Y_nl_iterator.next().node;
                     
-                    sims++;
-                    double similarity = rho.similarity(Q.value, other_node.value);
+                    if (visited_nodes.containsKey(other_node)) {
+                        continue;
+                    }
+                    
+                    // Compute similarity to query
+                    double similarity = similarity_measure.similarity(query.value, other_node.value);
+                    computed_similarities++;
+                    visited_nodes.put(other_node, similarity);
+                    
+                    // Keep the most similar neighbor to the query
                     if (similarity > highest_similarity) {
                         most_similar_node = other_node;
                         highest_similarity = similarity;
                     }
-                    
-                    if (! visited_nodes.containsKey(other_node)) {
-                        visited_nodes.put(other_node, similarity);
-                    }
-                    
                 }
                 
-                Y = most_similar_node;
-                
+                current_node = most_similar_node;
             }
-            
         }
         
-        if (debug) {
-            System.out.println("Computed similarities: " + sims);
-        }
+        System.out.println("Computed similarities: " + computed_similarities);
         
         NeighborList neighborList = new NeighborList(K);
         for (Map.Entry<Node<T>, Double> entry : visited_nodes.entrySet()) {
