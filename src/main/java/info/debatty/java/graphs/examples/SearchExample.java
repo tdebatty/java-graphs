@@ -72,7 +72,9 @@ public class SearchExample {
             
             // Perform GNNS
             System.out.println("Query: " + query);
-            NeighborList resultset_gnss = graph.search(query, k, 6, 10, similarity);
+            int[] computed_similaritites = new int[1];
+            NeighborList resultset_gnss = graph.search(query, k, 6, 10, similarity, computed_similaritites);
+            System.out.println(computed_similaritites[0]);
             System.out.println(resultset_gnss);
             
             // Perform linear search

@@ -227,6 +227,16 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         }
     };
     
+    public NeighborList search(
+            Node<T> query, 
+            int K, 
+            int restarts, 
+            int search_depth,
+            SimilarityInterface<T> similarity_measure) {
+        
+        int[] computed_similarities = new int[1];
+        return this.search(query, K, restarts, search_depth, similarity_measure, computed_similarities);
+    }
     
     /**
      * Implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
@@ -242,6 +252,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * @param restarts number of random restarts
      * @param search_depth number of greedy steps
      * @param similarity_measure similarity measure
+     * @param computed_similarities
      * 
      * @return
      */
@@ -250,11 +261,26 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             int K, 
             int restarts, 
             int search_depth,
-            SimilarityInterface<T> similarity_measure) {
+            SimilarityInterface<T> similarity_measure,
+            int[] computed_similarities) {
         
-        // Node => Similarity
+        if (K >= this.size()) {
+            // Looking for more nodes than this graph contains...
+            NeighborList nl = new NeighborList(K);
+            for (Node<T> node : this.keySet()) {
+                nl.add(
+                        new Neighbor(
+                                node,
+                                similarity_measure.similarity(
+                                        query.value,
+                                        node.value)));
+            }
+            return nl;
+        }
+        
+        // Node => Similarity with query node
         HashMap<Node<T>, Double> visited_nodes = new HashMap<Node<T>, Double>();
-        int computed_similarities = 0;
+        computed_similarities[0] = 0;
         
         ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(this.keySet());
         Random rand = new Random();
@@ -287,7 +313,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
                     
                     // Compute similarity to query
                     double similarity = similarity_measure.similarity(query.value, other_node.value);
-                    computed_similarities++;
+                    computed_similarities[0]++;
                     visited_nodes.put(other_node, similarity);
                     
                     // Keep the most similar neighbor to the query
@@ -301,7 +327,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             }
         }
         
-        System.out.println("Computed similarities: " + computed_similarities);
+        //System.out.println("Computed similarities: " + computed_similarities);
         
         NeighborList neighborList = new NeighborList(K);
         for (Map.Entry<Node<T>, Double> entry : visited_nodes.entrySet()) {
