@@ -1,6 +1,6 @@
 #java-graphs
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs) [![Build Status](https://travis-ci.org/tdebatty/java-graphs.svg?branch=master)](https://travis-ci.org/tdebatty/java-graphs) [![API](http://api123.web-d.be/api123-head.svg)](http://api123.web-d.be/api/java-graphs/head/index.html)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs) [![Build Status](https://travis-ci.org/tdebatty/java-graphs.svg?branch=master)](https://travis-ci.org/tdebatty/java-graphs) [![Coverage Status](https://coveralls.io/repos/tdebatty/java-graphs/badge.svg?branch=master&service=github)](https://coveralls.io/github/tdebatty/java-graphs?branch=master) [![API](http://api123.web-d.be/api123-head.svg)](http://api123.web-d.be/api/java-graphs/head/index.html)
 
 Java implementation of various algorithms that build and proces k-nearest neighbors graph (k-nn graph).
 
