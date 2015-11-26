@@ -1,12 +1,21 @@
 #java-graphs
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs) [![API](http://api123.web-d.be/api123-head.svg)](http://api123.web-d.be/api/java-graphs/head/index.html)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs) [![Build Status](https://travis-ci.org/tdebatty/java-graphs.svg?branch=master)](https://travis-ci.org/tdebatty/java-graphs) [![API](http://api123.web-d.be/api123-head.svg)](http://api123.web-d.be/api/java-graphs/head/index.html)
 
-Java implementation of various algorithms that build k-nearest neighbors graph (k-nn graph).
+Java implementation of various algorithms that build and proces k-nearest neighbors graph (k-nn graph).
 
-Some of these algorithms are independant of the data type and similarity metric:
+Some of these algorithms build a k-nn graph independantly of the data type and similarity metric:
 * Brute-force
 * (Multi-threaded) NN-Descent
+
+Implemented processing algorithms:
+* Dijkstra algorithm to compute the shortest path between two nodes.
+* Graph Nearest Neighbor Search (GNNS) algorithm from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest Neighbor Graph" by Hajebi et al. This algorithm uses a k-nn graph to efficiently search the most similar node of a query point.
+* Pruning (remove all edges for which the similarity is less than a threshold).
+* Tarjan's algorithm to compute strongly connected subgraphs (where every node is reachable from every other node).
+* Weakly connected components.
+
+For the complete list, check the [documentation](http://api123.io/api/java-graphs/head/index.html) or the [examples](https://github.com/tdebatty/java-graphs/tree/master/src/main/java/info/debatty/java/graphs/examples).
 
 
 ##Installation
