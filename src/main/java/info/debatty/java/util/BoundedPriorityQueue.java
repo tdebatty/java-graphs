@@ -6,7 +6,7 @@ import java.util.PriorityQueue;
  * This class implements a bounded priority queue
  * A structure that always keeps the n 'largest' elements
  * 
- * @author tibo
+ * @author Thibault Debatty
  * @param <E>
  */
 public class BoundedPriorityQueue<E> extends PriorityQueue<E> {
