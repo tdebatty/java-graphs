@@ -21,14 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
 import java.util.ArrayList;
-import java.util.Random;
 import junit.framework.TestCase;
 
 /**
@@ -36,16 +34,16 @@ import junit.framework.TestCase;
  * @author Thibault Debatty
  */
 public class BruteTest extends TestCase {
-    
+
     public BruteTest(String testName) {
         super(testName);
     }
-    
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
     }
-    
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
@@ -53,15 +51,13 @@ public class BruteTest extends TestCase {
 
     public void testComputeGraph() {
         // Generate some nodes
-        Random r = new Random();
         int count = 1000;
-        
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
             nodes.add(new Node<Integer>(String.valueOf(i), i));
         }
-        
+
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
@@ -73,16 +69,16 @@ public class BruteTest extends TestCase {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
         });
-        
+
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
         // Test...
         Node node_0 = nodes.get(0);
         // this is the k'st most similar node (=> number 9)
         Node other_node = graph.get(node_0).peek().node;
-        
+
         assertEquals(other_node.id, "10");
-        
+
     }
-    
+
 }
