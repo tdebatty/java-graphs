@@ -57,6 +57,7 @@ public class BoundedPriorityQueueTest extends TestCase {
         instance.add(5);
         instance.add(6);
         instance.add(2);
+        instance.add(0);
         assertEquals(instance.size(), 4);
         assertEquals((int) instance.peek(), 2);
     }

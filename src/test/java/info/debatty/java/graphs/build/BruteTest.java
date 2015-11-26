@@ -22,27 +22,44 @@
  * THE SOFTWARE.
  */
 
-package info.debatty.java.graphs.examples;
+package info.debatty.java.graphs.build;
 
-import info.debatty.java.graphs.build.Brute;
-import info.debatty.java.graphs.*;
+import info.debatty.java.graphs.Graph;
+import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.SimilarityInterface;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
+import junit.framework.TestCase;
 
+/**
+ *
+ * @author Thibault Debatty
+ */
+public class BruteTest extends TestCase {
+    
+    public BruteTest(String testName) {
+        super(testName);
+    }
+    
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+    }
+    
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
 
-public class BruteExample {
-
-    public static void main(String[] args) {
-        
-        // Generate some random nodes
+    public void testComputeGraph() {
+        // Generate some nodes
         Random r = new Random();
         int count = 1000;
         
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), r.nextInt(10 * count)));
+            nodes.add(new Node<Integer>(String.valueOf(i), i));
         }
         
         // Instantiate and configure the brute-force graph building algorithm
@@ -57,29 +74,15 @@ public class BruteExample {
             }
         });
         
-        // Optionaly, we can define a callback, to get some feedback...
-        builder.setCallback(new CallbackInterface() {
-
-            @Override
-            public void call(HashMap<String, Object> data) {
-                System.out.println(data);
-            }
-          
-        });
-        
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
+        // Test...
+        Node node_0 = nodes.get(0);
+        // this is the k'st most similar node (=> number 9)
+        Node other_node = graph.get(node_0).peek().node;
         
-        // Display the computed neighbor lists
-        for (Node n : nodes) {
-            NeighborList nl = graph.get(n);
-            System.out.print(n);
-            System.out.println(nl);
-        }
+        assertEquals(other_node.id, "10");
         
-        graph.prune(0.15);
-        ArrayList<Graph<Integer>> connectedComponents = graph.connectedComponents();
-        System.out.println(connectedComponents.size());
-        System.out.println(connectedComponents.get(0));
-    }   
+    }
+    
 }
