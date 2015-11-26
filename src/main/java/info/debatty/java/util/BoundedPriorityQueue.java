@@ -11,17 +11,6 @@ import java.util.PriorityQueue;
  */
 public class BoundedPriorityQueue<E> extends PriorityQueue<E> {
     
-    public static void main(String [] args) {
-        BoundedPriorityQueue<Integer> q = new BoundedPriorityQueue(4);
-        q.add(1);
-        q.add(4);
-        q.add(5);
-        q.add(6);
-        q.add(2);
-        
-        System.out.println(q);
-    }
-    
     protected int CAPACITY = Integer.MAX_VALUE;
     
     /**
