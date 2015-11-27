@@ -62,20 +62,28 @@ public class SearchExample {
         // Compute the graph
         Brute<String> builder = new Brute();
         builder.setSimilarity(similarity);
-        builder.setK(10);
+        builder.setK(20);
         Graph<String> graph = builder.computeGraph(nodes);
         
         // Perform some research...
         int correct = 0;
+        int total_computed_similarities = 0;
         
         for (Node<String> query : queries) {
             
             // Perform GNNS
             System.out.println("Query: " + query);
             int[] computed_similaritites = new int[1];
-            NeighborList resultset_gnss = graph.search(query, k, 6, 10, similarity, computed_similaritites);
-            System.out.println(computed_similaritites[0]);
+            NeighborList resultset_gnss = graph.search(
+                    query, 
+                    k, 
+                    20, 
+                    10, 
+                    similarity,
+                    1.1,
+                    computed_similaritites);
             System.out.println(resultset_gnss);
+            total_computed_similarities += computed_similaritites[0];
             
             // Perform linear search
             NeighborList resultset_linear = new NeighborList(k);
@@ -92,6 +100,11 @@ public class SearchExample {
             correct += resultset_gnss.CountCommons(resultset_linear);
         }
         
-        System.out.println("Correct: " + correct);
+        System.out.println("Correct: " + correct + " / " + tests);
+        System.out.println("Computed similarities: " + 
+                total_computed_similarities);
+        
+        System.out.println("Quality equivalent speedup: " +
+                (double) nodes.size() * tests * correct / tests / total_computed_similarities);
     }
 }

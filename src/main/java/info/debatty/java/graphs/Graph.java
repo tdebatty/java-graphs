@@ -235,7 +235,14 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             SimilarityInterface<T> similarity_measure) {
         
         int[] computed_similarities = new int[1];
-        return this.search(query, K, restarts, search_depth, similarity_measure, computed_similarities);
+        return this.search(
+                query,
+                K,
+                restarts,
+                search_depth,
+                similarity_measure,
+                1.01,
+                computed_similarities);
     }
     
     /**
@@ -252,6 +259,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * @param restarts number of random restarts
      * @param search_depth number of greedy steps
      * @param similarity_measure similarity measure
+     * @param expansion
      * @param computed_similarities
      * 
      * @return
@@ -262,6 +270,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             int restarts, 
             int search_depth,
             SimilarityInterface<T> similarity_measure,
+            double expansion,
             int[] computed_similarities) {
         
         if (K >= this.size()) {
@@ -281,6 +290,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         // Node => Similarity with query node
         HashMap<Node<T>, Double> visited_nodes = new HashMap<Node<T>, Double>();
         computed_similarities[0] = 0;
+        double global_highest_similarity = 0;
         
         ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(this.keySet());
         Random rand = new Random();
@@ -289,6 +299,15 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             
             // Select a random node from the graph
             Node<T> current_node = nodes.get(rand.nextInt(nodes.size()));
+            
+            // Skip this starting point if too far / similarity too small!
+            double start_similarity = similarity_measure.similarity(
+                    query.value,
+                    current_node.value);
+            computed_similarities[0]++;
+            if (start_similarity < global_highest_similarity / expansion) {
+                continue;
+            }
             
             for (int step = 0; step < search_depth; step++) {
                 NeighborList nl = this.get(current_node);
@@ -320,14 +339,16 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
                     if (similarity > highest_similarity) {
                         most_similar_node = other_node;
                         highest_similarity = similarity;
+                        
+                        if (similarity > global_highest_similarity) {
+                            global_highest_similarity = similarity;
+                        }
                     }
                 }
                 
                 current_node = most_similar_node;
             }
         }
-        
-        //System.out.println("Computed similarities: " + computed_similarities);
         
         NeighborList neighborList = new NeighborList(K);
         for (Map.Entry<Node<T>, Double> entry : visited_nodes.entrySet()) {
