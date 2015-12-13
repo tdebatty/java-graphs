@@ -252,6 +252,17 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
                 
     }
     
+    public NeighborList search(
+            Node<T> query, 
+            int K, 
+            SimilarityInterface<T> similarity_measure,
+            int max_similarities,
+            int search_depth,
+            double expansion) {
+        
+        return search(query.value, K, similarity_measure, max_similarities, search_depth, expansion);
+    }
+    
     /**
      * Implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
