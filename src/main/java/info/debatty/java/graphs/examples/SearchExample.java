@@ -39,9 +39,12 @@ public class SearchExample {
         
         // Number of neighbors to search
         int k = 1;
+        // Number of similarities to compute using approximate search
+        int max_similaritites = 100;
         
         // Read the file
-        ArrayList<Node<String>> nodes = GraphBuilder.readFile("/home/tibo/Downloads/726-unique-spams");
+        ArrayList<Node<String>> nodes = GraphBuilder.readFile(
+                "/home/tibo/Downloads/726-unique-spams");
         
         // Leave some random nodes out for the search queries
         Random rand = new Random();
@@ -51,7 +54,8 @@ public class SearchExample {
         }
         
         // Define the similarity to use
-        SimilarityInterface<String> similarity = new SimilarityInterface<String>() {
+        SimilarityInterface<String> similarity = 
+                new SimilarityInterface<String>() {
             
             public double similarity(String value1, String value2) {
                 JaroWinkler jw = new JaroWinkler();
@@ -67,23 +71,17 @@ public class SearchExample {
         
         // Perform some research...
         int correct = 0;
-        int total_computed_similarities = 0;
         
         for (Node<String> query : queries) {
             
             // Perform GNNS
             System.out.println("Query: " + query);
-            int[] computed_similaritites = new int[1];
             NeighborList resultset_gnss = graph.search(
-                    query, 
+                    query.value, 
                     k, 
-                    20, 
-                    10, 
                     similarity,
-                    1.1,
-                    computed_similaritites);
+                    max_similaritites);
             System.out.println(resultset_gnss);
-            total_computed_similarities += computed_similaritites[0];
             
             // Perform linear search
             NeighborList resultset_linear = new NeighborList(k);
@@ -101,10 +99,14 @@ public class SearchExample {
         }
         
         System.out.println("Correct: " + correct + " / " + tests);
-        System.out.println("Computed similarities: " + 
-                total_computed_similarities);
+        System.out.println("Computed similarities (approximate search): " + 
+                queries.size() * max_similaritites);
+        System.out.println("Computed similarities (exhaustive search): " + 
+                nodes.size() * tests);
         
         System.out.println("Quality equivalent speedup: " +
-                (double) nodes.size() * tests * correct / tests / total_computed_similarities);
+                (double) nodes.size() * tests * correct / 
+                        tests / 
+                        (queries.size() * max_similaritites));
     }
 }
