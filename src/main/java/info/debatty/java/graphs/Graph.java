@@ -257,16 +257,15 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
      * Neighbor Graph" by Hajebi et al.
      * 
-     * The algorithm is basically a best-first search method with R random 
-     * starting points. The higher bound on the number of computed similarities
-     * is restarts * search_depth * k (number of edges per node)
+     * The algorithm is basically a best-first search method with random 
+     * starting points.
      * 
      * @param query query point
      * @param K number of neighbors to find (the K from K-nn search)
-     * @param max_similarities
+     * @param max_similarities max similarities to compute
      * @param search_depth number of greedy steps (default: 100)
-     * @param similarity_measure similarity measure (default: 1.01)
-     * @param expansion
+     * @param similarity_measure similarity measure 
+     * @param expansion (default: 1.01)
      * 
      * @return
      */
