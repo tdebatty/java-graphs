@@ -153,11 +153,10 @@ public class GraphTest extends TestCase {
         
         
         NeighborList results = graph.search(
-                new Node<Integer>("1010", 1010),
+                1010,
                 1,
-                100,
-                100,
-                similarity);
+                similarity,
+                900);
         assertEquals(nodes.get(999), results.peek().node);
     }
 
