@@ -288,8 +288,12 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             int search_depth,
             double expansion) {
         
-        if (K >= this.size()) {
-            // Looking for more nodes than this graph contains...
+        
+        // Looking for more nodes than this graph contains...
+        // Or fall back to exhaustive search
+        if (    K >= this.size() || 
+                max_similarities >= this.size() ) {
+            
             NeighborList nl = new NeighborList(K);
             for (Node<T> node : this.keySet()) {
                 nl.add(
@@ -309,7 +313,11 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(this.keySet());
         Random rand = new Random();
         
-        while (computed_similarities < max_similarities) {
+        while (true) {
+            
+            if (computed_similarities >= max_similarities) {
+                break;
+            }
             
             // Select a random node from the graph
             Node<T> current_node = nodes.get(rand.nextInt(nodes.size()));
@@ -328,6 +336,11 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             }
             
             for (int step = 0; step < search_depth; step++) {
+                
+                if (computed_similarities >= max_similarities) {
+                    break;
+                }
+                
                 NeighborList nl = this.get(current_node);
                 
                 // Node has no neighbor, continue...
