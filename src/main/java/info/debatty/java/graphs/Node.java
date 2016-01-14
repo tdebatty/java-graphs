@@ -1,6 +1,7 @@
 package info.debatty.java.graphs;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * The nodes of a graph have an id (String) and a value (type T)
@@ -11,16 +12,39 @@ public class Node<T> implements Serializable {
     public String id = "";
     public T value;
     
+    private final HashMap<String, Object> attributes;
+    
     public Node() {
+        this.attributes = new HashMap<String, Object>(0);
     }
     
     public Node(String id) {
+        this.attributes = new HashMap<String, Object>(0);
         this.id = id;
     }
     
     public Node(String id, T value) {
+        this.attributes = new HashMap<String, Object>(0);
         this.id = id;
         this.value = value;
+    }
+    
+    /**
+     * 
+     * @param key
+     * @param value 
+     */
+    public void setAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+    
+    /**
+     * 
+     * @param key
+     * @return 
+     */
+    public Object getAttribute(String key) {
+        return attributes.get(key);
     }
 
     @Override
@@ -57,5 +81,4 @@ public class Node<T> implements Serializable {
         hash = 83 * hash + (this.id != null ? this.id.hashCode() : 0);
         return hash;
     }
-    
 }
