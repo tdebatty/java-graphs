@@ -228,7 +228,9 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
     };
     
     /**
-     * Perform approximate k-nn search on this graph.
+     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
+     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
+     * Neighbor Graph" by Hajebi et al.
      * 
      * @param query
      * @param K search K neighbors
@@ -247,24 +249,13 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
                 K,
                 similarity_measure,
                 max_similarities,
-                100, // default depth value
+                Integer.MAX_VALUE, // default depth value
                 1.01); // default expansion value
                 
     }
     
-    public NeighborList search(
-            Node<T> query, 
-            int K, 
-            SimilarityInterface<T> similarity_measure,
-            int max_similarities,
-            int search_depth,
-            double expansion) {
-        
-        return search(query.value, K, similarity_measure, max_similarities, search_depth, expansion);
-    }
-    
     /**
-     * Implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
+     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
      * Neighbor Graph" by Hajebi et al.
      * 
@@ -313,8 +304,8 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(this.keySet());
         Random rand = new Random();
         
-        while (true) {
-            
+        while (true) { // Restart...
+            //System.out.println("Restart...");
             if (computed_similarities >= max_similarities) {
                 break;
             }
@@ -322,37 +313,36 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             // Select a random node from the graph
             Node<T> current_node = nodes.get(rand.nextInt(nodes.size()));
             
+            // Already been here => restart
             if (visited_nodes.containsKey(current_node)) {
                 continue;
             }
             
-            // Skip this starting point if too far / similarity too small!
-            double start_similarity = similarity_measure.similarity(
+            // starting point too far (similarity too small) => restart!
+            double restart_similarity = similarity_measure.similarity(
                     query,
                     current_node.value);
             computed_similarities++;
-            if (start_similarity < global_highest_similarity / expansion) {
+            if (restart_similarity < global_highest_similarity / expansion) {
                 continue;
             }
             
             for (int step = 0; step < search_depth; step++) {
-                
+                //System.out.println("Current sim inside restart: " + restart_similarity);
                 if (computed_similarities >= max_similarities) {
                     break;
                 }
                 
                 NeighborList nl = this.get(current_node);
                 
-                // Node has no neighbor, continue...
+                // Node has no neighbor => restart!
                 if (nl == null) {
-                    continue;
+                    break;
                 }
                 
+                // Check all neighbors and try to find a node with higher similarity
                 Iterator<Neighbor> Y_nl_iterator = nl.iterator();
-                Node<T> most_similar_node = null;
-                double highest_similarity = -1;
-                
-                // From current_node, check all neighbors
+                Node<T> node_higher_similarity = null;
                 while (Y_nl_iterator.hasNext()) {
                     
                     Node<T> other_node = Y_nl_iterator.next().node;
@@ -368,20 +358,30 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
                     computed_similarities++;
                     visited_nodes.put(other_node, similarity);
                     
-                    // Keep the most similar neighbor to the query
-                    if (similarity > highest_similarity) {
-                        most_similar_node = other_node;
-                        highest_similarity = similarity;
+                    // If this node provides an improved similarity, keep it
+                    if (similarity > restart_similarity) {
+                        node_higher_similarity = other_node;
+                        restart_similarity = similarity;
                         
-                        if (similarity > global_highest_similarity) {
-                            global_highest_similarity = similarity;
-                        }
+                        // early break...
+                        break;
                     }
                 }
                 
-                current_node = most_similar_node;
-            }
-        }
+                // No node provides higher similarity 
+                // => we reached the end of this track...
+                // => restart!
+                if (node_higher_similarity == null) {
+                    
+                    if (restart_similarity > global_highest_similarity) {
+                        global_highest_similarity = restart_similarity;
+                    }
+                    break;
+                }
+                
+                current_node = node_higher_similarity;
+            } // for (int step = 0; step < search_depth; step++) {
+        } // while (true) { // Restart...
         
         NeighborList neighborList = new NeighborList(K);
         for (Map.Entry<Node<T>, Double> entry : visited_nodes.entrySet()) {

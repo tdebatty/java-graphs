@@ -26,9 +26,10 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
-import info.debatty.java.graphs.build.NNDescent;
 import info.debatty.java.graphs.build.ThreadedNNDescent;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import junit.framework.TestCase;
 
 /**
@@ -126,38 +127,63 @@ public class GraphTest extends TestCase {
      * Test of search method, of class Graph.
      */
     public void testSearch_5args() {
-        // Generate some nodes
-        int count = 1000;
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
-        for (int i = 0; i < count; i++) {
-            // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), i));
-        }
+        System.out.println("search");
         
-        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
-
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
+        int n = 4000;
+        
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+            
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
             }
         };
+        
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+        }
 
-        // Instantiate and configure the brute-force graph building algorithm
-        // The minimum is to define k (number of edges per node)
-        // and a similarity metric between nodes
-        GraphBuilder builder = new NNDescent<Integer>();
+        System.out.println("compute graph...");
+        GraphBuilder builder = new Brute<Double>();
         builder.setK(10);
         builder.setSimilarity(similarity);
+        Graph<Double> graph = builder.computeGraph(data);
 
-        // Run the algorithm, and get the resulting neighbor lists
-        Graph<Integer> graph = builder.computeGraph(nodes);
-        
-        
-        NeighborList results = graph.search(
-                1010,
+        System.out.println("perform evaluation...");
+        int correct = 0;
+        for (int i = 0; i < 100; i++) {
+            double query = 400.0 * rand.nextDouble();
+            
+            NeighborList results = graph.search(
+                query,
                 1,
                 similarity,
-                900);
-        assertEquals(nodes.get(999), results.peek().node);
+                data.size() / 10);
+            
+            // Search the (real) most similar
+            double highest_similarity = -1;
+            Node most_similar = null;
+            for (Node<Double> node : data) {
+                double sim = similarity.similarity(query, node.value);
+                if (sim > highest_similarity) {
+                    highest_similarity = sim;
+                    most_similar = node;
+                }
+            }
+            
+            // Check if result is correct
+            if (results.peek().node.equals(most_similar)) {
+                correct++;
+            }
+        }
+
+        //System.out.println(data.size());
+        System.out.println("Found " + correct + " correct results!");
+        assertEquals(true, correct > 50);
     }
 
     
