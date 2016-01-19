@@ -1,7 +1,6 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -16,6 +15,7 @@ import java.util.concurrent.Future;
 /**
  *
  * @author Thibault Debatty
+ * @param <T>
  */
 public class ThreadedNNDescent<T> extends NNDescent<T> {
     
