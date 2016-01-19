@@ -41,14 +41,50 @@ import java.util.Stack;
  * @author Thibault Debatty
  * @param <T> The type of nodes value
  */
-public class Graph<T> extends HashMap<Node<T>, NeighborList> {
+public class Graph<T> implements GraphInterface<T> {
+    
+    protected HashMap<Node<T>, NeighborList> map;
+    protected SimilarityInterface<T> similarity;
+    protected int k = 10;
+    protected double speedup = 4.0;
+
+    @Override
+    public SimilarityInterface<T> getSimilarity() {
+        return similarity;
+    }
+
+    @Override
+    public void setSimilarity(SimilarityInterface<T> similarity) {
+        this.similarity = similarity;
+    }
+
+    @Override
+    public int getK() {
+        return k;
+    }
+
+    @Override
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    @Override
+    public double getSpeedup() {
+        return speedup;
+    }
+
+    @Override
+    public void setSpeedup(double speedup) {
+        this.speedup = speedup;
+    }
             
-    public Graph(int n) {
-        super(n);
+    public Graph(int k) {
+        this.k = k;
+        this.map = new HashMap<Node<T>, NeighborList>();
     }
     
     public Graph() {
-        super();
+        this.map = new HashMap<Node<T>, NeighborList>();
     }
     
     /**
@@ -56,16 +92,18 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * @param node
      * @return the neighborlist of this node 
      */
+    @Override
     public NeighborList get(Node node) {
-        return super.get(node);
+        return map.get(node);
     }
     
     /**
      * Remove from the graph all edges with a similarity lower than threshold
      * @param threshold 
      */
+    @Override
     public void prune(double threshold) {
-        for (NeighborList nl : this.values()) {
+        for (NeighborList nl : map.values()) {
             
             // We cannot remove inside the loop
             // => do it in 2 steps:
@@ -85,9 +123,10 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * graph to remove "weak" edges).
      * @return 
      */
+    @Override
     public ArrayList<Graph<T>> connectedComponents() {
         ArrayList<Graph<T>> subgraphs = new ArrayList<Graph<T>>();
-        ArrayList<Node<T>> nodes_to_process = new ArrayList<Node<T>>(this.keySet());
+        ArrayList<Node<T>> nodes_to_process = new ArrayList<Node<T>>(map.keySet());
         
         for (int i = 0; i < nodes_to_process.size(); i++) {
             Node n = nodes_to_process.get(i);
@@ -126,14 +165,15 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * cost O(n).
      * @return 
      */
+    @Override
     public ArrayList<Graph<T>> stronglyConnectedComponents() {
         Stack<Node> stack = new Stack<Node>();
         Index index = new Index();
-        HashMap<Node, NodeProperty> bookkeeping = new HashMap<Node, NodeProperty>(this.size());
+        HashMap<Node, NodeProperty> bookkeeping = new HashMap<Node, NodeProperty>(map.size());
         
         ArrayList<Graph<T>> connected_components = new ArrayList<Graph<T>>();
         
-        for (Node n : this.keySet()) {
+        for (Node n : map.keySet()) {
             
             if (bookkeeping.containsKey(n)) {
                 // This node was already processed...
@@ -201,8 +241,28 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         
         return null;
     }
+
+    @Override
+    public NeighborList put(Node<T> node, NeighborList neighborlist) {
+        return map.put(node, neighborlist);
+    }
+
+    @Override
+    public boolean containsKey(Node node) {
+        return map.containsKey(node);
+    }
+
+    @Override
+    public int size() {
+        return map.size();
+    }
+
+    @Override
+    public Iterable<Map.Entry<Node<T>, NeighborList>> entrySet() {
+        return map.entrySet();
+    }
     
-    private class Index {
+    private static class Index {
         private int value;
         
         public int Value() {
@@ -214,7 +274,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         }
     }
     
-    private class NodeProperty {
+    private static class NodeProperty {
 
         public int index;
         public int lowlink;
@@ -234,24 +294,17 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * 
      * @param query
      * @param K search K neighbors
-     * @param similarity_measure
-     * @param max_similarities perform max max_similarities similarity computations
      * @return
      */
+    @Override
     public NeighborList search(
             T query, 
-            int K,
-            SimilarityInterface<T> similarity_measure,
-            int max_similarities) {
+            int K) {
         
         return this.search(
                 query,
                 K,
-                similarity_measure,
-                max_similarities,
-                Integer.MAX_VALUE, // default depth value
                 1.01); // default expansion value
-                
     }
     
     /**
@@ -264,33 +317,30 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * 
      * @param query query point
      * @param K number of neighbors to find (the K from K-nn search)
-     * @param max_similarities max similarities to compute
-     * @param search_depth number of greedy steps (default: 100)
-     * @param similarity_measure similarity measure 
      * @param expansion (default: 1.01)
      * 
      * @return
      */
+    @Override
     public NeighborList search(
             T query, 
             int K, 
-            SimilarityInterface<T> similarity_measure,
-            int max_similarities,
-            int search_depth,
             double expansion) {
+        
+        int max_similarities = (int) (map.size() / speedup);
         
         
         // Looking for more nodes than this graph contains...
         // Or fall back to exhaustive search
-        if (    K >= this.size() || 
-                max_similarities >= this.size() ) {
+        if (    K >= map.size() || 
+                max_similarities >= map.size() ) {
             
             NeighborList nl = new NeighborList(K);
-            for (Node<T> node : this.keySet()) {
+            for (Node<T> node : map.keySet()) {
                 nl.add(
                         new Neighbor(
                                 node,
-                                similarity_measure.similarity(
+                                similarity.similarity(
                                         query,
                                         node.value)));
             }
@@ -301,7 +351,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         HashMap<Node<T>, Double> visited_nodes = new HashMap<Node<T>, Double>();
         int computed_similarities = 0;
         double global_highest_similarity = 0;
-        ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(this.keySet());
+        ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(map.keySet());
         Random rand = new Random();
         
         while (true) { // Restart...
@@ -319,7 +369,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
             }
             
             // starting point too far (similarity too small) => restart!
-            double restart_similarity = similarity_measure.similarity(
+            double restart_similarity = similarity.similarity(
                     query,
                     current_node.value);
             computed_similarities++;
@@ -327,11 +377,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
                 continue;
             }
             
-            for (int step = 0; step < search_depth; step++) {
-                //System.out.println("Current sim inside restart: " + restart_similarity);
-                if (computed_similarities >= max_similarities) {
-                    break;
-                }
+            while(computed_similarities < max_similarities) {
                 
                 NeighborList nl = this.get(current_node);
                 
@@ -352,16 +398,16 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
                     }
                     
                     // Compute similarity to query
-                    double similarity = similarity_measure.similarity(
+                    double sim = similarity.similarity(
                             query,
                             other_node.value);
                     computed_similarities++;
-                    visited_nodes.put(other_node, similarity);
+                    visited_nodes.put(other_node, sim);
                     
                     // If this node provides an improved similarity, keep it
-                    if (similarity > restart_similarity) {
+                    if (sim > restart_similarity) {
                         node_higher_similarity = other_node;
-                        restart_similarity = similarity;
+                        restart_similarity = sim;
                         
                         // early break...
                         break;
@@ -396,13 +442,14 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * @throws FileNotFoundException
      * @throws IOException 
      */
+    @Override
     public void writeGEXF(String filename) throws FileNotFoundException, IOException {
         Writer out = new OutputStreamWriter(new FileOutputStream(filename));
-        out.write(this.gexf_header());
+        out.write(GEXF_HEADER);
         
         // Write nodes
         out.write("<nodes>\n");
-        for (Node node : this.keySet()) {
+        for (Node node : map.keySet()) {
             out.write("<node id=\"" + node.id + "\" label=\"" + node.id + "\" />\n");
         }
         out.write("</nodes>\n");
@@ -410,7 +457,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         // Write edges
         out.write("<edges>\n");
         int i = 0;
-        for (Node source : this.keySet()) {
+        for (Node source : map.keySet()) {
             for (Neighbor target : this.get(source)) {
                 out.write("<edge id=\"" + i + "\" source=\"" + source.id + "\" "
                         + "target=\"" + target.node.id + "\" "
@@ -427,13 +474,12 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         out.close();
     }
     
-    private String gexf_header() {
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    private static final String GEXF_HEADER = 
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<gexf xmlns=\"http://www.gexf.net/1.2draft\" version=\"1.2\">\n" +
             "<meta>\n" +
             "<creator>info.debatty.java.graphs.Graph</creator>\n" +
             "<description></description>\n" +
             "</meta>\n" +
             "<graph mode=\"static\" defaultedgetype=\"directed\">\n";
-    }
 }

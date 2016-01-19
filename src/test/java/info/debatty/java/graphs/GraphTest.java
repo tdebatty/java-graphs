@@ -160,9 +160,7 @@ public class GraphTest extends TestCase {
             
             NeighborList results = graph.search(
                 query,
-                1,
-                similarity,
-                data.size() / 10);
+                1);
             
             // Search the (real) most similar
             double highest_similarity = -1;
@@ -185,6 +183,4 @@ public class GraphTest extends TestCase {
         System.out.println("Found " + correct + " correct results!");
         assertEquals(true, correct > 50);
     }
-
-    
 }

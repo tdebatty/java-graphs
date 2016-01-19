@@ -20,11 +20,11 @@ import java.util.logging.Logger;
 /**
  *
  * @author Thibault Debatty
- * @param <t>
+ * @param <T>
  */
-public abstract class GraphBuilder<t> implements Cloneable, Serializable {
+public abstract class GraphBuilder<T> implements Cloneable, Serializable {
     protected int k = 10;
-    protected SimilarityInterface<t> similarity;
+    protected SimilarityInterface<T> similarity;
     protected CallbackInterface callback = null;
     protected int computed_similarities = 0;
     
@@ -48,7 +48,7 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
         return similarity;
     }
 
-    public void setSimilarity(SimilarityInterface<t> similarity) {
+    public void setSimilarity(SimilarityInterface<T> similarity) {
         this.similarity = similarity;
     }
 
@@ -64,17 +64,16 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
         return computed_similarities;
     }
     
-    public Graph<t> computeGraph(List<Node<t>> nodes) {
-        if (nodes.isEmpty()) {
-            throw new InvalidParameterException("Nodes list is empty");
-        }
+    public Graph<T> computeGraph(List<Node<T>> nodes) {
         
         if (similarity == null) {
             throw new InvalidParameterException("Similarity is not defined");
         }
         computed_similarities = 0;
-        
-        return _computeGraph(nodes);   
+        Graph<T> graph = _computeGraph(nodes);   
+        graph.setK(k);
+        graph.setSimilarity(similarity);
+        return graph;
     }
     
     /**
@@ -82,14 +81,14 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
      * graph and compare the results
      * @param nodes
      */
-    public void test(List<Node<t>> nodes) {
-        HashMap<Node<t>, NeighborList> approximate_graph = this.computeGraph(nodes);
+    public void test(List<Node<T>> nodes) {
+        Graph<T> approximate_graph = computeGraph(nodes);
         
         // Use Brute force to build the exact graph
         Brute brute = new Brute();
         brute.setK(k);
         brute.setSimilarity(similarity);
-        HashMap<Node, NeighborList> exact_graph = brute.computeGraph(nodes);
+        Graph<T> exact_graph = brute.computeGraph(nodes);
         
         int correct = 0;
         for (Node node : nodes) {            
@@ -144,5 +143,5 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
         return super.clone();
     }
 
-    protected abstract Graph<t> _computeGraph(List<Node<t>> nodes);
+    protected abstract Graph<T> _computeGraph(List<Node<T>> nodes);
 }
