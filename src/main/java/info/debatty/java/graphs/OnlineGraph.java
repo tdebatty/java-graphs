@@ -171,4 +171,12 @@ public class OnlineGraph<T> implements GraphInterface<T> {
     public void writeGEXF(String filename) throws FileNotFoundException, IOException {
         graph.writeGEXF(filename);
     }
+
+    public Iterable<Node<T>> getNodes() {
+        return graph.getNodes();
+    }
+
+    public NeighborList searchExhaustive(T query, int K) {
+        return graph.searchExhaustive(query, K);
+    }
 }

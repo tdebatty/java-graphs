@@ -158,29 +158,18 @@ public class GraphTest extends TestCase {
         for (int i = 0; i < 100; i++) {
             double query = 400.0 * rand.nextDouble();
             
-            NeighborList results = graph.search(
+            NeighborList approximate_result = graph.search(
                 query,
                 1);
             
             // Search the (real) most similar
-            double highest_similarity = -1;
-            Node most_similar = null;
-            for (Node<Double> node : data) {
-                double sim = similarity.similarity(query, node.value);
-                if (sim > highest_similarity) {
-                    highest_similarity = sim;
-                    most_similar = node;
-                }
-            }
+            NeighborList exhaustive_result = graph.searchExhaustive(query, 1);
+            correct += approximate_result.CountCommonValues(exhaustive_result);
             
-            // Check if result is correct
-            if (results.peek().node.equals(most_similar)) {
-                correct++;
-            }
         }
 
         //System.out.println(data.size());
         System.out.println("Found " + correct + " correct results!");
-        assertEquals(true, correct > 50);
+        assertTrue(correct > 50);
     }
 }

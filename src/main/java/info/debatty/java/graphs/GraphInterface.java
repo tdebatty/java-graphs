@@ -55,6 +55,8 @@ public interface GraphInterface<T> {
     NeighborList get(Node node);
 
     int getK();
+    
+    public Iterable<Node<T>> getNodes();
 
     SimilarityInterface<T> getSimilarity();
 
@@ -94,6 +96,8 @@ public interface GraphInterface<T> {
      * @return
      */
     NeighborList search(T query, int K, double expansion);
+    
+    public NeighborList searchExhaustive(T query, int K);
 
     void setK(int k);
 

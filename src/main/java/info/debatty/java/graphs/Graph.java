@@ -287,6 +287,18 @@ public class Graph<T> implements GraphInterface<T> {
         }
     };
     
+    public Iterable<Node<T>> getNodes() {
+        return map.keySet();
+    }
+    
+    public NeighborList searchExhaustive(T query, int K) {
+        NeighborList neighbors = new NeighborList(K);
+        for (Node<T> other : getNodes()) {
+            neighbors.add(new Neighbor(other, similarity.similarity(query, other.value)));
+        }
+        return neighbors;
+    }
+    
     /**
      * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
