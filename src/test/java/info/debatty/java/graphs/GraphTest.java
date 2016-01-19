@@ -126,7 +126,7 @@ public class GraphTest extends TestCase {
     /**
      * Test of search method, of class Graph.
      */
-    public void testSearch_5args() {
+    public void testSearch() {
         System.out.println("search");
         
         int n = 4000;
