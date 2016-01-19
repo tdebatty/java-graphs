@@ -34,6 +34,7 @@ Or from the [releases page](https://github.com/tdebatty/java-graphs/releases).
 ## Quick start
 
 Most of the time, all you have to do is:
+
 1. Create the nodes
 2. Choose and configure the graph builder (mainly the similarity to use)
 3. Compute the graph
