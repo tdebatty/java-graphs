@@ -162,7 +162,7 @@ public class GraphTest extends TestCase {
                 query,
                 1,
                 similarity,
-                data.size() / 10);
+                data.size() / 4);
             
             // Search the (real) most similar
             double highest_similarity = -1;
@@ -186,5 +186,59 @@ public class GraphTest extends TestCase {
         assertEquals(true, correct > 50);
     }
 
+    
+    public void testAddNode() {
+        System.out.println("addNode");
+        
+        int n = 1000;
+        int n_test = 100;
+        
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+            
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+        
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("compute initial graph...");
+        GraphBuilder builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        Graph<Double> graph = builder.computeGraph(data);
+        
+        System.out.println("add some nodes...");
+        for (int i =0; i < n_test; i++) {
+            Node<Double> query = new Node<Double>(
+                    String.valueOf(graph.size()), 400.0 * rand.nextDouble());
+            
+            System.out.println(graph.addNode(query, 10, similarity));
+            
+            data.add(query);
+        }
+        
+        assertEquals(n + n_test, graph.size());
+        
+        System.out.println("compute validation graph...");
+        Graph validation_graph = builder.computeGraph(data);
+        
+        int correct = 0;
+        for (Node<Double> node : data) {
+            correct += graph.get(node).CountCommons(validation_graph.get(node));
+        }
+        System.out.println("Found " + correct + " correct edges");
+        System.out.printf("= %f \n", 100.0 * correct / (10 * data.size()));
+        assertTrue(1.0 * correct / (10 * data.size()) > 0.5);
+        
+    }
     
 }

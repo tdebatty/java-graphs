@@ -65,9 +65,6 @@ public abstract class GraphBuilder<t> implements Cloneable, Serializable {
     }
     
     public Graph<t> computeGraph(List<Node<t>> nodes) {
-        if (nodes.isEmpty()) {
-            throw new InvalidParameterException("Nodes list is empty");
-        }
         
         if (similarity == null) {
             throw new InvalidParameterException("Similarity is not defined");

@@ -32,6 +32,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
 import java.util.Stack;
@@ -227,6 +228,62 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
         }
     };
     
+    public int addNode(
+            Node<T> node,
+            int k,
+            SimilarityInterface<T> similarity_measure) {
+        
+        NeighborList neighborlist = search(node.value, k, similarity_measure, this.size() / 4);
+        put(node, neighborlist);
+        
+        int expansion_levels = 3;
+        
+        // Nodes to analyze at this iteration
+        LinkedList<Node<T>> analyze = new LinkedList<Node<T>>();
+        
+        // Nodes to analyze at next iteration
+        LinkedList<Node<T>> next_analyze = new LinkedList<Node<T>>();
+        
+        // List of already analyzed nodes
+        HashMap<Node<T>, Boolean> visited = new HashMap<Node<T>, Boolean>();
+        
+        // Fill the list of nodes to analyze
+        for (Neighbor neighbor : get(node)) {
+            analyze.add(neighbor.node);
+        }
+        
+        
+        int similarities = this.size() / 4;
+        for (int level = 0; level < expansion_levels; level++) {
+            while (!analyze.isEmpty()){
+                Node other = analyze.pop();
+                NeighborList other_neighborlist = get(other);
+                
+                // Add neighbors to the list of nodes to analyze at next iteration
+                for (Neighbor other_neighbor : other_neighborlist) {
+                    if (!visited.containsKey(other_neighbor.node)) {
+                        next_analyze.add(other_neighbor.node);
+                    }
+                }
+                
+                // Try to add the new node (if sufficiently similar)
+                similarities++;
+                other_neighborlist.add(new Neighbor(
+                        node,
+                        similarity_measure.similarity(
+                                node.value,
+                                (T) other.value)));
+                
+                visited.put(other, Boolean.TRUE);
+            }
+            
+            analyze = next_analyze;
+            next_analyze =  new LinkedList<Node<T>>();
+        }
+        
+        return similarities;
+    }
+    
     /**
      * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
@@ -265,7 +322,7 @@ public class Graph<T> extends HashMap<Node<T>, NeighborList> {
      * @param query query point
      * @param K number of neighbors to find (the K from K-nn search)
      * @param max_similarities max similarities to compute
-     * @param search_depth number of greedy steps (default: 100)
+     * @param search_depth number of greedy steps (default: unlimited)
      * @param similarity_measure similarity measure 
      * @param expansion (default: 1.01)
      * 
