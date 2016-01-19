@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  *
@@ -176,7 +177,8 @@ public class OnlineGraph<T> implements GraphInterface<T> {
         return graph.getNodes();
     }
 
-    public NeighborList searchExhaustive(T query, int K) {
+    public NeighborList searchExhaustive(T query, int K) 
+            throws InterruptedException,ExecutionException{
         return graph.searchExhaustive(query, K);
     }
 }

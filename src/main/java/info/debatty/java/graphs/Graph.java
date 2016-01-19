@@ -32,9 +32,15 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Stack;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * k-nn graph, represented as a mapping node => neighborlist
@@ -291,11 +297,41 @@ public class Graph<T> implements GraphInterface<T> {
         return map.keySet();
     }
     
-    public NeighborList searchExhaustive(T query, int K) {
-        NeighborList neighbors = new NeighborList(K);
-        for (Node<T> other : getNodes()) {
-            neighbors.add(new Neighbor(other, similarity.similarity(query, other.value)));
+    /**
+     *
+     * @param query
+     * @param K
+     * @return
+     * @throws InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public NeighborList searchExhaustive(T query, int K) 
+            throws InterruptedException,ExecutionException {
+        
+        // Read all nodes
+        ArrayList<Node<T>> nodes = new ArrayList<Node<T>>();
+        for (Node<T> node : getNodes()) {
+            nodes.add(node);
         }
+        
+        
+        int procs = Runtime.getRuntime().availableProcessors();
+        ExecutorService pool = Executors.newFixedThreadPool(procs);
+        List<Future<NeighborList>> results = new ArrayList();
+        
+        for (int i = 0; i < procs; i++) {
+            int start = nodes.size() / procs * i;
+            int stop = Math.min(nodes.size() / procs * (i + 1), nodes.size());
+            
+            results.add(pool.submit(new SearchTask(nodes, query, start, stop)));
+        }
+        
+        // Reduce
+        NeighborList neighbors = new NeighborList(K);
+        for (Future<NeighborList> future : results) {
+            neighbors.addAll(future.get());
+        }
+        pool.shutdown();
         return neighbors;
     }
     
@@ -494,4 +530,35 @@ public class Graph<T> implements GraphInterface<T> {
             "<description></description>\n" +
             "</meta>\n" +
             "<graph mode=\"static\" defaultedgetype=\"directed\">\n";
+
+    private class SearchTask implements Callable<NeighborList> {
+        private final ArrayList<Node<T>> nodes;
+        private final T query;
+        private final int start;
+        private final int stop;
+
+        public SearchTask(
+                ArrayList<Node<T>> nodes, 
+                T query, 
+                int start, 
+                int stop) {
+            
+            this.nodes = nodes;
+            this.query = query;
+            this.start = start;
+            this.stop = stop;
+        }
+
+        public NeighborList call() throws Exception {
+            NeighborList nl = new NeighborList(k);
+            for (int i = start; i < stop; i++) {
+                Node<T> other = nodes.get(i);
+                nl.add(new Neighbor(
+                        other, 
+                        similarity.similarity(query, other.value)));
+            }
+            return nl;
+            
+        }
+    }
 }

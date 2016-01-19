@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  *
@@ -97,7 +98,8 @@ public interface GraphInterface<T> {
      */
     NeighborList search(T query, int K, double expansion);
     
-    public NeighborList searchExhaustive(T query, int K);
+    public NeighborList searchExhaustive(T query, int K) 
+            throws InterruptedException,ExecutionException;
 
     void setK(int k);
 

@@ -30,6 +30,7 @@ import info.debatty.java.graphs.build.ThreadedNNDescent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import junit.framework.TestCase;
 
 /**
@@ -125,11 +126,13 @@ public class GraphTest extends TestCase {
 
     /**
      * Test of search method, of class Graph.
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
      */
-    public void testSearch() {
+    public void testSearch() throws InterruptedException, ExecutionException {
         System.out.println("search");
         
-        int n = 4000;
+        int n = 1000;
         
         SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
             
