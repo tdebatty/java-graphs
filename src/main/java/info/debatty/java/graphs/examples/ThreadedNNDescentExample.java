@@ -73,7 +73,7 @@ public class ThreadedNNDescentExample {
         });
         
         // Run the algorithm and get computed neighbor lists
-        HashMap<Node, NeighborList> graph = builder.computeGraph(nodes);
+        Graph<Double> graph = builder.computeGraph(nodes);
         
         // Display neighbor lists
         for (Node n : nodes) {

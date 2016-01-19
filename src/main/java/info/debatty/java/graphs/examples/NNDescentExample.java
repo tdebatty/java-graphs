@@ -24,10 +24,7 @@
 
 package info.debatty.java.graphs.examples;
 
-import info.debatty.java.graphs.CallbackInterface;
-import info.debatty.java.graphs.NeighborList;
-import info.debatty.java.graphs.Node;
-import info.debatty.java.graphs.SimilarityInterface;
+import info.debatty.java.graphs.*;
 import info.debatty.java.graphs.build.NNDescent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,16 +37,16 @@ public class NNDescentExample {
     public static void main(String[] args) {
         Random r = new Random();
         int count = 1000;
-        
         int k = 10;
         
+        // Create the nodes
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
             nodes.add(new Node<Integer>(String.valueOf(i), r.nextInt(10 * count)));
         }
         
-        // Instantiate and configure algorithm
+        // Instantiate and configure the build algorithm
         NNDescent builder = new NNDescent();
         builder.setK(k);
         
@@ -78,8 +75,8 @@ public class NNDescentExample {
             }
         });
         
-        // Run the algorithm and get computed neighborlists
-        HashMap<Node, NeighborList> graph = builder.computeGraph(nodes);
+        // Run the algorithm and get computed graph
+        Graph<Integer> graph = builder.computeGraph(nodes);
         
         // Display neighborlists
         for (Node n : nodes) {
@@ -92,5 +89,22 @@ public class NNDescentExample {
         // This will compute the approximate graph, and then the exact graph
         // and compare results...
         builder.test(nodes);
-    }   
+        
+        // Analyze the graph:
+        // Count number of connected components
+        System.out.println(graph.connectedComponents().size());
+        
+        // Search a query (fast approximative algorithm)
+        System.out.println(graph.search(r.nextInt(10 * count), 1));
+        
+        // Count number of strongly connected components
+        System.out.println(graph.stronglyConnectedComponents().size());
+        
+        // Convert the graph to an online graph (to which we can add new nodes)
+        OnlineGraph<Integer> online_graph = new OnlineGraph<Integer>(graph);
+        
+        // Now we can add a node to the graph (using a fast approximate algorithm)
+        online_graph.addNode(
+                new Node<Integer>("my new node 1", r.nextInt(10 * count)));
+    }
 }

@@ -10,16 +10,17 @@ import java.util.List;
 /**
  *
  * @author Thibault Debatty
+ * @param <T>
  */
-public class Brute<t> extends GraphBuilder<t> {
+public class Brute<T> extends GraphBuilder<T> {
     
     @Override
-    protected Graph<t> _computeGraph(List<Node<t>> nodes) {
+    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
         
         int n = nodes.size();
         
         // Initialize all NeighborLists
-        Graph<t> graph = new Graph<t>(n);
+        Graph<T> graph = new Graph<T>();
         for (Node node : nodes) {
             graph.put(node, new NeighborList(k));
         }
@@ -35,7 +36,7 @@ public class Brute<t> extends GraphBuilder<t> {
             n1 = nodes.get(i);
             for (int j = 0; j < i; j++) {
                 n2 = nodes.get(j);
-                sim = similarity.similarity((t) n1.value, (t) n2.value);
+                sim = similarity.similarity((T) n1.value, (T) n2.value);
                 computed_similarities++;
                 
                 graph.get(n1).add(new Neighbor(n2, sim));

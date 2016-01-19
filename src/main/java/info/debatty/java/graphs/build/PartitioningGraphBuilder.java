@@ -122,11 +122,11 @@ public abstract class PartitioningGraphBuilder<T> extends GraphBuilder<T> {
 
             if (partitioning[p] != null && !partitioning[p].isEmpty()) {
 
-                HashMap<Node, NeighborList> subgraph = internal_builder.computeGraph(partitioning[p]);
+                Graph<T> subgraph = internal_builder.computeGraph(partitioning[p]);
                 computed_similarities += internal_builder.getComputedSimilarities();
 
                 // Add to current neighborlists
-                for (Entry<Node, NeighborList> e : subgraph.entrySet()) {
+                for (Entry<Node<T>, NeighborList> e : subgraph.entrySet()) {
                     neighborlists.get(e.getKey()).addAll(e.getValue());
                 }
             }

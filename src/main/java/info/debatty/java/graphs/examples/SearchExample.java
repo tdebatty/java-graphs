@@ -43,8 +43,9 @@ public class SearchExample {
         int max_similaritites = 100;
         
         // Read the file
+        
         ArrayList<Node<String>> nodes = GraphBuilder.readFile(
-                "/home/tibo/Downloads/726-unique-spams");
+                SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
         
         // Leave some random nodes out for the search queries
         Random rand = new Random();
@@ -78,9 +79,7 @@ public class SearchExample {
             System.out.println("Query: " + query);
             NeighborList resultset_gnss = graph.search(
                     query.value, 
-                    k, 
-                    similarity,
-                    max_similaritites);
+                    k);
             System.out.println(resultset_gnss);
             
             // Perform linear search

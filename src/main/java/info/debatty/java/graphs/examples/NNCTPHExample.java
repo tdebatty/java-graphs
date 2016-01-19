@@ -45,7 +45,8 @@ public class NNCTPHExample {
      */
     public static void main(String[] args) {
         // Read the file
-        List<Node<String>> nodes = GraphBuilder.readFile("/home/tibo/Downloads/726-unique-spams");
+        List<Node<String>> nodes = GraphBuilder.readFile(
+                SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
         
         
         NNCTPH builder = new NNCTPH();
