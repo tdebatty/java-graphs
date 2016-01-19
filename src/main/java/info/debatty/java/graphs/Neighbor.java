@@ -2,6 +2,7 @@ package info.debatty.java.graphs;
 
 import java.io.Serializable;
 import java.security.InvalidParameterException;
+import java.util.HashMap;
 
 /**
  * Neighbor of an edge (stores the other node, and the similarity)
@@ -10,16 +11,38 @@ import java.security.InvalidParameterException;
 public class Neighbor implements Comparable, Serializable {
     public Node node;
     public double similarity; 
-    public boolean is_new = true; // only used by sequential nndescent...
+    
+    protected HashMap<String, Object> attributes;
 
     
     public Neighbor() {
+        this.attributes = new HashMap<String, Object>();
         node = new Node();
     }
     
     public Neighbor(Node node, double similarity) {
+        this.attributes = new HashMap<String, Object>();
         this.node = node;
         this.similarity = similarity;
+    }
+    
+    /**
+     * 
+     * @param key
+     * @param value 
+     */
+    public void setAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+    
+    /**
+     * Returns the value of this attribute, or null if this neighbor has no such
+     * attribute
+     * @param key
+     * @return 
+     */
+    public Object getAttribute(String key) {
+        return attributes.get(key);
     }
 
     /**

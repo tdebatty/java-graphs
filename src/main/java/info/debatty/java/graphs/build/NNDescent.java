@@ -31,6 +31,8 @@ public class NNDescent<T> extends GraphBuilder<T> {
     protected int iterations = 0;
     protected int c;
     
+    protected static final String IS_PROCESSED = "NNDescent_IS_PROCESSED_KEY";
+    
     
     /**
      * Get the number of edges modified at the last iteration
@@ -247,7 +249,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
     protected ArrayList<Node> PickFalses(NeighborList neighborList) {
         ArrayList<Node> falses = new ArrayList<Node>();
         for (Neighbor n : neighborList) {
-            if (!n.is_new) {
+            if (n.getAttribute(IS_PROCESSED) != null) { // !n.is_new
                 falses.add(n.node);
             }
         }
@@ -264,8 +266,8 @@ public class NNDescent<T> extends GraphBuilder<T> {
     protected ArrayList<Node> PickTruesAndMark(NeighborList neighborList) {
         ArrayList<Node> r = new ArrayList<Node>();
         for (Neighbor n : neighborList) {
-            if (n.is_new && Math.random() < rho) {
-                n.is_new = false;
+            if (n.getAttribute(IS_PROCESSED) == null && Math.random() < rho) { // n.is_new
+                n.setAttribute(IS_PROCESSED, true); // n.is_new = false;
                 r.add(n.node);
             }
         }
