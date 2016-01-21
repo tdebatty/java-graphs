@@ -61,8 +61,6 @@ public interface GraphInterface<T> {
 
     SimilarityInterface<T> getSimilarity();
 
-    double getSpeedup();
-
     /**
      * Remove from the graph all edges with a similarity lower than threshold
      * @param threshold
@@ -72,15 +70,24 @@ public interface GraphInterface<T> {
     NeighborList put(Node<T> node, NeighborList neighborlist);
 
     /**
+     *
+     * @param query
+     * @param K
+     * @return
+     */
+    public NeighborList search(T query, int K);
+    
+    /**
      * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
      * Neighbor Graph" by Hajebi et al.
      *
      * @param query
      * @param K search K neighbors
+     * @param speedup (default: 4)
      * @return
      */
-    NeighborList search(T query, int K);
+    NeighborList search(T query, int K, double speedup);
 
     /**
      * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
@@ -92,11 +99,12 @@ public interface GraphInterface<T> {
      *
      * @param query query point
      * @param K number of neighbors to find (the K from K-nn search)
+     * @param speedup
      * @param expansion (default: 1.01)
      *
      * @return
      */
-    NeighborList search(T query, int K, double expansion);
+    NeighborList search(T query, int K, double speedup, double expansion);
     
     public NeighborList searchExhaustive(T query, int K) 
             throws InterruptedException,ExecutionException;
@@ -104,8 +112,6 @@ public interface GraphInterface<T> {
     void setK(int k);
 
     void setSimilarity(SimilarityInterface<T> similarity);
-
-    void setSpeedup(double speedup);
 
     int size();
 

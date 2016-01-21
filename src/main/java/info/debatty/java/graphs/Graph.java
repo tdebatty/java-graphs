@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -52,7 +53,6 @@ public class Graph<T> implements GraphInterface<T> {
     protected HashMap<Node<T>, NeighborList> map;
     protected SimilarityInterface<T> similarity;
     protected int k = 10;
-    protected double speedup = 4.0;
 
     @Override
     public SimilarityInterface<T> getSimilarity() {
@@ -72,16 +72,6 @@ public class Graph<T> implements GraphInterface<T> {
     @Override
     public void setK(int k) {
         this.k = k;
-    }
-
-    @Override
-    public double getSpeedup() {
-        return speedup;
-    }
-
-    @Override
-    public void setSpeedup(double speedup) {
-        this.speedup = speedup;
     }
             
     public Graph(int k) {
@@ -335,6 +325,11 @@ public class Graph<T> implements GraphInterface<T> {
         return neighbors;
     }
     
+    @Override
+    public NeighborList search(T query, int K) {
+        return search(query, K, 4);
+    }
+    
     /**
      * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
@@ -345,13 +340,12 @@ public class Graph<T> implements GraphInterface<T> {
      * @return
      */
     @Override
-    public NeighborList search(
-            T query, 
-            int K) {
+    public NeighborList search(T query, int K, double speedup) {
         
         return this.search(
                 query,
                 K,
+                speedup,
                 1.01); // default expansion value
     }
     
@@ -373,7 +367,12 @@ public class Graph<T> implements GraphInterface<T> {
     public NeighborList search(
             T query, 
             int K, 
+            double speedup,
             double expansion) {
+        
+        if (speedup <= 1.0) {
+            throw new InvalidParameterException("Speedup should be > 1.0");
+        }
         
         int max_similarities = (int) (map.size() / speedup);
         

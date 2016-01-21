@@ -90,8 +90,7 @@ public class OnlineGraphTest extends TestCase {
             Node<Double> query = new Node<Double>(
                     String.valueOf(graph.size()), 400.0 * rand.nextDouble());
             
-            System.out.println(graph.addNode(query));
-            
+            graph.addNode(query);
             data.add(query);
         }
         

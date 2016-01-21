@@ -55,9 +55,24 @@ public class OnlineGraph<T> implements GraphInterface<T> {
         this.graph = new Graph<T>(k);
     }
     
+    /**
+     * 
+     * @param node
+     * @return 
+     */
     public int addNode(Node<T> node) {
+        return addNode(node, 4);
+    }
+    
+    /**
+     * 
+     * @param node
+     * @param speedup
+     * @return 
+     */
+    public int addNode(Node<T> node, double speedup) {
         
-        NeighborList neighborlist = graph.search(node.value, graph.k);
+        NeighborList neighborlist = graph.search(node.value, graph.k, speedup);
         graph.put(node, neighborlist);
         
         // Nodes to analyze at this iteration
@@ -74,7 +89,7 @@ public class OnlineGraph<T> implements GraphInterface<T> {
             analyze.add(neighbor.node);
         }
         
-        int similarities = (int) (graph.size() / graph.speedup);
+        int similarities = (int) (graph.size() / speedup);
         for (int level = 0; level < expansion_levels; level++) {
             while (!analyze.isEmpty()){
                 Node other = analyze.pop();
@@ -129,10 +144,6 @@ public class OnlineGraph<T> implements GraphInterface<T> {
         return graph.getSimilarity();
     }
 
-    public double getSpeedup() {
-        return graph.getSpeedup();
-    }
-
     public void prune(double threshold) {
         graph.prune(threshold);
     }
@@ -144,9 +155,13 @@ public class OnlineGraph<T> implements GraphInterface<T> {
     public NeighborList search(T query, int K) {
         return graph.search(query, K);
     }
+    
+    public NeighborList search(T query, int K, double speedup) {
+        return graph.search(query, K, speedup);
+    }
 
-    public NeighborList search(T query, int K, double expansion) {
-        return graph.search(query, K, expansion);
+    public NeighborList search(T query, int K, double speedup, double expansion) {
+        return graph.search(query, K, speedup, expansion);
     }
 
     public void setK(int k) {
@@ -155,10 +170,6 @@ public class OnlineGraph<T> implements GraphInterface<T> {
 
     public void setSimilarity(SimilarityInterface<T> similarity) {
         graph.setSimilarity(similarity);
-    }
-
-    public void setSpeedup(double speedup) {
-        graph.setSpeedup(speedup);
     }
 
     public int size() {
