@@ -21,30 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.examples;
 
+import info.debatty.java.graphs.CallbackInterface;
+import info.debatty.java.graphs.Graph;
+import info.debatty.java.graphs.NeighborList;
+import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.Brute;
-import info.debatty.java.graphs.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-
 public class BruteExample {
 
     public static void main(String[] args) {
-        
+
         // Generate some random nodes
         Random r = new Random();
         int count = 1000;
-        
+
         ArrayList<Node> nodes = new ArrayList<Node>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
             nodes.add(new Node<Integer>(String.valueOf(i), r.nextInt(10 * count)));
         }
-        
+
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
@@ -56,7 +58,7 @@ public class BruteExample {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
         });
-        
+
         // Optionaly, we can define a callback, to get some feedback...
         builder.setCallback(new CallbackInterface() {
 
@@ -64,22 +66,22 @@ public class BruteExample {
             public void call(HashMap<String, Object> data) {
                 System.out.println(data);
             }
-          
+
         });
-        
+
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
-        
+
         // Display the computed neighbor lists
         for (Node n : nodes) {
             NeighborList nl = graph.get(n);
             System.out.print(n);
             System.out.println(nl);
         }
-        
+
         graph.prune(0.15);
         ArrayList<Graph<Integer>> connectedComponents = graph.connectedComponents();
         System.out.println(connectedComponents.size());
         System.out.println(connectedComponents.get(0));
-    }   
+    }
 }

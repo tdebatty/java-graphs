@@ -4,9 +4,13 @@ import java.util.HashMap;
 
 /**
  *
- * @author tibo
+ * @author Thibault Debatty
  */
 public interface CallbackInterface {
-    public void call(HashMap<String, Object> data);
-    
+
+    /**
+     *
+     * @param data hashmap containing info about current state of algorithm
+     */
+    void call(HashMap<String, Object> data);
 }

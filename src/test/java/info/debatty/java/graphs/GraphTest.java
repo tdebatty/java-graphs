@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
@@ -38,21 +37,20 @@ import junit.framework.TestCase;
  * @author Thibault Debatty
  */
 public class GraphTest extends TestCase {
-    
+
     public GraphTest(String testName) {
         super(testName);
     }
-    
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
     }
-    
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
     }
-
 
     /**
      * Test of connectedComponents method, of class Graph.
@@ -64,9 +62,9 @@ public class GraphTest extends TestCase {
             // The value of our nodes will be an int
             nodes.add(new Node<Integer>(String.valueOf(i), i));
             nodes.add(new Node<Integer>(String.valueOf(1000000 + i), 1000000 + i));
-            
+
         }
-        
+
         SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
 
             public double similarity(Integer value1, Integer value2) {
@@ -83,7 +81,7 @@ public class GraphTest extends TestCase {
 
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
-        
+
         assertEquals(2, graph.connectedComponents().size());
     }
 
@@ -97,14 +95,13 @@ public class GraphTest extends TestCase {
             // The value of our nodes will be an int
             nodes.add(new Node<Integer>(String.valueOf(i), i));
         }
-        for (int i = 1010; i < 2000; i+=20) {
+        for (int i = 1010; i < 2000; i += 20) {
             // This will generate a link from node 1010 to node 1000
             // but not in the other direction
             // => will not be strongly connected
             nodes.add(new Node<Integer>(String.valueOf(i), i));
         }
-        
-        
+
         SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
 
             public double similarity(Integer value1, Integer value2) {
@@ -126,21 +123,22 @@ public class GraphTest extends TestCase {
 
     /**
      * Test of search method, of class Graph.
+     *
      * @throws java.lang.InterruptedException
      * @throws java.util.concurrent.ExecutionException
      */
     public void testSearch() throws InterruptedException, ExecutionException {
         System.out.println("search");
-        
+
         int n = 1000;
-        
+
         SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
-            
+
             public double similarity(Double value1, Double value2) {
                 return 1.0 / (1 + Math.abs(value1 - value2));
             }
         };
-        
+
         System.out.println("create some random nodes...");
         Random rand = new Random();
         List<Node<Double>> data = new ArrayList<Node<Double>>();
@@ -160,15 +158,15 @@ public class GraphTest extends TestCase {
         int correct = 0;
         for (int i = 0; i < 100; i++) {
             double query = 400.0 * rand.nextDouble();
-            
+
             NeighborList approximate_result = graph.search(
-                query,
-                1);
-            
+                    query,
+                    1);
+
             // Search the (real) most similar
             NeighborList exhaustive_result = graph.searchExhaustive(query, 1);
             correct += approximate_result.CountCommonValues(exhaustive_result);
-            
+
         }
 
         //System.out.println(data.size());

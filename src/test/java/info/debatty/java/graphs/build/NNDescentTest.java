@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
@@ -37,16 +36,16 @@ import junit.framework.TestCase;
  * @author Thibault Debatty
  */
 public class NNDescentTest extends TestCase {
-    
+
     public NNDescentTest(String testName) {
         super(testName);
     }
-    
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
     }
-    
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
@@ -54,24 +53,24 @@ public class NNDescentTest extends TestCase {
 
     public void testComputeGraph() {
         System.out.println("computeGraph");
-        
+
         int n = 2000;
         int k = 10;
-        
+
         // Generate some nodes
         Random rand = new Random();
         ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(n);
         for (int i = 0; i < n; i++) {
             nodes.add(new Node<Integer>(String.valueOf(i), rand.nextInt()));
         }
-        
+
         SimilarityInterface<Integer> sim = new SimilarityInterface<Integer>() {
-            
+
             public double similarity(Integer value1, Integer value2) {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
         };
-        
+
         // Instantiate and configure the brute-force graph building algorithm
         NNDescent<Integer> nndes = new NNDescent<Integer>();
         nndes.setK(k);
@@ -79,10 +78,10 @@ public class NNDescentTest extends TestCase {
         nndes.setDelta(0.1);
         nndes.setMaxIterations(10);
         nndes.setRho(0.6);
-        
+
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = nndes.computeGraph(nodes);
-        
+
         // Test using brute builder
         Brute brute = new Brute();
         brute.setK(k);
@@ -95,9 +94,8 @@ public class NNDescentTest extends TestCase {
         }
         System.out.println("found " + correct + " correct edges");
         System.out.println("" + 100.0 * correct / (n * k) + "%");
-        assertTrue((1.0 * correct / (n*k)) > 0.8);
-        
+        assertTrue((1.0 * correct / (n * k)) > 0.8);
 
     }
-    
+
 }

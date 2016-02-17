@@ -18,28 +18,28 @@ import java.util.concurrent.Future;
  * @param <T>
  */
 public class ThreadedNNDescent<T> extends NNDescent<T> {
-    
+
     protected int thread_count = 4;
-    
+
     /**
-     * Set the number of threads
-     * Default is 4
-     * @param thread_count 
+     * Set the number of threads Default is 4
+     *
+     * @param thread_count
      */
     public void setThreadCount(int thread_count) {
         if (thread_count <= 0) {
             throw new InvalidParameterException("thread_count should be > 0");
         }
-        
+
         this.thread_count = thread_count;
     }
-    
+
     public int getThreadCount() {
         return thread_count;
     }
-    
+
     private ExecutorService executor;
-    
+
     // Internal state, used by worker objects
     List<Node<T>> nodes;
     Graph<T> neighborlists;
@@ -47,24 +47,24 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
     @Override
     protected Graph<T> _computeGraph(List<Node<T>> nodes) {
-        
+
         // Create worker threads
         executor = Executors.newFixedThreadPool(thread_count);
-        
+
         iterations = 0;
-        
-        if (nodes.size() <= (k+1)) {
+
+        if (nodes.size() <= (k + 1)) {
             return MakeFullyLinked(nodes);
         }
-        
+
         // Initialize state...
         this.nodes = nodes;
         this.neighborlists = new Graph<T>(nodes.size());
         this.old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
         this.new_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
-        
+
         HashMap<String, Object> data = new HashMap<String, Object>();
-    
+
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
         for (Node v : nodes) {
@@ -75,7 +75,7 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         while (true) {
             iterations++;
             c = 0;
-            
+
             // for v ∈ V do
             // old[v]←− all items in B[v] with a false flag
             // new[v]←− ρK items in B[v] with a true flag
@@ -106,7 +106,7 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                 } catch (ExecutionException e) {
                 }
             }
-            
+
             //System.out.println("C : " + c);
             if (callback != null) {
                 data.put("c", c);
@@ -120,14 +120,14 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
             if (c <= (delta * nodes.size() * k)) {
                 break;
             }
-            
+
             if (iterations >= max_iterations) {
                 break;
             }
         }
-        
+
         executor.shutdown();
-        
+
         // Clear local state
         Graph<T> n = this.neighborlists;
         this.neighborlists = null;
@@ -136,14 +136,14 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         this.nodes = null;
         this.old_lists = null;
         this.old_lists_2 = null;
-        
+
         return n;
     }
-    
-    
+
     class NNThread implements Callable<Integer> {
+
         int slice;
-        
+
         public NNThread(int slice) {
             this.slice = slice;
         }
@@ -152,14 +152,14 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         public Integer call() {
             int c = 0;
             // for v ∈ V do
-            int start = slice * nodes.size()/thread_count;
-            int end = (slice + 1) * nodes.size()/thread_count;
-            
+            int start = slice * nodes.size() / thread_count;
+            int end = (slice + 1) * nodes.size() / thread_count;
+
             // Last slice should go to the end...
             if (slice == (thread_count - 1)) {
                 end = nodes.size();
             }
-            
+
             for (int i = start; i < end; i++) {
                 Node v = nodes.get(i);
                 // old[v]←− old[v] ∪ Sample(old′[v], ρK)
@@ -186,11 +186,11 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                     // or u1 ∈ new[v], u2 ∈ old[v] do
                     for (int k = 0; k < old_lists.get(v).size(); k++) {
                         Node u2 = (Node) old_lists.get(v).get(k);
-            
+
                         if (u1.equals(u2)) {
                             continue;
                         }
-                        
+
                         //int u2_i = Find(u2);
                         double s = Similarity(u1, u2);
                         c += UpdateNL(neighborlists.get(u1), u2, s);

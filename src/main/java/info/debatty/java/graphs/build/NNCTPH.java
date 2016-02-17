@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Node;
@@ -30,9 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builds the k-nn graph by partitioning the graph using Context Triggered 
- * Piecewize Hashing.
- * This graph builder is meant for string node values.
+ * Builds the k-nn graph by partitioning the graph using Context Triggered
+ * Piecewize Hashing. This graph builder is meant for string node values.
+ *
  * @author Thibault Debatty
  */
 public class NNCTPH extends PartitioningGraphBuilder<String> {
@@ -40,26 +39,26 @@ public class NNCTPH extends PartitioningGraphBuilder<String> {
     @Override
     protected List<Node<String>>[] _partition(List<Node<String>> nodes) {
         ESSum ess = new ESSum(oversampling, n_partitions, 1);
-        
+
         ArrayList<Node<String>>[] buckets = new ArrayList[n_partitions];
-        
+
         for (Node<String> node : nodes) {
             int[] hash = ess.HashString(node.value);
-            
+
             for (int stage = 0; stage < oversampling; stage++) {
                 int partition = hash[stage];
-                
+
                 if (buckets[partition] == null) {
                     buckets[partition] = new ArrayList<Node<String>>();
                 }
-                
+
                 // !! this is not efficient !!!!
-                if (! buckets[partition].contains(node)) {
+                if (!buckets[partition].contains(node)) {
                     buckets[partition].add(node);
                 }
             }
         }
-        
+
         return buckets;
     }
 }

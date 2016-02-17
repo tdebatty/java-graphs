@@ -2,7 +2,6 @@ package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.CallbackInterface;
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
 import java.io.BufferedReader;
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,22 +21,23 @@ import java.util.logging.Logger;
  * @param <T>
  */
 public abstract class GraphBuilder<T> implements Cloneable, Serializable {
+
     protected int k = 10;
     protected SimilarityInterface<T> similarity;
     protected CallbackInterface callback = null;
     protected int computed_similarities = 0;
-    
+
     public int getK() {
         return k;
     }
 
     /**
-     * Define k the number of edges per node.
-     * Default value is 10
-     * @param k 
+     * Define k the number of edges per node. Default value is 10
+     *
+     * @param k
      */
     public void setK(int k) {
-        if (k <=0) {
+        if (k <= 0) {
             throw new InvalidParameterException("k must be > 0");
         }
         this.k = k;
@@ -63,62 +62,63 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
     public int getComputedSimilarities() {
         return computed_similarities;
     }
-    
+
     public Graph<T> computeGraph(List<Node<T>> nodes) {
-        
+
         if (similarity == null) {
             throw new InvalidParameterException("Similarity is not defined");
         }
         computed_similarities = 0;
-        Graph<T> graph = _computeGraph(nodes);   
+        Graph<T> graph = _computeGraph(nodes);
         graph.setK(k);
         graph.setSimilarity(similarity);
         return graph;
     }
-    
+
     /**
-     * Build the approximate graph, then use brute-force to build the exact 
+     * Build the approximate graph, then use brute-force to build the exact
      * graph and compare the results
+     *
      * @param nodes
      */
     public void test(List<Node<T>> nodes) {
         Graph<T> approximate_graph = computeGraph(nodes);
-        
+
         // Use Brute force to build the exact graph
         Brute brute = new Brute();
         brute.setK(k);
         brute.setSimilarity(similarity);
         Graph<T> exact_graph = brute.computeGraph(nodes);
-        
+
         int correct = 0;
-        for (Node node : nodes) {            
+        for (Node node : nodes) {
             correct += approximate_graph.get(node).CountCommonValues(exact_graph.get(node));
         }
-        
+
         System.out.println("Theoretical speedup: " + this.estimatedSpeedup());
         System.out.println("Computed similarities: " + this.getComputedSimilarities());
-        double speedup_ratio = 
-                (double) (nodes.size() * (nodes.size() - 1) / 2) / 
-                this.getComputedSimilarities();
+        double speedup_ratio
+                = (double) (nodes.size() * (nodes.size() - 1) / 2)
+                / this.getComputedSimilarities();
         System.out.println("Speedup ratio: " + speedup_ratio);
-        
+
         double correct_ratio = (double) correct / (nodes.size() * k);
-        System.out.println("Correct edges: " + correct + 
-                " (" + correct_ratio * 100 + "%)");
-        
-        System.out.println("Quality-equivalent speedup: " 
+        System.out.println("Correct edges: " + correct
+                + " (" + correct_ratio * 100 + "%)");
+
+        System.out.println("Quality-equivalent speedup: "
                 + speedup_ratio * correct_ratio);
     }
-    
+
     public double estimatedSpeedup() {
         return 1.0;
     }
-    
+
     public static ArrayList<Node<String>> readFile(String path) {
         try {
             FileReader fileReader;
             fileReader = new FileReader(path);
-            
+
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             ArrayList<Node<String>> nodes = new ArrayList<Node<String>>();
             String line;
@@ -128,16 +128,16 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
                 i++;
             }
             bufferedReader.close();
-            return  nodes;
+            return nodes;
         } catch (FileNotFoundException ex) {
             Logger.getLogger(GraphBuilder.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(GraphBuilder.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         return null;
     }
-    
+
     @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone();

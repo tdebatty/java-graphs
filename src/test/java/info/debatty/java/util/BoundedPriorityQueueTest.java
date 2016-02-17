@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.util;
 
 import junit.framework.TestCase;
@@ -31,25 +30,11 @@ import junit.framework.TestCase;
  * @author Thibault Debatty
  */
 public class BoundedPriorityQueueTest extends TestCase {
-    
-    public BoundedPriorityQueueTest(String testName) {
-        super(testName);
-    }
-    
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-    
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
 
     /**
      * Test of add method, of class BoundedPriorityQueue.
      */
-    public void testAdd() {
+    public final void testAdd() {
         System.out.println("add");
         BoundedPriorityQueue<Integer> instance = new BoundedPriorityQueue(4);
         instance.add(1);
@@ -61,5 +46,5 @@ public class BoundedPriorityQueueTest extends TestCase {
         assertEquals(instance.size(), 4);
         assertEquals((int) instance.peek(), 2);
     }
-    
+
 }

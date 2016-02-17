@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.*;
@@ -39,22 +38,22 @@ public class ThreadedNNDescentExample {
     public static void main(String[] args) {
         Random r = new Random();
         int count = 1000;
-        
+
         int k = 10;
-        
+
         ArrayList<Node<Double>> nodes = new ArrayList<Node<Double>>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
             nodes.add(new Node<Double>(String.valueOf(i), r.nextDouble()));
         }
-        
+
         SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
 
             public double similarity(Double value1, Double value2) {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
         };
-        
+
         // Instantiate and configure the algorithm
         ThreadedNNDescent builder = new ThreadedNNDescent<Double>();
         builder.setThreadCount(3);
@@ -63,7 +62,7 @@ public class ThreadedNNDescentExample {
         builder.setMaxIterations(20);
         builder.setDelta(0.1);
         builder.setRho(0.5);
-        
+
         // Optionnally, define callback
         builder.setCallback(new CallbackInterface() {
             @Override
@@ -71,17 +70,17 @@ public class ThreadedNNDescentExample {
                 System.out.println(data);
             }
         });
-        
+
         // Run the algorithm and get computed neighbor lists
         Graph<Double> graph = builder.computeGraph(nodes);
-        
+
         // Display neighbor lists
         for (Node n : nodes) {
             NeighborList nl = graph.get(n);
             System.out.print(n);
             System.out.println(nl);
         }
-        
+
         // Optionnally, we can test the builder
         // This will compute the approximate graph, and then the exact graph
         // and compare results...

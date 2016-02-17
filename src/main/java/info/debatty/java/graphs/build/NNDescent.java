@@ -11,41 +11,40 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Implementation of NN-Descent k-nn graph building algorithm.
- * Based on the paper "Efficient K-Nearest Neighbor Graph Construction for 
- * Generic Similarity Measures" by Dong et al.
- * http://www.cs.princeton.edu/cass/papers/www11.pdf
- * 
- * NN-Descent works by iteratively exploring the neighbors of neighbors...
- * It is not suitable for small datasets (less than 500 items)!
+ * Implementation of NN-Descent k-nn graph building algorithm. Based on the
+ * paper "Efficient K-Nearest Neighbor Graph Construction for Generic Similarity
+ * Measures" by Dong et al. http://www.cs.princeton.edu/cass/papers/www11.pdf
+ *
+ * NN-Descent works by iteratively exploring the neighbors of neighbors... It is
+ * not suitable for small datasets (less than 500 items)!
+ *
  * @author Thibault Debatty
  * @param <T> The type of nodes value
  */
-
 public class NNDescent<T> extends GraphBuilder<T> {
 
     protected double rho = 0.5; // Standard : 1, Fast: 0.5
     protected double delta = 0.001;
     protected int max_iterations = Integer.MAX_VALUE;
-    
+
     protected int iterations = 0;
     protected int c;
-    
+
     protected static final String IS_PROCESSED = "NNDescent_IS_PROCESSED_KEY";
-    
-    
+
     /**
      * Get the number of edges modified at the last iteration
-     * @return 
+     *
+     * @return
      */
     public int getC() {
         return c;
     }
-    
-    
+
     /**
      * Get the number of executed iterations
-     * @return 
+     *
+     * @return
      */
     public int getIterations() {
         return iterations;
@@ -56,12 +55,10 @@ public class NNDescent<T> extends GraphBuilder<T> {
     }
 
     /**
-     * Sampling coefficient.
-     * In interval ]0, 1.0]
-     * Typical value for fast computation is 0.5
-     * Use 1.0 for precise computation
-     * Default is 0.5
-     * @param rho 
+     * Sampling coefficient. In interval ]0, 1.0] Typical value for fast
+     * computation is 0.5 Use 1.0 for precise computation Default is 0.5
+     *
+     * @param rho
      */
     public void setRho(double rho) {
         if (rho > 1.0 || rho <= 0.0) {
@@ -75,11 +72,10 @@ public class NNDescent<T> extends GraphBuilder<T> {
     }
 
     /**
-     * Early termination coefficient.
-     * The algorithm stops when less than this proportion of edges are modified
-     * Should be in ]0, 1.0[
-     * Default is 0.001
-     * @param delta 
+     * Early termination coefficient. The algorithm stops when less than this
+     * proportion of edges are modified Should be in ]0, 1.0[ Default is 0.001
+     *
+     * @param delta
      */
     public void setDelta(double delta) {
         if (rho >= 1.0 || rho <= 0.0) {
@@ -93,9 +89,10 @@ public class NNDescent<T> extends GraphBuilder<T> {
     }
 
     /**
-     * Set the maximum number of iterations
-     * Default is no max (Integer.MAX_VALUE)
-     * @param max_iterations 
+     * Set the maximum number of iterations Default is no max
+     * (Integer.MAX_VALUE)
+     *
+     * @param max_iterations
      */
     public void setMaxIterations(int max_iterations) {
         if (max_iterations < 0) {
@@ -104,24 +101,23 @@ public class NNDescent<T> extends GraphBuilder<T> {
         this.max_iterations = max_iterations;
     }
 
-    
     @Override
     protected Graph<T> _computeGraph(List<Node<T>> nodes) {
-        
+
         iterations = 0;
-        
-        if (nodes.size() <= (k+1)) {
+
+        if (nodes.size() <= (k + 1)) {
             return MakeFullyLinked(nodes);
         }
-        
+
         Graph<T> neighborlists = new Graph<T>(nodes.size());
         HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
-        
+
         old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
         new_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
-        
+
         HashMap<String, Object> data = new HashMap<String, Object>();
-    
+
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
         for (Node v : nodes) {
@@ -132,7 +128,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
         while (true) {
             iterations++;
             c = 0;
-            
+
             // for v ∈ V do
             // old[v]←− all items in B[v] with a false flag
             // new[v]←− ρK items in B[v] with a true flag
@@ -161,12 +157,12 @@ public class NNDescent<T> extends GraphBuilder<T> {
                 for (int j = 0; j < new_lists.get(v).size(); j++) {
                     Node u1 = (Node) new_lists.get(v).get(j);
 
-                        //int u1_i = Find(u1); // position of u1 in nodes
+                    //int u1_i = Find(u1); // position of u1 in nodes
                     for (int l = j + 1; l < new_lists.get(u1).size(); l++) {
                         Node u2 = (Node) new_lists.get(u1).get(l);
                             //int u2_i = Find(u2);
 
-                            // l←− σ(u1,u2)
+                        // l←− σ(u1,u2)
                         // c←− c+UpdateNN(B[u1], u2, l, true)
                         // c←− c+UpdateNN(B[u2], u1, l, true)
                         double s = Similarity(u1, u2);
@@ -189,7 +185,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
                     }
                 }
             }
-            
+
             //System.out.println("C : " + c);
             if (callback != null) {
                 data.put("c", c);
@@ -197,19 +193,19 @@ public class NNDescent<T> extends GraphBuilder<T> {
                 data.put("computed_similarities_ratio",
                         (double) computed_similarities / (nodes.size() * (nodes.size() - 1) / 2));
                 data.put("iterations", iterations);
-                
+
                 callback.call(data);
             }
 
             if (c <= (delta * nodes.size() * k)) {
                 break;
             }
-            
+
             if (iterations >= max_iterations) {
                 break;
             }
         }
-        
+
         return neighborlists;
     }
 
@@ -220,7 +216,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
                 r.add(n);
             }
         }
-        
+
         for (Node n : l2) {
             if (!r.contains(n)) {
                 r.add(n);
@@ -237,12 +233,12 @@ public class NNDescent<T> extends GraphBuilder<T> {
 
         while (nl.size() < k) {
             Node node = nodes.get(r.nextInt(nodes.size()));
-            if (! node.equals(for_node)) {
+            if (!node.equals(for_node)) {
                 double s = Similarity(node, for_node);
                 nl.add(new Neighbor(node, s));
             }
         }
-        
+
         return nl;
     }
 
@@ -256,7 +252,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
 
         return falses;
     }
-    
+
     /**
      * pick new neighbors with a probability of rho, and mark them as false
      *
@@ -275,11 +271,10 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return r;
     }
 
-
     protected HashMap<Node<T>, ArrayList> Reverse(List<Node<T>> nodes, HashMap<Node<T>, ArrayList> lists) {
 
         HashMap<Node<T>, ArrayList> R = new HashMap<Node<T>, ArrayList>(nodes.size());
-        
+
         // Create all arraylists
         for (Node n : nodes) {
             R.put(n, new ArrayList<Node>());
@@ -302,9 +297,8 @@ public class NNDescent<T> extends GraphBuilder<T> {
      *
      * @param nodes
      * @param count
-     * @return 
+     * @return
      */
-
     protected ArrayList<Node> Sample(ArrayList<Node> nodes, int count) {
         Random r = new Random();
         while (nodes.size() > count) {
@@ -320,11 +314,10 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return nl.add(neighbor) ? 1 : 0;
     }
 
-
     protected double Similarity(Node n1, Node n2) {
         computed_similarities++;
         return similarity.similarity((T) n1.value, (T) n2.value);
-        
+
     }
 
     protected Graph<T> MakeFullyLinked(List<Node<T>> nodes) {
@@ -335,7 +328,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
                 if (node.equals(other_node)) {
                     continue;
                 }
-                
+
                 neighborlist.add(new Neighbor(
                         other_node,
                         Similarity(node, other_node)
@@ -343,7 +336,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
             }
             neighborlists.put(node, neighborlist);
         }
-        
+
         return neighborlists;
     }
 }

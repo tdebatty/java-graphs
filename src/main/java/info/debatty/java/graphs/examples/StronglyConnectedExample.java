@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.Graph;
@@ -48,7 +47,7 @@ public class StronglyConnectedExample {
             nodes.add(new Node<Double>(
                     String.valueOf(i),
                     rand.nextDouble() * 100));
-            
+
             nodes.add(new Node<Double>(
                     String.valueOf(100 + i),
                     1000000 + rand.nextDouble() * 100));
@@ -64,16 +63,15 @@ public class StronglyConnectedExample {
             }
         });
         Graph<Double> graph = builder.computeGraph(nodes);
-        
-        
+
         ArrayList<Graph<Double>> stronglyConnectedComponents = graph.stronglyConnectedComponents();
-        
+
         System.out.printf("Found %d strongly connected components\n", stronglyConnectedComponents.size());
-        
+
         for (Graph<Double> component : stronglyConnectedComponents) {
             System.out.printf("Contains %d nodes\n", component.size());
             System.out.println(component);
         }
     }
-    
+
 }

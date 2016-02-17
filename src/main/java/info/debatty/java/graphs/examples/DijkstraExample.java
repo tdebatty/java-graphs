@@ -70,7 +70,7 @@ public class DijkstraExample {
 
         System.out.println(dijkstra.getPath(nodes.get(1)));
         System.out.println(dijkstra.getLargestDistance());
-        
+
         graph.writeGEXF("example.gexf");
     }
 }

@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.Graph;
@@ -47,8 +46,7 @@ public class NNCTPHExample {
         // Read the file
         List<Node<String>> nodes = GraphBuilder.readFile(
                 SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
-        
-        
+
         NNCTPH builder = new NNCTPH();
         builder.setNPartitions(20);
         builder.setOversampling(2);
@@ -59,14 +57,14 @@ public class NNCTPHExample {
                 return cosine.similarity(value1, value2);
             }
         });
-        
+
         Graph<String> graph = builder.computeGraph(nodes);
-        
+
         for (Map.Entry<Node<String>, NeighborList> entry : graph.entrySet()) {
             System.out.println(entry);
         }
-        
+
         builder.test(nodes);
     }
-    
+
 }

@@ -51,7 +51,7 @@ public class BruteTest extends TestCase {
 
     public void testComputeGraph() {
         System.out.println("computeGraph");
-        
+
         // Generate some nodes
         int count = 1000;
         ArrayList<Node> nodes = new ArrayList<Node>(count);

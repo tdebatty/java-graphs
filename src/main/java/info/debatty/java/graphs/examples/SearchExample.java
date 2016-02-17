@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.*;
@@ -31,57 +30,55 @@ import info.debatty.java.stringsimilarity.JaroWinkler;
 import java.util.ArrayList;
 import java.util.Random;
 
-
 public class SearchExample {
 
     public static void main(String[] args) {
         int tests = 100;
-        
+
         // Number of neighbors to search
         int k = 1;
         // Number of similarities to compute using approximate search
         int max_similaritites = 100;
-        
+
         // Read the file
-        
         ArrayList<Node<String>> nodes = GraphBuilder.readFile(
                 SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
-        
+
         // Leave some random nodes out for the search queries
         Random rand = new Random();
         ArrayList<Node<String>> queries = new ArrayList<Node<String>>(tests);
         for (int i = 0; i < tests; i++) {
             queries.add(nodes.remove(rand.nextInt(nodes.size())));
         }
-        
+
         // Define the similarity to use
-        SimilarityInterface<String> similarity = 
-                new SimilarityInterface<String>() {
-            
-            public double similarity(String value1, String value2) {
-                JaroWinkler jw = new JaroWinkler();
-                return jw.similarity(value1, value2);
-            }
-        };
-        
+        SimilarityInterface<String> similarity
+                = new SimilarityInterface<String>() {
+
+                    public double similarity(String value1, String value2) {
+                        JaroWinkler jw = new JaroWinkler();
+                        return jw.similarity(value1, value2);
+                    }
+                };
+
         // Compute the graph
         Brute<String> builder = new Brute();
         builder.setSimilarity(similarity);
         builder.setK(20);
         Graph<String> graph = builder.computeGraph(nodes);
-        
+
         // Perform some research...
         int correct = 0;
-        
+
         for (Node<String> query : queries) {
-            
+
             // Perform GNNS
             System.out.println("Query: " + query);
             NeighborList resultset_gnss = graph.search(
-                    query.value, 
+                    query.value,
                     k);
             System.out.println(resultset_gnss);
-            
+
             // Perform linear search
             NeighborList resultset_linear = new NeighborList(k);
             for (Node<String> candidate : nodes) {
@@ -93,19 +90,19 @@ public class SearchExample {
                                         candidate.value)));
             }
             System.out.println(resultset_linear);
-            
+
             correct += resultset_gnss.CountCommons(resultset_linear);
         }
-        
+
         System.out.println("Correct: " + correct + " / " + tests);
-        System.out.println("Computed similarities (approximate search): " + 
-                queries.size() * max_similaritites);
-        System.out.println("Computed similarities (exhaustive search): " + 
-                nodes.size() * tests);
-        
-        System.out.println("Quality equivalent speedup: " +
-                (double) nodes.size() * tests * correct / 
-                        tests / 
-                        (queries.size() * max_similaritites));
+        System.out.println("Computed similarities (approximate search): "
+                + queries.size() * max_similaritites);
+        System.out.println("Computed similarities (exhaustive search): "
+                + nodes.size() * tests);
+
+        System.out.println("Quality equivalent speedup: "
+                + (double) nodes.size() * tests * correct
+                / tests
+                / (queries.size() * max_similaritites));
     }
 }

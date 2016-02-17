@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
@@ -38,16 +37,16 @@ import junit.framework.TestCase;
  * @author Thibault Debatty
  */
 public class OnlineGraphTest extends TestCase {
-    
+
     public OnlineGraphTest(String testName) {
         super(testName);
     }
-    
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
     }
-    
+
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
@@ -58,17 +57,17 @@ public class OnlineGraphTest extends TestCase {
      */
     public void testAddNode() {
         System.out.println("addNode");
-        
+
         int n = 1000;
-        int n_test = 100;
-        
+        int n_test = 1000;
+
         SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
-            
+
             public double similarity(Double value1, Double value2) {
                 return 1.0 / (1 + Math.abs(value1 - value2));
             }
         };
-        
+
         System.out.println("create some random nodes...");
         Random rand = new Random();
         List<Node<Double>> data = new ArrayList<Node<Double>>();
@@ -84,21 +83,21 @@ public class OnlineGraphTest extends TestCase {
         builder.setK(10);
         builder.setSimilarity(similarity);
         OnlineGraph<Double> graph = new OnlineGraph<Double>(builder.computeGraph(data));
-        
+
         System.out.println("add some nodes...");
-        for (int i =0; i < n_test; i++) {
+        for (int i = 0; i < n_test; i++) {
             Node<Double> query = new Node<Double>(
                     String.valueOf(graph.size()), 400.0 * rand.nextDouble());
-            
+
             graph.addNode(query);
             data.add(query);
         }
-        
+
         assertEquals(n + n_test, graph.size());
-        
+
         System.out.println("compute validation graph...");
         Graph validation_graph = builder.computeGraph(data);
-        
+
         int correct = 0;
         for (Node<Double> node : data) {
             correct += graph.get(node).CountCommons(validation_graph.get(node));
@@ -106,7 +105,7 @@ public class OnlineGraphTest extends TestCase {
         System.out.println("Found " + correct + " correct edges");
         System.out.printf("= %f \n", 100.0 * correct / (10 * data.size()));
         assertTrue(1.0 * correct / (10 * data.size()) > 0.5);
-        
+
     }
-    
+
 }

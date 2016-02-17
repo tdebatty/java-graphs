@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs;
 
 import java.io.FileNotFoundException;
@@ -38,70 +37,78 @@ import java.util.concurrent.ExecutionException;
  * @param <T>
  */
 public class OnlineGraph<T> implements GraphInterface<T> {
-    
+
     protected Graph<T> graph;
-    protected int expansion_levels = 3;
-    
+    protected int update_depth;
+
+    protected static final int DEFAULT_UPDATE_DEPTH = 3;
+
     public OnlineGraph(Graph<T> initial) {
         this.graph = initial;
-                
+        this.update_depth = DEFAULT_UPDATE_DEPTH;
     }
-    
+
     public OnlineGraph() {
         this.graph = new Graph<T>();
+        this.update_depth = DEFAULT_UPDATE_DEPTH;
     }
-    
+
     public OnlineGraph(int k) {
         this.graph = new Graph<T>(k);
+        this.update_depth = DEFAULT_UPDATE_DEPTH;
     }
-    
+
+    public void setDepth(int update_depth) {
+        this.update_depth = update_depth;
+    }
+
     /**
-     * 
+     *
      * @param node
-     * @return 
+     * @return
      */
     public int addNode(Node<T> node) {
         return addNode(node, 4);
     }
-    
+
     /**
-     * 
+     *
      * @param node
      * @param speedup
-     * @return 
+     * @return
      */
     public int addNode(Node<T> node, double speedup) {
-        
+
         NeighborList neighborlist = graph.search(node.value, graph.k, speedup);
         graph.put(node, neighborlist);
-        
+
         // Nodes to analyze at this iteration
         LinkedList<Node<T>> analyze = new LinkedList<Node<T>>();
-        
+
         // Nodes to analyze at next iteration
         LinkedList<Node<T>> next_analyze = new LinkedList<Node<T>>();
-        
+
         // List of already analyzed nodes
         HashMap<Node<T>, Boolean> visited = new HashMap<Node<T>, Boolean>();
-        
+
         // Fill the list of nodes to analyze
         for (Neighbor neighbor : graph.get(node)) {
             analyze.add(neighbor.node);
         }
-        
+
         int similarities = (int) (graph.size() / speedup);
-        for (int level = 0; level < expansion_levels; level++) {
-            while (!analyze.isEmpty()){
+        for (int d = 0; d < update_depth; d++) {
+            while (!analyze.isEmpty()) {
                 Node other = analyze.pop();
                 NeighborList other_neighborlist = graph.get(other);
-                
+
                 // Add neighbors to the list of nodes to analyze at next iteration
                 for (Neighbor other_neighbor : other_neighborlist) {
                     if (!visited.containsKey(other_neighbor.node)) {
                         next_analyze.add(other_neighbor.node);
                     }
                 }
-                
+
                 // Try to add the new node (if sufficiently similar)
                 similarities++;
                 other_neighborlist.add(new Neighbor(
@@ -109,14 +116,14 @@ public class OnlineGraph<T> implements GraphInterface<T> {
                         graph.similarity.similarity(
                                 node.value,
                                 (T) other.value)));
-                
+
                 visited.put(other, Boolean.TRUE);
             }
-            
+
             analyze = next_analyze;
-            next_analyze =  new LinkedList<Node<T>>();
+            next_analyze = new LinkedList<Node<T>>();
         }
-        
+
         return similarities;
     }
 
@@ -155,7 +162,7 @@ public class OnlineGraph<T> implements GraphInterface<T> {
     public NeighborList search(T query, int K) {
         return graph.search(query, K);
     }
-    
+
     public NeighborList search(T query, int K, double speedup) {
         return graph.search(query, K, speedup);
     }
@@ -188,8 +195,8 @@ public class OnlineGraph<T> implements GraphInterface<T> {
         return graph.getNodes();
     }
 
-    public NeighborList searchExhaustive(T query, int K) 
-            throws InterruptedException,ExecutionException{
+    public NeighborList searchExhaustive(T query, int K)
+            throws InterruptedException, ExecutionException {
         return graph.searchExhaustive(query, K);
     }
 }

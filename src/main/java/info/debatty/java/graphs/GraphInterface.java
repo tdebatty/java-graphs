@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs;
 
 import java.io.FileNotFoundException;
@@ -40,6 +39,7 @@ public interface GraphInterface<T> {
     /**
      * Split the graph in connected components (usually you will first prune the
      * graph to remove "weak" edges).
+     *
      * @return
      */
     ArrayList<Graph<T>> connectedComponents();
@@ -50,19 +50,21 @@ public interface GraphInterface<T> {
 
     /**
      * Get the neighborlist of this node
+     *
      * @param node
      * @return the neighborlist of this node
      */
     NeighborList get(Node node);
 
     int getK();
-    
+
     public Iterable<Node<T>> getNodes();
 
     SimilarityInterface<T> getSimilarity();
 
     /**
      * Remove from the graph all edges with a similarity lower than threshold
+     *
      * @param threshold
      */
     void prune(double threshold);
@@ -76,7 +78,7 @@ public interface GraphInterface<T> {
      * @return
      */
     public NeighborList search(T query, int K);
-    
+
     /**
      * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
      * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
@@ -105,9 +107,9 @@ public interface GraphInterface<T> {
      * @return
      */
     NeighborList search(T query, int K, double speedup, double expansion);
-    
-    public NeighborList searchExhaustive(T query, int K) 
-            throws InterruptedException,ExecutionException;
+
+    public NeighborList searchExhaustive(T query, int K)
+            throws InterruptedException, ExecutionException;
 
     void setK(int k);
 
@@ -119,16 +121,18 @@ public interface GraphInterface<T> {
      * Computes the strongly connected sub-graphs (where every node is reachable
      * from every other node) using Tarjan's algorithm, which has computation
      * cost O(n).
+     *
      * @return
      */
     ArrayList<Graph<T>> stronglyConnectedComponents();
 
     /**
      * Writes the graph as a GEXF file (to be used in Gephi, for example)
+     *
      * @param filename
      * @throws FileNotFoundException
      * @throws IOException
      */
     void writeGEXF(String filename) throws FileNotFoundException, IOException;
-    
+
 }

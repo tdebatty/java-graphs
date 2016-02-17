@@ -31,51 +31,54 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Compute the shortest path (measured as the number of 'hops' from this source 
+ * Compute the shortest path (measured as the number of 'hops' from this source
  * node to every other node in the graph using Dijkstra algorithm.
+ *
  * @author Thibault Debatty
  */
 public class Dijkstra {
 
     private final Graph graph;
-    private final Set<Node> settledNodes;
-    private final Set<Node> unSettledNodes;
+    private final Set<Node> settled_nodes;
+    private final Set<Node> unsettled_nodes;
     private final Map<Node, Node> predecessors;
     private final Map<Node, Integer> distances;
 
     /**
-     * Compute the shortest path from source node to every other node in the 
+     * Compute the shortest path from source node to every other node in the
      * graph.
-     * @param graph
-     * @param source 
+     *
+     * @param graph to use for computing path
+     * @param source node from which to compute distance to every other node
      */
-    public Dijkstra(Graph graph, Node source) {
+    public Dijkstra(final Graph graph, final Node source) {
 
         this.graph = graph;
 
-        settledNodes = new HashSet<Node>();
-        unSettledNodes = new HashSet<Node>();
+        settled_nodes = new HashSet<Node>();
+        unsettled_nodes = new HashSet<Node>();
         distances = new HashMap<Node, Integer>();
         predecessors = new HashMap<Node, Node>();
 
         distances.put(source, 0);
-        unSettledNodes.add(source);
+        unsettled_nodes.add(source);
 
-        while (unSettledNodes.size() > 0) {
-            Node node = getMinimum(unSettledNodes);
-            settledNodes.add(node);
-            unSettledNodes.remove(node);
+        while (unsettled_nodes.size() > 0) {
+            Node node = getMinimum(unsettled_nodes);
+            settled_nodes.add(node);
+            unsettled_nodes.remove(node);
             findMinimalDistances(node);
         }
     }
 
     /**
-     * Return the path from the source to the selected target
-     * @param target
+     * Return the path from the source to the selected target.
+     *
+     * @param target node to which we search the path
      * @return the path from the source to the selected target
      * @throws java.lang.Exception if no path exists to this target
      */
-    public LinkedList<Node> getPath(Node target) throws Exception {
+    public final LinkedList<Node> getPath(final Node target) throws Exception {
         LinkedList<Node> path = new LinkedList<Node>();
         Node step = target;
         // check if a path exists
@@ -94,11 +97,12 @@ public class Dijkstra {
 
     /**
      * Return the distance (measured as the number of hops) to the most distant
-     * node
+     * node.
+     *
      * @return the distance (measured as the number of hops) to the most distant
      * node
      */
-    public int getLargestDistance() {
+    public final int getLargestDistance() {
         int largest = 0;
         for (Integer distance : distances.values()) {
             if (distance > largest) {
@@ -108,23 +112,23 @@ public class Dijkstra {
         return largest;
     }
 
-    private void findMinimalDistances(Node node) {
-        if (! graph.containsKey(node) || graph.get(node) == null) {
+    private void findMinimalDistances(final Node node) {
+        if (!graph.containsKey(node) || graph.get(node) == null) {
             return;
         }
-        
+
         for (Neighbor neighbor : graph.get(node)) {
             Node target = neighbor.node;
 
             if (getShortestDistance(target) > (getShortestDistance(node) + 1)) {
                 distances.put(target, getShortestDistance(node) + 1);
                 predecessors.put(target, node);
-                unSettledNodes.add(target);
+                unsettled_nodes.add(target);
             }
         }
     }
 
-    private Node getMinimum(Set<Node> nodes) {
+    private Node getMinimum(final Set<Node> nodes) {
         Node minimum = null;
         for (Node node : nodes) {
             if (minimum == null) {
@@ -138,7 +142,7 @@ public class Dijkstra {
         return minimum;
     }
 
-    private int getShortestDistance(Node destination) {
+    private int getShortestDistance(final Node destination) {
         Integer d = distances.get(destination);
         if (d == null) {
             return Integer.MAX_VALUE;

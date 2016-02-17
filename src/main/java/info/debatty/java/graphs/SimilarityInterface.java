@@ -8,5 +8,6 @@ import java.io.Serializable;
  * @param <t>
  */
 public interface SimilarityInterface<t> extends Serializable {
+
     public double similarity(t value1, t value2);
 }
