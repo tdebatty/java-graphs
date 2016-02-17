@@ -21,13 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.io.Writer;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -45,11 +45,15 @@ import java.util.concurrent.Future;
 
 /**
  * k-nn graph, represented as a mapping node => neighborlist
+ *
  * @author Thibault Debatty
  * @param <T> The type of nodes value
  */
-public class Graph<T> implements GraphInterface<T> {
-    
+public class Graph<T> implements GraphInterface<T>, Serializable {
+
+    private static final double DEFAULT_EXPANSION = 1.2;
+    private static final int DEFAULT_SPEEDUP = 4;
+
     protected HashMap<Node<T>, NeighborList> map;
     protected SimilarityInterface<T> similarity;
     protected int k = 10;
@@ -73,34 +77,36 @@ public class Graph<T> implements GraphInterface<T> {
     public void setK(int k) {
         this.k = k;
     }
-            
+
     public Graph(int k) {
         this.k = k;
         this.map = new HashMap<Node<T>, NeighborList>();
     }
-    
+
     public Graph() {
         this.map = new HashMap<Node<T>, NeighborList>();
     }
-    
+
     /**
      * Get the neighborlist of this node
+     *
      * @param node
-     * @return the neighborlist of this node 
+     * @return the neighborlist of this node
      */
     @Override
     public NeighborList get(Node node) {
         return map.get(node);
     }
-    
+
     /**
      * Remove from the graph all edges with a similarity lower than threshold
-     * @param threshold 
+     *
+     * @param threshold
      */
     @Override
     public void prune(double threshold) {
         for (NeighborList nl : map.values()) {
-            
+
             // We cannot remove inside the loop
             // => do it in 2 steps:
             ArrayList<Neighbor> to_remove = new ArrayList<Neighbor>();
@@ -109,21 +115,22 @@ public class Graph<T> implements GraphInterface<T> {
                     to_remove.add(n);
                 }
             }
-            
+
             nl.removeAll(to_remove);
         }
     }
-    
+
     /**
      * Split the graph in connected components (usually you will first prune the
      * graph to remove "weak" edges).
-     * @return 
+     *
+     * @return
      */
     @Override
     public ArrayList<Graph<T>> connectedComponents() {
         ArrayList<Graph<T>> subgraphs = new ArrayList<Graph<T>>();
         ArrayList<Node<T>> nodes_to_process = new ArrayList<Node<T>>(map.keySet());
-        
+
         for (int i = 0; i < nodes_to_process.size(); i++) {
             Node n = nodes_to_process.get(i);
             if (n == null) {
@@ -131,66 +138,67 @@ public class Graph<T> implements GraphInterface<T> {
             }
             Graph<T> subgraph = new Graph<T>();
             subgraphs.add(subgraph);
-            
+
             addAndFollow(subgraph, n, nodes_to_process);
         }
-        
+
         return subgraphs;
     }
-    
+
     private void addAndFollow(Graph<T> subgraph, Node<T> node, ArrayList<Node<T>> nodes_to_process) {
         nodes_to_process.remove(node);
-        
+
         NeighborList neighborlist = this.get(node);
         subgraph.put(node, neighborlist);
-        
+
         if (neighborlist == null) {
             return;
         }
-        
+
         for (Neighbor neighbor : this.get(node)) {
-            if (! subgraph.containsKey(neighbor.node)) {
+            if (!subgraph.containsKey(neighbor.node)) {
                 addAndFollow(subgraph, neighbor.node, nodes_to_process);
             }
         }
     }
-    
+
     /**
-     * Computes the strongly connected sub-graphs (where every node is reachable 
+     * Computes the strongly connected sub-graphs (where every node is reachable
      * from every other node) using Tarjan's algorithm, which has computation
      * cost O(n).
-     * @return 
+     *
+     * @return
      */
     @Override
     public ArrayList<Graph<T>> stronglyConnectedComponents() {
         Stack<Node> stack = new Stack<Node>();
         Index index = new Index();
         HashMap<Node, NodeProperty> bookkeeping = new HashMap<Node, NodeProperty>(map.size());
-        
+
         ArrayList<Graph<T>> connected_components = new ArrayList<Graph<T>>();
-        
+
         for (Node n : map.keySet()) {
-            
+
             if (bookkeeping.containsKey(n)) {
                 // This node was already processed...
                 continue;
             }
-            
+
             ArrayList<Node> connected_component = this.strongConnect(n, stack, index, bookkeeping);
-            
+
             if (connected_component == null) {
                 continue;
             }
-            
+
             // We found a connected component
             Graph<T> subgraph = new Graph<T>(connected_component.size());
             for (Node node : connected_component) {
                 subgraph.put(node, this.get(node));
             }
             connected_components.add(subgraph);
-            
+
         }
-        
+
         return connected_components;
     }
 
@@ -198,43 +206,41 @@ public class Graph<T> implements GraphInterface<T> {
         bookkeeping.put(v, new NodeProperty(index.Value(), index.Value()));
         index.Inc();
         stack.add(v);
-        
-        
+
         for (Neighbor neighbor : this.get(v)) {
             Node w = neighbor.node;
-            
-            if (! this.containsKey(w) || this.get(w) == null) {
+
+            if (!this.containsKey(w) || this.get(w) == null) {
                 continue;
             }
-            
-            
-            if (! bookkeeping.containsKey(w)) {
+
+            if (!bookkeeping.containsKey(w)) {
                 strongConnect(w, stack, index, bookkeeping);
                 bookkeeping.get(v).lowlink = Math.min(
                         bookkeeping.get(v).lowlink,
                         bookkeeping.get(w).lowlink);
-                
-            } else if(bookkeeping.get(neighbor.node).onstack) {
+
+            } else if (bookkeeping.get(neighbor.node).onstack) {
                 bookkeeping.get(v).lowlink = Math.min(
                         bookkeeping.get(v).lowlink,
                         bookkeeping.get(w).index);
-                
+
             }
         }
-        
+
         if (bookkeeping.get(v).lowlink == bookkeeping.get(v).index) {
             ArrayList<Node> connected_component = new ArrayList<Node>();
-            
+
             Node w;
             do {
-                 w = stack.pop();
+                w = stack.pop();
                 bookkeeping.get(w).onstack = false;
                 connected_component.add(w);
             } while (v != w);
-            
+
             return connected_component;
         }
-        
+
         return null;
     }
 
@@ -257,36 +263,37 @@ public class Graph<T> implements GraphInterface<T> {
     public Iterable<Map.Entry<Node<T>, NeighborList>> entrySet() {
         return map.entrySet();
     }
-    
+
     private static class Index {
+
         private int value;
-        
+
         public int Value() {
             return this.value;
         }
-        
+
         public void Inc() {
             this.value++;
         }
     }
-    
+
     private static class NodeProperty {
 
         public int index;
         public int lowlink;
         public boolean onstack;
-        
+
         public NodeProperty(int index, int lowlink) {
             this.index = index;
             this.lowlink = lowlink;
             this.onstack = true;
         }
     };
-    
+
     public Iterable<Node<T>> getNodes() {
         return map.keySet();
     }
-    
+
     /**
      *
      * @param query
@@ -295,27 +302,26 @@ public class Graph<T> implements GraphInterface<T> {
      * @throws InterruptedException
      * @throws java.util.concurrent.ExecutionException
      */
-    public NeighborList searchExhaustive(T query, int K) 
-            throws InterruptedException,ExecutionException {
-        
+    public NeighborList searchExhaustive(T query, int K)
+            throws InterruptedException, ExecutionException {
+
         // Read all nodes
         ArrayList<Node<T>> nodes = new ArrayList<Node<T>>();
         for (Node<T> node : getNodes()) {
             nodes.add(node);
         }
-        
-        
+
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService pool = Executors.newFixedThreadPool(procs);
         List<Future<NeighborList>> results = new ArrayList();
-        
+
         for (int i = 0; i < procs; i++) {
             int start = nodes.size() / procs * i;
             int stop = Math.min(nodes.size() / procs * (i + 1), nodes.size());
-            
+
             results.add(pool.submit(new SearchTask(nodes, query, start, stop)));
         }
-        
+
         // Reduce
         NeighborList neighbors = new NeighborList(K);
         for (Future<NeighborList> future : results) {
@@ -324,65 +330,74 @@ public class Graph<T> implements GraphInterface<T> {
         pool.shutdown();
         return neighbors;
     }
-    
-    @Override
-    public NeighborList search(T query, int K) {
-        return search(query, K, 4);
-    }
-    
+
     /**
-     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
-     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
+     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
+     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
      * Neighbor Graph" by Hajebi et al.
-     * 
+     *
+     * Default speedup is 4.
+     *
      * @param query
-     * @param K search K neighbors
+     * @param k search K neighbors
      * @return
      */
     @Override
-    public NeighborList search(T query, int K, double speedup) {
-        
-        return this.search(
-                query,
-                K,
-                speedup,
-                1.01); // default expansion value
+    public final NeighborList search(final T query, final int k) {
+        return search(query, k, DEFAULT_SPEEDUP);
     }
-    
+
     /**
-     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm 
-     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest 
+     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
+     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
      * Neighbor Graph" by Hajebi et al.
-     * 
-     * The algorithm is basically a best-first search method with random 
-     * starting points.
-     * 
-     * @param query query point
-     * @param K number of neighbors to find (the K from K-nn search)
-     * @param expansion (default: 1.01)
-     * 
+     *
+     * @param query
+     * @param k search k neighbors
+     * @param speedup speedup for searching (> 1)
      * @return
      */
     @Override
-    public NeighborList search(
-            T query, 
-            int K, 
-            double speedup,
-            double expansion) {
-        
+    public final NeighborList search(
+            final T query, final int k, final double speedup) {
+
+        return this.search(query, k, speedup, DEFAULT_EXPANSION);
+    }
+
+    /**
+     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
+     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
+     * Neighbor Graph" by Hajebi et al.
+     *
+     * The algorithm is basically a best-first search method with random
+     * starting points.
+     *
+     * @param query query point
+     * @param k number of neighbors to find (the K from K-nn search)
+     * @param speedup (default: 4)
+     * @param expansion (default: 1.2)
+     *
+     * @return
+     */
+    @Override
+    public final NeighborList search(
+            final T query,
+            final int k,
+            final double speedup,
+            final double expansion) {
+
         if (speedup <= 1.0) {
             throw new InvalidParameterException("Speedup should be > 1.0");
         }
-        
+
         int max_similarities = (int) (map.size() / speedup);
-        
-        
+
         // Looking for more nodes than this graph contains...
         // Or fall back to exhaustive search
-        if (    K >= map.size() || 
-                max_similarities >= map.size() ) {
-            
-            NeighborList nl = new NeighborList(K);
+        if (k >= map.size()
+                || max_similarities >= map.size()) {
+
+            NeighborList nl = new NeighborList(k);
             for (Node<T> node : map.keySet()) {
                 nl.add(
                         new Neighbor(
@@ -393,28 +408,28 @@ public class Graph<T> implements GraphInterface<T> {
             }
             return nl;
         }
-        
+
         // Node => Similarity with query node
         HashMap<Node<T>, Double> visited_nodes = new HashMap<Node<T>, Double>();
         int computed_similarities = 0;
         double global_highest_similarity = 0;
         ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(map.keySet());
         Random rand = new Random();
-        
+
         while (true) { // Restart...
             //System.out.println("Restart...");
             if (computed_similarities >= max_similarities) {
                 break;
             }
-            
+
             // Select a random node from the graph
             Node<T> current_node = nodes.get(rand.nextInt(nodes.size()));
-            
+
             // Already been here => restart
             if (visited_nodes.containsKey(current_node)) {
                 continue;
             }
-            
+
             // starting point too far (similarity too small) => restart!
             double restart_similarity = similarity.similarity(
                     query,
@@ -423,84 +438,85 @@ public class Graph<T> implements GraphInterface<T> {
             if (restart_similarity < global_highest_similarity / expansion) {
                 continue;
             }
-            
-            while(computed_similarities < max_similarities) {
-                
+
+            while (computed_similarities < max_similarities) {
+
                 NeighborList nl = this.get(current_node);
-                
+
                 // Node has no neighbor => restart!
                 if (nl == null) {
                     break;
                 }
-                
+
                 // Check all neighbors and try to find a node with higher similarity
                 Iterator<Neighbor> Y_nl_iterator = nl.iterator();
                 Node<T> node_higher_similarity = null;
                 while (Y_nl_iterator.hasNext()) {
-                    
+
                     Node<T> other_node = Y_nl_iterator.next().node;
-                    
+
                     if (visited_nodes.containsKey(other_node)) {
                         continue;
                     }
-                    
+
                     // Compute similarity to query
                     double sim = similarity.similarity(
                             query,
                             other_node.value);
                     computed_similarities++;
                     visited_nodes.put(other_node, sim);
-                    
+
                     // If this node provides an improved similarity, keep it
                     if (sim > restart_similarity) {
                         node_higher_similarity = other_node;
                         restart_similarity = sim;
-                        
+
                         // early break...
                         break;
                     }
                 }
-                
-                // No node provides higher similarity 
+
+                // No node provides higher similarity
                 // => we reached the end of this track...
                 // => restart!
                 if (node_higher_similarity == null) {
-                    
+
                     if (restart_similarity > global_highest_similarity) {
                         global_highest_similarity = restart_similarity;
                     }
                     break;
                 }
-                
+
                 current_node = node_higher_similarity;
-            } // for (int step = 0; step < search_depth; step++) {
-        } // while (true) { // Restart...
-        
-        NeighborList neighborList = new NeighborList(K);
+            }
+        }
+
+        NeighborList neighborList = new NeighborList(k);
         for (Map.Entry<Node<T>, Double> entry : visited_nodes.entrySet()) {
             neighborList.add(new Neighbor(entry.getKey(), entry.getValue()));
         }
         return neighborList;
     }
-    
+
     /**
      * Writes the graph as a GEXF file (to be used in Gephi, for example)
+     *
      * @param filename
      * @throws FileNotFoundException
-     * @throws IOException 
+     * @throws IOException
      */
     @Override
     public void writeGEXF(String filename) throws FileNotFoundException, IOException {
         Writer out = new OutputStreamWriter(new FileOutputStream(filename));
         out.write(GEXF_HEADER);
-        
+
         // Write nodes
         out.write("<nodes>\n");
         for (Node node : map.keySet()) {
             out.write("<node id=\"" + node.id + "\" label=\"" + node.id + "\" />\n");
         }
         out.write("</nodes>\n");
-            
+
         // Write edges
         out.write("<edges>\n");
         int i = 0;
@@ -512,36 +528,37 @@ public class Graph<T> implements GraphInterface<T> {
                 i++;
             }
         }
-            
+
         out.write("</edges>");
-                    
+
         // End the file
-        out.write("</graph>\n" +
-                "</gexf>");
+        out.write("</graph>\n"
+                + "</gexf>");
         out.close();
     }
-    
-    private static final String GEXF_HEADER = 
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<gexf xmlns=\"http://www.gexf.net/1.2draft\" version=\"1.2\">\n" +
-            "<meta>\n" +
-            "<creator>info.debatty.java.graphs.Graph</creator>\n" +
-            "<description></description>\n" +
-            "</meta>\n" +
-            "<graph mode=\"static\" defaultedgetype=\"directed\">\n";
+
+    private static final String GEXF_HEADER
+            = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<gexf xmlns=\"http://www.gexf.net/1.2draft\" version=\"1.2\">\n"
+            + "<meta>\n"
+            + "<creator>info.debatty.java.graphs.Graph</creator>\n"
+            + "<description></description>\n"
+            + "</meta>\n"
+            + "<graph mode=\"static\" defaultedgetype=\"directed\">\n";
 
     private class SearchTask implements Callable<NeighborList> {
+
         private final ArrayList<Node<T>> nodes;
         private final T query;
         private final int start;
         private final int stop;
 
         public SearchTask(
-                ArrayList<Node<T>> nodes, 
-                T query, 
-                int start, 
+                ArrayList<Node<T>> nodes,
+                T query,
+                int start,
                 int stop) {
-            
+
             this.nodes = nodes;
             this.query = query;
             this.start = start;
@@ -553,11 +570,11 @@ public class Graph<T> implements GraphInterface<T> {
             for (int i = start; i < stop; i++) {
                 Node<T> other = nodes.get(i);
                 nl.add(new Neighbor(
-                        other, 
+                        other,
                         similarity.similarity(query, other.value)));
             }
             return nl;
-            
+
         }
     }
 }
