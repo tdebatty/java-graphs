@@ -2,7 +2,6 @@ package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Node;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,37 +18,18 @@ import java.util.concurrent.Future;
  */
 public class ThreadedNNDescent<T> extends NNDescent<T> {
 
-    protected int thread_count = 4;
-
-    /**
-     * Set the number of threads Default is 4
-     *
-     * @param thread_count
-     */
-    public void setThreadCount(int thread_count) {
-        if (thread_count <= 0) {
-            throw new InvalidParameterException("thread_count should be > 0");
-        }
-
-        this.thread_count = thread_count;
-    }
-
-    public int getThreadCount() {
-        return thread_count;
-    }
-
-    private ExecutorService executor;
-
     // Internal state, used by worker objects
-    List<Node<T>> nodes;
-    Graph<T> neighborlists;
-    HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
+    private int cores;
+    private List<Node<T>> nodes;
+    private Graph<T> neighborlists;
+    private HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2,
+            new_lists_2;
 
     @Override
-    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
-
+    protected final Graph<T> _computeGraph(final List<Node<T>> nodes) {
         // Create worker threads
-        executor = Executors.newFixedThreadPool(thread_count);
+        cores = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(cores);
 
         iterations = 0;
 
@@ -94,7 +74,7 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
             ArrayList<Future<Integer>> list = new ArrayList<Future<Integer>>();
             // Start threads...
-            for (int t = 0; t < thread_count; t++) {
+            for (int t = 0; t < cores; t++) {
                 list.add(executor.submit(new ThreadedNNDescent.NNThread(t)));
 
             }
@@ -113,7 +93,8 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                 data.put("computed_similarities", computed_similarities);
                 data.put("iterations", iterations);
                 data.put("computed_similarities_ratio",
-                        (double) computed_similarities / (nodes.size() * (nodes.size() - 1) / 2));
+                        (double) computed_similarities
+                                / (nodes.size() * (nodes.size() - 1) / 2));
                 callback.call(data);
             }
 
@@ -140,11 +121,14 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         return n;
     }
 
+    /**
+     *
+     */
     class NNThread implements Callable<Integer> {
 
-        int slice;
+        private final int slice;
 
-        public NNThread(int slice) {
+        NNThread(final int slice) {
             this.slice = slice;
         }
 
@@ -152,11 +136,11 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         public Integer call() {
             int c = 0;
             // for v ∈ V do
-            int start = slice * nodes.size() / thread_count;
-            int end = (slice + 1) * nodes.size() / thread_count;
+            int start = slice * nodes.size() / cores;
+            int end = (slice + 1) * nodes.size() / cores;
 
             // Last slice should go to the end...
-            if (slice == (thread_count - 1)) {
+            if (slice == (cores - 1)) {
                 end = nodes.size();
             }
 
@@ -164,8 +148,14 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                 Node v = nodes.get(i);
                 // old[v]←− old[v] ∪ Sample(old′[v], ρK)
                 // new[v]←− new[v] ∪ Sample(new′[v], ρK)
-                old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * k))));
-                new_lists.put(v, Union(new_lists.get(v), Sample(new_lists_2.get(v), (int) (rho * k))));
+                old_lists.put(v,
+                        Union(
+                                old_lists.get(v),
+                                Sample(old_lists_2.get(v), (int) (rho * k))));
+                new_lists.put(v,
+                        Union(
+                                new_lists.get(v),
+                                Sample(new_lists_2.get(v), (int) (rho * k))));
 
                 // for u1,u2 ∈ new[v], u1 < u2 do
                 for (int j = 0; j < new_lists.get(v).size(); j++) {

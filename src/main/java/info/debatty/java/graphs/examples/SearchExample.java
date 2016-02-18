@@ -91,7 +91,7 @@ public class SearchExample {
             }
             System.out.println(resultset_linear);
 
-            correct += resultset_gnss.CountCommons(resultset_linear);
+            correct += resultset_gnss.countCommons(resultset_linear);
         }
 
         System.out.println("Correct: " + correct + " / " + tests);

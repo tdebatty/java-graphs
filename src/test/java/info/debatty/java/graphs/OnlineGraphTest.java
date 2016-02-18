@@ -100,7 +100,7 @@ public class OnlineGraphTest extends TestCase {
 
         int correct = 0;
         for (Node<Double> node : data) {
-            correct += graph.get(node).CountCommons(validation_graph.get(node));
+            correct += graph.get(node).countCommons(validation_graph.get(node));
         }
         System.out.println("Found " + correct + " correct edges");
         System.out.printf("= %f \n", 100.0 * correct / (10 * data.size()));

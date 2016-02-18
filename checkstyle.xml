@@ -83,6 +83,8 @@
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
         <module name="JavadocMethod">
           <property name="scope" value="public"/>
+          <property name="allowMissingReturnTag" value="true" />
+          <property name="allowMissingParamTags" value="true" />
         </module>
         <module name="JavadocType"/>
         <module name="JavadocVariable">

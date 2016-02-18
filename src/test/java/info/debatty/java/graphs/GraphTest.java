@@ -165,7 +165,7 @@ public class GraphTest extends TestCase {
 
             // Search the (real) most similar
             NeighborList exhaustive_result = graph.searchExhaustive(query, 1);
-            correct += approximate_result.CountCommonValues(exhaustive_result);
+            correct += approximate_result.countCommons(exhaustive_result);
 
         }
 

@@ -92,7 +92,7 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
 
         int correct = 0;
         for (Node node : nodes) {
-            correct += approximate_graph.get(node).CountCommonValues(exact_graph.get(node));
+            correct += approximate_graph.get(node).countCommons(exact_graph.get(node));
         }
 
         System.out.println("Theoretical speedup: " + this.estimatedSpeedup());

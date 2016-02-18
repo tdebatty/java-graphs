@@ -56,7 +56,6 @@ public class ThreadedNNDescentExample {
 
         // Instantiate and configure the algorithm
         ThreadedNNDescent builder = new ThreadedNNDescent<Double>();
-        builder.setThreadCount(3);
         builder.setK(k);
         builder.setSimilarity(similarity);
         builder.setMaxIterations(20);

@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Stack;
 import java.util.concurrent.Callable;
@@ -99,7 +100,17 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
     }
 
     /**
-     * Remove from the graph all edges with a similarity lower than threshold
+     * Get the first node in the graph.
+     *
+     * @return The first node in the graph
+     * @throws NoSuchElementException if the graph is empty...
+     */
+    public final Node<T> first() throws NoSuchElementException {
+        return this.getNodes().iterator().next();
+    }
+
+    /**
+     * Remove from the graph all edges with a similarity lower than threshold.
      *
      * @param threshold
      */

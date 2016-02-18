@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
@@ -35,9 +36,9 @@ import junit.framework.TestCase;
  *
  * @author Thibault Debatty
  */
-public class NNDescentTest extends TestCase {
+public class ThreadedBruteTest extends TestCase {
 
-    public NNDescentTest(String testName) {
+    public ThreadedBruteTest(String testName) {
         super(testName);
     }
 
@@ -54,48 +55,49 @@ public class NNDescentTest extends TestCase {
     public void testComputeGraph() {
         System.out.println("computeGraph");
 
-        int n = 2000;
+        int count = 5500;
         int k = 10;
 
         // Generate some nodes
-        Random rand = new Random();
-        ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(n);
-        for (int i = 0; i < n; i++) {
-            nodes.add(new Node<Integer>(String.valueOf(i), rand.nextInt()));
+        Random r = new Random();
+        ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(count);
+        for (int i = 0; i < count; i++) {
+            // The value of our nodes will be an int
+            nodes.add(new Node<Integer>(String.valueOf(i), r.nextInt(100 * count)));
         }
-
-        SimilarityInterface<Integer> sim = new SimilarityInterface<Integer>() {
+        // Define the similarity
+        SimilarityInterface<Integer> similarity =
+                new SimilarityInterface<Integer>() {
 
             public double similarity(Integer value1, Integer value2) {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
         };
 
-        // Instantiate and configure the brute-force graph building algorithm
-        NNDescent<Integer> nndes = new NNDescent<Integer>();
-        nndes.setK(k);
-        nndes.setSimilarity(sim);
-        nndes.setDelta(0.1);
-        nndes.setMaxIterations(10);
-        nndes.setRho(0.6);
+        System.out.println("Multi threaded graph builder...");
+        ThreadedBrute<Integer> threaded_builder = new ThreadedBrute<Integer>();
+        threaded_builder.setK(k);
+        threaded_builder.setSimilarity(similarity);
+        Graph<Integer> threaded_graph = threaded_builder.computeGraph(nodes);
 
-        // Run the algorithm, and get the resulting neighbor lists
-        Graph<Integer> graph = nndes.computeGraph(nodes);
 
-        // Test using brute builder
-        Brute brute = new Brute();
-        brute.setK(k);
-        brute.setSimilarity(sim);
-        Graph exact_graph = brute.computeGraph(nodes);
+        System.out.println("Single thread graph builder...");
+        Brute builder = new Brute<Integer>();
+        builder.setK(k);
+        builder.setSimilarity(similarity);
+        Graph<Integer> graph = builder.computeGraph(nodes);
 
-        int correct = 0;
-        for (Node<Integer> node : nodes) {
-            correct += graph.get(node).countCommons(exact_graph.get(node));
+        Node<Integer> first_node = graph.first();
+        System.out.println(threaded_graph.get(first_node));
+        assertEquals(graph.get(first_node).countCommons(threaded_graph.get(first_node)), k);
+
+        int correct_edges = 0;
+        for (Node n : nodes) {
+            correct_edges += graph.get(n).countCommons(threaded_graph.get(n));
         }
-        System.out.println("found " + correct + " correct edges");
-        System.out.println("" + 100.0 * correct / (n * k) + "%");
-        assertTrue((1.0 * correct / (n * k)) > 0.8);
 
+        assertEquals(count, graph.size());
+        assertEquals(count * k, correct_edges);
     }
 
 }

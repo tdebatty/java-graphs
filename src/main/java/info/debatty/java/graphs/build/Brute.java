@@ -15,7 +15,7 @@ import java.util.List;
 public class Brute<T> extends GraphBuilder<T> {
 
     @Override
-    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
+    protected final Graph<T> _computeGraph(final List<Node<T>> nodes) {
 
         int n = nodes.size();
 
@@ -29,7 +29,7 @@ public class Brute<T> extends GraphBuilder<T> {
         double sim;
         Node n1;
         Node n2;
-        HashMap<String, Object> data = new HashMap<String, Object>();
+        HashMap<String, Object> callback_data = new HashMap<String, Object>();
 
         for (int i = 0; i < n; i++) {
 
@@ -44,9 +44,11 @@ public class Brute<T> extends GraphBuilder<T> {
             }
 
             if (callback != null) {
-                data.put("node_id", n1.id);
-                data.put("computed_similarities", computed_similarities);
-                callback.call(data);
+                callback_data.put("node_id", n1.id);
+                callback_data.put(
+                        "computed_similarities",
+                        computed_similarities);
+                callback.call(callback_data);
 
             }
         }
