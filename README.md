@@ -4,15 +4,19 @@
 
 Java implementation of various algorithms that build and proces k-nearest neighbors graph (k-nn graph).
 
-Some of these algorithms build a k-nn graph independantly of the data type and similarity metric:
-* Brute-force
-* (Multi-threaded) NN-Descent
+Graph building algorithms:
+* (Multi-threaded) Brute-force: works with any similarity measure;
+* (Multi-threaded) NN-Descent: works with any similarity measure;
+* Online graph building, as published in ["Fast Online k-nn Graph Building"](http://arxiv.org/abs/1602.06819);
+* NNCTPH, as published in ["Building k-nn graphs from large text data"](http://dx.doi.org/10.1109/BigData.2014.7004276), for text datasets;
+
+
 
 Implemented processing algorithms:
-* Dijkstra algorithm to compute the shortest path between two nodes.
-* Graph Nearest Neighbor Search (GNNS) algorithm from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest Neighbor Graph" by Hajebi et al. This algorithm uses a k-nn graph to efficiently search the most similar node of a query point.
-* Pruning (remove all edges for which the similarity is less than a threshold).
-* Tarjan's algorithm to compute strongly connected subgraphs (where every node is reachable from every other node).
+* Dijkstra algorithm to compute the shortest path between two nodes;
+* Improved Graph based Nearest Neighbor Search (iGNNS) algorithm, as published in ["Fast Online k-nn Graph Building"](http://arxiv.org/abs/1602.06819);
+* Pruning (remove all edges for which the similarity is less than a threshold);
+* Tarjan's algorithm to compute strongly connected subgraphs (where every node is reachable from every other node);
 * Weakly connected components.
 
 For the complete list, check the [documentation](http://api123.io/api/java-graphs/head/index.html) or the [examples](https://github.com/tdebatty/java-graphs/tree/master/src/main/java/info/debatty/java/graphs/examples).

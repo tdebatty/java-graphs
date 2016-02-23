@@ -45,7 +45,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * k-nn graph, represented as a mapping node => neighborlist
+ * k-nn graph, represented as a mapping node => neighborlist.
  *
  * @author Thibault Debatty
  * @param <T> The type of nodes value
@@ -343,12 +343,12 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
     }
 
     /**
-     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
-     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
-     * Neighbor Graph" by Hajebi et al.
-     *
+     * Approximate fast graph based search, as published in "Fast Online k-nn
+     * Graph Building" by Debatty et al.
      * Default speedup is 4.
      *
+     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+     * Building</a>
      * @param query
      * @param k search K neighbors
      * @return
@@ -359,13 +359,14 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
     }
 
     /**
-     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
-     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
-     * Neighbor Graph" by Hajebi et al.
+     * Approximate fast graph based search, as published in "Fast Online k-nn
+     * Graph Building" by Debatty et al.
      *
+     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+     * Building</a>
      * @param query
      * @param k search k neighbors
-     * @param speedup speedup for searching (> 1)
+     * @param speedup speedup for searching (> 1, default 4)
      * @return
      */
     @Override
@@ -376,13 +377,11 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
     }
 
     /**
-     * Improved implementation of Graph Nearest Neighbor Search (GNNS) algorithm
-     * from paper "Fast Approximate Nearest-Neighbor Search with k-Nearest
-     * Neighbor Graph" by Hajebi et al.
+     * Approximate fast graph based search, as published in "Fast Online k-nn
+     * Graph Building" by Debatty et al.
      *
-     * The algorithm is basically a best-first search method with random
-     * starting points.
-     *
+     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+     * Building</a>
      * @param query query point
      * @param k number of neighbors to find (the K from K-nn search)
      * @param speedup (default: 4)
@@ -459,7 +458,8 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
                     break;
                 }
 
-                // Check all neighbors and try to find a node with higher similarity
+                // Check all neighbors and try to find a node with higher
+                // similarity
                 Iterator<Neighbor> Y_nl_iterator = nl.iterator();
                 Node<T> node_higher_similarity = null;
                 while (Y_nl_iterator.hasNext()) {
@@ -502,15 +502,15 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
             }
         }
 
-        NeighborList neighborList = new NeighborList(k);
+        NeighborList neighbor_list = new NeighborList(k);
         for (Map.Entry<Node<T>, Double> entry : visited_nodes.entrySet()) {
-            neighborList.add(new Neighbor(entry.getKey(), entry.getValue()));
+            neighbor_list.add(new Neighbor(entry.getKey(), entry.getValue()));
         }
-        return neighborList;
+        return neighbor_list;
     }
 
     /**
-     * Writes the graph as a GEXF file (to be used in Gephi, for example)
+     * Writes the graph as a GEXF file (to be used in Gephi, for example).
      *
      * @param filename
      * @throws FileNotFoundException
@@ -564,7 +564,7 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
         private final int start;
         private final int stop;
 
-        public SearchTask(
+        SearchTask(
                 ArrayList<Node<T>> nodes,
                 T query,
                 int start,

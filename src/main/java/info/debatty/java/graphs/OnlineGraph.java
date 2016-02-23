@@ -32,52 +32,79 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
+ * Implementation of approximate online graph building algorithm, as presented
+ * in "Fast Online k-nn Graph Building" by Debatty et al.
  *
+ * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+ * Building</a>
  * @author Thibault Debatty
  * @param <T>
  */
 public class OnlineGraph<T> implements GraphInterface<T> {
 
-    protected Graph<T> graph;
-    protected int update_depth;
+    private final Graph<T> graph;
+    private int update_depth;
 
     protected static final int DEFAULT_UPDATE_DEPTH = 3;
+    protected static final double DEFAULT_SEARCH_SPEEDUP = 4.0;
 
-    public OnlineGraph(Graph<T> initial) {
+    /**
+     * Implementation of approximate online graph building algorithm, as
+     * presented in "Fast Online k-nn Graph Building" by Debatty et al.
+     *
+     * Start with an initial graph.
+     *
+     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+     * Building</a>
+     * @param initial
+     */
+    public OnlineGraph(final Graph<T> initial) {
         this.graph = initial;
         this.update_depth = DEFAULT_UPDATE_DEPTH;
     }
 
-    public OnlineGraph() {
-        this.graph = new Graph<T>();
-        this.update_depth = DEFAULT_UPDATE_DEPTH;
-    }
-
-    public OnlineGraph(int k) {
+    /**
+     * Implementation of approximate online graph building algorithm, as
+     * presented in "Fast Online k-nn Graph Building" by Debatty et al.
+     *
+     * Start with an empty graph.
+     *
+     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+     * Building</a>
+     * @param k number of edges per node
+     */
+    public OnlineGraph(final int k) {
         this.graph = new Graph<T>(k);
         this.update_depth = DEFAULT_UPDATE_DEPTH;
     }
 
-    public void setDepth(int update_depth) {
+    /**
+     * Modify the depth for updating existing edges (default is 2).
+     * @param update_depth
+     */
+    public final void setDepth(final int update_depth) {
         this.update_depth = update_depth;
     }
 
     /**
+     * Add a node to the online graph, using a speedup of 4 compared to
+     * exhaustive search.
      *
      * @param node
      * @return
      */
-    public int addNode(Node<T> node) {
-        return addNode(node, 4);
+    public final int addNode(final Node<T> node) {
+        return addNode(node, DEFAULT_SEARCH_SPEEDUP);
     }
 
     /**
+     * Add a node to the online graph.
      *
      * @param node
-     * @param speedup
+     * @param speedup compared to exhaustive search
      * @return
      */
-    public int addNode(Node<T> node, double speedup) {
+    public final int addNode(final Node<T> node, final double speedup) {
 
         NeighborList neighborlist = graph.search(node.value, graph.k, speedup);
         graph.put(node, neighborlist);
@@ -102,7 +129,8 @@ public class OnlineGraph<T> implements GraphInterface<T> {
                 Node other = analyze.pop();
                 NeighborList other_neighborlist = graph.get(other);
 
-                // Add neighbors to the list of nodes to analyze at next iteration
+                // Add neighbors to the list of nodes to analyze at
+                // next iteration
                 for (Neighbor other_neighbor : other_neighborlist) {
                     if (!visited.containsKey(other_neighbor.node)) {
                         next_analyze.add(other_neighbor.node);
@@ -127,7 +155,7 @@ public class OnlineGraph<T> implements GraphInterface<T> {
         return similarities;
     }
 
-    public ArrayList<Graph<T>> connectedComponents() {
+    public final ArrayList<Graph<T>> connectedComponents() {
         return graph.connectedComponents();
     }
 
