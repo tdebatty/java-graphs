@@ -38,20 +38,6 @@ import junit.framework.TestCase;
  */
 public class OnlineGraphTest extends TestCase {
 
-    public OnlineGraphTest(String testName) {
-        super(testName);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
-
     /**
      * Test of addNode method, of class OnlineGraph.
      */
@@ -89,7 +75,7 @@ public class OnlineGraphTest extends TestCase {
             Node<Double> query = new Node<Double>(
                     String.valueOf(graph.size()), 400.0 * rand.nextDouble());
 
-            graph.addNode(query);
+            graph.add(query);
             data.add(query);
         }
 
@@ -105,6 +91,55 @@ public class OnlineGraphTest extends TestCase {
         System.out.println("Found " + correct + " correct edges");
         System.out.printf("= %f \n", 100.0 * correct / (10 * data.size()));
         assertTrue(1.0 * correct / (10 * data.size()) > 0.5);
+
+    }
+
+    public void testRemove() {
+        System.out.println("removeNode");
+
+        int n = 1000;
+        int n_test = 100;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("compute initial graph...");
+        GraphBuilder builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        OnlineGraph<Double> graph = new OnlineGraph<Double>(builder.computeGraph(data));
+
+        System.out.println("Remove some nodes...");
+        for (int i = 0; i < n_test; i++) {
+            Node<Double> query = data.get(rand.nextInt(data.size() - 1));
+
+            graph.remove(query);
+            data.remove(query);
+
+            for (Node node : graph.getNodes()) {
+                assertEquals(10, graph.get(node).size());
+                assertTrue(
+                        "Graph still contains references to deleted node!!!",
+                        !graph.get(node).containsNode(query));
+            }
+        }
+
+        assertEquals(n - n_test, graph.size());
+
 
     }
 

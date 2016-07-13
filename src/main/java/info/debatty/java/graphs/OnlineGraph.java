@@ -93,8 +93,8 @@ public class OnlineGraph<T> implements GraphInterface<T> {
      * @param node
      * @return
      */
-    public final int addNode(final Node<T> node) {
-        return addNode(node, DEFAULT_SEARCH_SPEEDUP);
+    public final int add(final Node<T> node) {
+        return add(node, DEFAULT_SEARCH_SPEEDUP);
     }
 
     /**
@@ -104,7 +104,7 @@ public class OnlineGraph<T> implements GraphInterface<T> {
      * @param speedup compared to exhaustive search
      * @return
      */
-    public final int addNode(final Node<T> node, final double speedup) {
+    public final int add(final Node<T> node, final double speedup) {
 
         NeighborList neighborlist = graph.search(node.value, graph.k, speedup);
         graph.put(node, neighborlist);
@@ -153,6 +153,91 @@ public class OnlineGraph<T> implements GraphInterface<T> {
         }
 
         return similarities;
+    }
+
+    /**
+     * Remove a node from the graph (and update the graph) using fast
+     * approximate algorithm.
+     * @param node_to_remove
+     * @return the number of similarities that were computed.
+     */
+    public final int remove(final Node<T> node_to_remove) {
+        // Build the list of nodes to update
+        LinkedList<Node<T>> nodes_to_update = new LinkedList<Node<T>>();
+
+        for (Node<T> node : this.graph.getNodes()) {
+            NeighborList nl = graph.get(node);
+            if (nl.containsNode(node_to_remove)) {
+                nodes_to_update.add(node);
+                nl.removeNode(node_to_remove);
+            }
+        }
+
+        // Build the list of candidates
+        LinkedList<Node<T>> initial_candidates = new LinkedList<Node<T>>();
+        initial_candidates.add(node_to_remove);
+        initial_candidates.addAll(nodes_to_update);
+
+        LinkedList<Node<T>> candidates = propagate(initial_candidates);
+        while (candidates.contains(node_to_remove)) {
+            candidates.remove(node_to_remove);
+        }
+
+        // Update the nodes_to_update
+        int similarities = 0;
+        for (Node<T> node_to_update : nodes_to_update) {
+            NeighborList nl_to_update = graph.get(node_to_update);
+            for (Node<T> candidate : candidates) {
+                similarities++;
+                double similarity = graph.similarity.similarity(
+                        node_to_update.value,
+                        candidate.value);
+
+                nl_to_update.add(new Neighbor(candidate, similarity));
+            }
+        }
+
+        // Remove node_to_remove
+        graph.map.remove(node_to_remove);
+
+        return similarities;
+
+    }
+
+    private LinkedList<Node<T>> propagate(
+            final LinkedList<Node<T>> initial_candidates) {
+        LinkedList<Node<T>> candidates = new LinkedList<Node<T>>();
+        candidates.addAll(initial_candidates);
+
+        // I can NOT loop over candidates as I will add items to it inside the
+        // loop!
+        for (Node<T> node : initial_candidates) {
+
+            // As depth will be small, I can use recursion here...
+            propagate(candidates, node, 0);
+        }
+
+
+        return candidates;
+    }
+
+    private void propagate(
+            final LinkedList<Node<T>> candidates,
+            final Node<T> node,
+            final int current_depth) {
+
+        for (Neighbor n : graph.get(node)) {
+            if (!candidates.contains(n.node)) {
+                candidates.add(n.node);
+
+                if (current_depth < update_depth) {
+                    // don't use current_depth++ here as we will reuse it in
+                    // the for loop !
+                    propagate(candidates, n.node, current_depth + 1);
+                }
+            }
+        }
+
     }
 
     public final ArrayList<Graph<T>> connectedComponents() {

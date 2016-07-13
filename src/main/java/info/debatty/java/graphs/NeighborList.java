@@ -119,4 +119,35 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
 
         return count;
     }
+
+    /**
+     * Returns true if this neighborlist contains a neighbor corresponding to
+     * this node.
+     * @param node
+     * @return
+     */
+    public final boolean containsNode(final Node node) {
+        for (Neighbor n : this) {
+            if (n.node == node) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Remove from the neighborlist the neighbor corresponding to this node.
+     * @param node
+     * @return true if a neighbor was effectively removed from the list.
+     */
+    public final boolean removeNode(final Node node) {
+        for (Neighbor n : this) {
+            if (n.node == node) {
+                this.remove(n);
+                return true;
+            }
+        }
+        return false;
+    }
 }
