@@ -73,7 +73,7 @@ public class OnlineGraphTest extends TestCase {
         System.out.println("add some nodes...");
         for (int i = 0; i < n_test; i++) {
             Node<Double> query = new Node<Double>(
-                    String.valueOf(graph.size()), 400.0 * rand.nextDouble());
+                    String.valueOf(n + i), 400.0 * rand.nextDouble());
 
             graph.add(query);
             data.add(query);
@@ -139,8 +139,92 @@ public class OnlineGraphTest extends TestCase {
         }
 
         assertEquals(n - n_test, graph.size());
-
-
     }
 
+    public void testWindow() {
+        System.out.println("window");
+
+        int n = 1000;
+        int n_test = 1000;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("compute initial graph...");
+        GraphBuilder builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        OnlineGraph<Double> graph = new OnlineGraph<Double>(builder.computeGraph(data));
+
+        graph.setWindowSize(n);
+
+        System.out.println("add some nodes...");
+        for (int i = 0; i < n_test; i++) {
+            Node<Double> query = new Node<Double>(
+                    String.valueOf(n + i), 400.0 * rand.nextDouble());
+
+            graph.add(query);
+            data.add(query);
+
+            for (Node<Double> node : graph.getNodes()) {
+                if (graph.get(node) == null) {
+                    System.err.println("NL is null!!");
+                }
+            }
+        }
+
+        assertEquals(n, graph.size());
+    }
+
+
+    public void testAddNodeSameId() {
+        System.out.println("addNode with same id");
+
+        int n = 1000;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("compute initial graph...");
+        GraphBuilder builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        OnlineGraph<Double> graph = new OnlineGraph<Double>(builder.computeGraph(data));
+
+        System.out.println("add some nodes...");
+        try {
+            graph.add(data.get(1));
+            fail("Should throw exception!!");
+        } catch (IllegalArgumentException aExp) {
+            //assert (aExp.getMessage().contains("negative number"));
+        }
+    }
 }

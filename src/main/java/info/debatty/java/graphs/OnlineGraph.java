@@ -44,9 +44,13 @@ public class OnlineGraph<T> implements GraphInterface<T> {
 
     private final Graph<T> graph;
     private int update_depth;
+    private int window_size;
+    private int current_sequence = 0;
 
     protected static final int DEFAULT_UPDATE_DEPTH = 3;
     protected static final double DEFAULT_SEARCH_SPEEDUP = 4.0;
+
+    private static final String NODE_SEQUENCE_KEY = "ONLINE_GRAPH_SEQUENCE";
 
     /**
      * Implementation of approximate online graph building algorithm, as
@@ -54,6 +58,7 @@ public class OnlineGraph<T> implements GraphInterface<T> {
      *
      * Start with an initial graph.
      *
+     * @deprecated this constructor will be removed in future versions
      * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
      * Building</a>
      * @param initial
@@ -61,6 +66,12 @@ public class OnlineGraph<T> implements GraphInterface<T> {
     public OnlineGraph(final Graph<T> initial) {
         this.graph = initial;
         this.update_depth = DEFAULT_UPDATE_DEPTH;
+
+        // Assign a sequence number to nodes in the initial graph
+        for (Node<T> node : graph.getNodes()) {
+            node.setAttribute(NODE_SEQUENCE_KEY, current_sequence);
+            current_sequence++;
+        }
     }
 
     /**
@@ -87,6 +98,15 @@ public class OnlineGraph<T> implements GraphInterface<T> {
     }
 
     /**
+     * Set the size of the window (number of nodes to keep in the graph).
+     * Default = 0 = unlimited size
+     * @param window_size
+     */
+    public final void setWindowSize(final int window_size) {
+        this.window_size = window_size;
+    }
+
+    /**
      * Add a node to the online graph, using a speedup of 4 compared to
      * exhaustive search.
      *
@@ -100,15 +120,43 @@ public class OnlineGraph<T> implements GraphInterface<T> {
     /**
      * Add a node to the online graph.
      *
-     * @param node
+     * @param new_node
      * @param speedup compared to exhaustive search
      * @return
      */
-    public final int add(final Node<T> node, final double speedup) {
+    public final int add(final Node<T> new_node, final double speedup) {
 
-        NeighborList neighborlist = graph.search(node.value, graph.k, speedup);
-        graph.put(node, neighborlist);
+        if (graph.containsKey(new_node)) {
+            throw new IllegalArgumentException(
+                    "This graph already contains a node with the same id!");
+        }
 
+        int similarities = 0;
+
+        // 1. Give a sequence number to the node (if it has to be removed later)
+        new_node.setAttribute(NODE_SEQUENCE_KEY, current_sequence);
+        current_sequence++;
+
+        // 2. If needed, remove a node
+        // We remove before adding the new node, as this reduces computation
+        if (window_size != 0) {
+            int node_to_delete = current_sequence - window_size - 1;
+            for (Node<T> node : graph.getNodes()) {
+                if (node.getAttribute(NODE_SEQUENCE_KEY)
+                        .equals(node_to_delete)) {
+                     similarities += this.remove(node);
+                     break;
+                }
+            }
+        }
+
+        // 3. Search the neighbors of the new node
+        similarities += (int) (graph.size() / speedup);
+        NeighborList neighborlist = graph.search(
+                new_node.value, graph.k, speedup);
+        graph.put(new_node, neighborlist);
+
+        // 4. Update existing edges
         // Nodes to analyze at this iteration
         LinkedList<Node<T>> analyze = new LinkedList<Node<T>>();
 
@@ -119,14 +167,13 @@ public class OnlineGraph<T> implements GraphInterface<T> {
         HashMap<Node<T>, Boolean> visited = new HashMap<Node<T>, Boolean>();
 
         // Fill the list of nodes to analyze
-        for (Neighbor neighbor : graph.get(node)) {
+        for (Neighbor neighbor : graph.get(new_node)) {
             analyze.add(neighbor.node);
         }
 
-        int similarities = (int) (graph.size() / speedup);
         for (int d = 0; d < update_depth; d++) {
             while (!analyze.isEmpty()) {
-                Node other = analyze.pop();
+                Node<T> other = analyze.pop();
                 NeighborList other_neighborlist = graph.get(other);
 
                 // Add neighbors to the list of nodes to analyze at
@@ -140,10 +187,10 @@ public class OnlineGraph<T> implements GraphInterface<T> {
                 // Try to add the new node (if sufficiently similar)
                 similarities++;
                 other_neighborlist.add(new Neighbor(
-                        node,
+                        new_node,
                         graph.similarity.similarity(
-                                node.value,
-                                (T) other.value)));
+                                new_node.value,
+                                other.value)));
 
                 visited.put(other, Boolean.TRUE);
             }
