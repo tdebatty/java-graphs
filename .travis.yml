@@ -2,4 +2,4 @@ language: java
 install: mvn --quiet install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
 
 after_success:
-  - mvn clean cobertura:cobertura coveralls:report
+  - mvn --quiet clean cobertura:cobertura coveralls:report
