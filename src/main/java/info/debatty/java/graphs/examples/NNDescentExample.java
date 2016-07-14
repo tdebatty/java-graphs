@@ -92,16 +92,13 @@ public class NNDescentExample {
         System.out.println(graph.connectedComponents().size());
 
         // Search a query (fast approximative algorithm)
-        System.out.println(graph.search(r.nextInt(10 * count), 1));
+        System.out.println(graph.fastSearch(r.nextInt(10 * count), 1));
 
         // Count number of strongly connected components
         System.out.println(graph.stronglyConnectedComponents().size());
 
-        // Convert the graph to an online graph (to which we can add new nodes)
-        OnlineGraph<Integer> online_graph = new OnlineGraph<Integer>(graph);
-
         // Now we can add a node to the graph (using a fast approximate algorithm)
-        online_graph.fastAdd(
+        graph.fastAdd(
                 new Node<Integer>("my new node 1", r.nextInt(10 * count)));
     }
 }

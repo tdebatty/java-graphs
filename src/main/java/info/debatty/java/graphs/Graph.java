@@ -51,52 +51,80 @@ import java.util.concurrent.Future;
  * @author Thibault Debatty
  * @param <T> The type of nodes value
  */
-public class Graph<T> implements GraphInterface<T>, Serializable {
+public class Graph<T> implements Serializable {
 
     private static final double DEFAULT_EXPANSION = 1.2;
     private static final int DEFAULT_SPEEDUP = 4;
+    private static final int DEFAULT_K = 10;
+    private static final int DEFAULT_UPDATE_DEPTH = 3;
+    private static final double DEFAULT_SEARCH_SPEEDUP = 4.0;
+    private static final String NODE_SEQUENCE_KEY = "ONLINE_GRAPH_SEQUENCE";
 
-    protected HashMap<Node<T>, NeighborList> map;
-    protected SimilarityInterface<T> similarity;
-    protected int k = 10;
+    private final HashMap<Node<T>, NeighborList> map;
+    private SimilarityInterface<T> similarity;
+    private int k = DEFAULT_K;
 
-    @Override
-    public SimilarityInterface<T> getSimilarity() {
-        return similarity;
-    }
+    private int update_depth = DEFAULT_UPDATE_DEPTH;
+    private int window_size = 0;
+    private int current_sequence = 0;
 
-    @Override
-    public void setSimilarity(SimilarityInterface<T> similarity) {
-        this.similarity = similarity;
-    }
-
-    @Override
-    public int getK() {
-        return k;
-    }
-
-    @Override
-    public void setK(int k) {
-        this.k = k;
-    }
-
-    public Graph(int k) {
+    /**
+     * Initialize an empty graph, and set k (number of edges per node).
+     * Default k is 10.
+     * @param k
+     */
+    public Graph(final int k) {
         this.k = k;
         this.map = new HashMap<Node<T>, NeighborList>();
     }
 
+    /**
+     * Initialize an empty graph with k = 10.
+     */
     public Graph() {
         this.map = new HashMap<Node<T>, NeighborList>();
     }
 
     /**
-     * Get the neighborlist of this node
+     * Get the similarity measure.
+     * @return
+     */
+    public final SimilarityInterface<T> getSimilarity() {
+        return similarity;
+    }
+
+    /**
+     * Set the similarity measure used to build or search the graph.
+     * @param similarity
+     */
+    public final void setSimilarity(final SimilarityInterface<T> similarity) {
+        this.similarity = similarity;
+    }
+
+    /**
+     * Get k (the number of edges per node).
+     * @return
+     */
+    public final int getK() {
+        return k;
+    }
+
+    /**
+     * Set k (the number of edges per node).
+     * The existing graph will not be modified.
+     * @param k
+     */
+    public final void setK(final int k) {
+        this.k = k;
+    }
+
+    /**
+     * Get the neighborlist of this node.
      *
      * @param node
      * @return the neighborlist of this node
      */
-    @Override
-    public NeighborList get(Node node) {
+    public final NeighborList get(final Node node) {
         return map.get(node);
     }
 
@@ -115,8 +143,7 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      *
      * @param threshold
      */
-    @Override
-    public void prune(double threshold) {
+    public final void prune(final double threshold) {
         for (NeighborList nl : map.values()) {
 
             // We cannot remove inside the loop
@@ -138,10 +165,11 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      *
      * @return
      */
-    @Override
-    public ArrayList<Graph<T>> connectedComponents() {
+    public final ArrayList<Graph<T>> connectedComponents() {
+
         ArrayList<Graph<T>> subgraphs = new ArrayList<Graph<T>>();
-        ArrayList<Node<T>> nodes_to_process = new ArrayList<Node<T>>(map.keySet());
+        ArrayList<Node<T>> nodes_to_process =
+                new ArrayList<Node<T>>(map.keySet());
 
         for (int i = 0; i < nodes_to_process.size(); i++) {
             Node n = nodes_to_process.get(i);
@@ -157,7 +185,11 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
         return subgraphs;
     }
 
-    private void addAndFollow(Graph<T> subgraph, Node<T> node, ArrayList<Node<T>> nodes_to_process) {
+    private void addAndFollow(
+            final Graph<T> subgraph,
+            final Node<T> node,
+            final ArrayList<Node<T>> nodes_to_process) {
+
         nodes_to_process.remove(node);
 
         NeighborList neighborlist = this.get(node);
@@ -181,11 +213,12 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      *
      * @return
      */
-    @Override
-    public ArrayList<Graph<T>> stronglyConnectedComponents() {
+    public final ArrayList<Graph<T>> stronglyConnectedComponents() {
+
         Stack<Node> stack = new Stack<Node>();
         Index index = new Index();
-        HashMap<Node, NodeProperty> bookkeeping = new HashMap<Node, NodeProperty>(map.size());
+        HashMap<Node, NodeProperty> bookkeeping =
+                new HashMap<Node, NodeProperty>(map.size());
 
         ArrayList<Graph<T>> connected_components = new ArrayList<Graph<T>>();
 
@@ -196,7 +229,8 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
                 continue;
             }
 
-            ArrayList<Node> connected_component = this.strongConnect(n, stack, index, bookkeeping);
+            ArrayList<Node> connected_component =
+                    this.strongConnect(n, stack, index, bookkeeping);
 
             if (connected_component == null) {
                 continue;
@@ -214,9 +248,14 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
         return connected_components;
     }
 
-    private ArrayList<Node> strongConnect(Node v, Stack<Node> stack, Index index, HashMap<Node, NodeProperty> bookkeeping) {
-        bookkeeping.put(v, new NodeProperty(index.Value(), index.Value()));
-        index.Inc();
+    private ArrayList<Node> strongConnect(
+            final Node v,
+            final Stack<Node> stack,
+            final Index index,
+            final HashMap<Node, NodeProperty> bookkeeping) {
+
+        bookkeeping.put(v, new NodeProperty(index.value(), index.value()));
+        index.inc();
         stack.add(v);
 
         for (Neighbor neighbor : this.get(v)) {
@@ -256,67 +295,91 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
         return null;
     }
 
-    @Override
-    public NeighborList put(Node<T> node, NeighborList neighborlist) {
-        return map.put(node, neighborlist);
-    }
-
-    @Override
-    public boolean containsKey(Node node) {
-        return map.containsKey(node);
-    }
-
-    @Override
-    public int size() {
-        return map.size();
-    }
-
-    @Override
-    public Iterable<Map.Entry<Node<T>, NeighborList>> entrySet() {
-        return map.entrySet();
-    }
-
+    /**
+     * Helper class to compute strongly connected components.
+     */
     private static class Index {
 
         private int value;
 
-        public int Value() {
+        public int value() {
             return this.value;
         }
 
-        public void Inc() {
+        public void inc() {
             this.value++;
         }
     }
 
+    /**
+     * Helper class to compute strongly connected components.
+     */
     private static class NodeProperty {
 
-        public int index;
-        public int lowlink;
-        public boolean onstack;
+        private int index;
+        private int lowlink;
+        private boolean onstack;
 
-        public NodeProperty(int index, int lowlink) {
+        NodeProperty(final int index, final int lowlink) {
             this.index = index;
             this.lowlink = lowlink;
             this.onstack = true;
         }
     };
 
-    public Iterable<Node<T>> getNodes() {
+    /**
+     *
+     * @param node
+     * @param neighborlist
+     * @return
+     */
+    public final NeighborList put(
+            final Node<T> node, final NeighborList neighborlist) {
+        return map.put(node, neighborlist);
+    }
+
+    /**
+     *
+     * @param node
+     * @return
+     */
+    public final boolean containsKey(final Node node) {
+        return map.containsKey(node);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public final int size() {
+        return map.size();
+    }
+
+    /**
+     *
+     * @return
+     */
+    public final Iterable<Map.Entry<Node<T>, NeighborList>> entrySet() {
+        return map.entrySet();
+    }
+
+    /**
+     *
+     * @return
+     */
+    public final Iterable<Node<T>> getNodes() {
         return map.keySet();
     }
 
-
-
-        /**
+    /**
      * Recursively search neighbors of neighbors, up to a given depth.
      * @param starting_points
      * @param depth
      * @return
      */
-    public LinkedList<Node<T>> findNeighbors(
+    public final LinkedList<Node<T>> findNeighbors(
             final LinkedList<Node<T>> starting_points,
-            int depth) {
+            final int depth) {
         LinkedList<Node<T>> neighbors = new LinkedList<Node<T>>();
         neighbors.addAll(starting_points);
 
@@ -363,19 +426,19 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      * neighborlists.
      * @return
      */
-    public HashMap<Node<T>, NeighborList> getHashMap() {
+    public final HashMap<Node<T>, NeighborList> getHashMap() {
         return map;
     }
 
     /**
-     *
+     * Multi-thread exhaustive search.
      * @param query
-     * @param K
+     * @param k
      * @return
      * @throws InterruptedException
      * @throws java.util.concurrent.ExecutionException
      */
-    public NeighborList searchExhaustive(T query, int K)
+    public final NeighborList searchExhaustive(final T query, final int k)
             throws InterruptedException, ExecutionException {
 
         // Read all nodes
@@ -396,12 +459,47 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
         }
 
         // Reduce
-        NeighborList neighbors = new NeighborList(K);
+        NeighborList neighbors = new NeighborList(k);
         for (Future<NeighborList> future : results) {
             neighbors.addAll(future.get());
         }
         pool.shutdown();
         return neighbors;
+    }
+
+    /**
+     * Class used for multi-thread search.
+     */
+    private class SearchTask implements Callable<NeighborList> {
+
+        private final ArrayList<Node<T>> nodes;
+        private final T query;
+        private final int start;
+        private final int stop;
+
+        SearchTask(
+                final ArrayList<Node<T>> nodes,
+                final T query,
+                final int start,
+                final int stop) {
+
+            this.nodes = nodes;
+            this.query = query;
+            this.start = start;
+            this.stop = stop;
+        }
+
+        public NeighborList call() throws Exception {
+            NeighborList nl = new NeighborList(k);
+            for (int i = start; i < stop; i++) {
+                Node<T> other = nodes.get(i);
+                nl.add(new Neighbor(
+                        other,
+                        similarity.similarity(query, other.value)));
+            }
+            return nl;
+
+        }
     }
 
     /**
@@ -415,9 +513,8 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      * @param k search K neighbors
      * @return
      */
-    @Override
-    public final NeighborList search(final T query, final int k) {
-        return search(query, k, DEFAULT_SPEEDUP);
+    public final NeighborList fastSearch(final T query, final int k) {
+        return fastSearch(query, k, DEFAULT_SPEEDUP);
     }
 
     /**
@@ -431,11 +528,10 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      * @param speedup speedup for searching (> 1, default 4)
      * @return
      */
-    @Override
-    public final NeighborList search(
+    public final NeighborList fastSearch(
             final T query, final int k, final double speedup) {
 
-        return this.search(query, k, speedup, DEFAULT_EXPANSION);
+        return this.fastSearch(query, k, speedup, DEFAULT_EXPANSION);
     }
 
     /**
@@ -451,8 +547,7 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      *
      * @return
      */
-    @Override
-    public final NeighborList search(
+    public final NeighborList fastSearch(
             final T query,
             final int k,
             final double speedup,
@@ -522,11 +617,11 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
 
                 // Check all neighbors and try to find a node with higher
                 // similarity
-                Iterator<Neighbor> Y_nl_iterator = nl.iterator();
+                Iterator<Neighbor> y_nl_iterator = nl.iterator();
                 Node<T> node_higher_similarity = null;
-                while (Y_nl_iterator.hasNext()) {
+                while (y_nl_iterator.hasNext()) {
 
-                    Node<T> other_node = Y_nl_iterator.next().node;
+                    Node<T> other_node = y_nl_iterator.next().node;
 
                     if (visited_nodes.containsKey(other_node)) {
                         continue;
@@ -575,18 +670,19 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
      * Writes the graph as a GEXF file (to be used in Gephi, for example).
      *
      * @param filename
-     * @throws FileNotFoundException
-     * @throws IOException
+     * @throws FileNotFoundException if filename is invalid
+     * @throws IOException if cannot write to file
      */
-    @Override
-    public void writeGEXF(String filename) throws FileNotFoundException, IOException {
+    public final void writeGEXF(final String filename)
+            throws FileNotFoundException, IOException {
         Writer out = new OutputStreamWriter(new FileOutputStream(filename));
         out.write(GEXF_HEADER);
 
         // Write nodes
         out.write("<nodes>\n");
         for (Node node : map.keySet()) {
-            out.write("<node id=\"" + node.id + "\" label=\"" + node.id + "\" />\n");
+            out.write("<node id=\"" + node.id
+                    + "\" label=\"" + node.id + "\" />\n");
         }
         out.write("</nodes>\n");
 
@@ -619,35 +715,203 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
             + "</meta>\n"
             + "<graph mode=\"static\" defaultedgetype=\"directed\">\n";
 
-    private class SearchTask implements Callable<NeighborList> {
 
-        private final ArrayList<Node<T>> nodes;
-        private final T query;
-        private final int start;
-        private final int stop;
 
-        SearchTask(
-                ArrayList<Node<T>> nodes,
-                T query,
-                int start,
-                int stop) {
 
-            this.nodes = nodes;
-            this.query = query;
-            this.start = start;
-            this.stop = stop;
+    /**
+     * Modify the depth for updating existing edges (default is 2).
+     * @param update_depth
+     */
+    public final void setDepth(final int update_depth) {
+        this.update_depth = update_depth;
+    }
+
+    /**
+     * Set the size of the window (number of nodes to keep in the graph).
+     * Default = 0 = unlimited size
+     * @param window_size
+     */
+    public final void setWindowSize(final int window_size) {
+        this.window_size = window_size;
+    }
+
+    /**
+     * Add a node to the online graph using exhaustive search approach.
+     * Adding a node requires to compute the similarity between the new node
+     * and every other node in the graph...
+     * @param new_node
+     * @return
+     */
+    public final int add(final Node<T> new_node) {
+        if (containsKey(new_node)) {
+            throw new IllegalArgumentException(
+                    "This graph already contains a node with the same id!");
         }
 
-        public NeighborList call() throws Exception {
-            NeighborList nl = new NeighborList(k);
-            for (int i = start; i < stop; i++) {
-                Node<T> other = nodes.get(i);
-                nl.add(new Neighbor(
-                        other,
-                        similarity.similarity(query, other.value)));
+        // Give a sequence number to the node (if it has to be removed later)
+        new_node.setAttribute(NODE_SEQUENCE_KEY, current_sequence);
+        current_sequence++;
+
+        NeighborList nl = new NeighborList(k);
+
+        for (Node<T> other_node : getNodes()) {
+            double sim = similarity.similarity(
+                    new_node.value, other_node.value);
+            nl.add(new Neighbor(other_node, sim));
+            get(other_node).add(new Neighbor(new_node, sim));
+        }
+
+        this.put(new_node, nl);
+        return (size() - 1);
+
+    }
+
+    /**
+     * Add a node to the online graph, using approximate online graph building
+     * algorithm presented in "Fast Online k-nn Graph Building" by Debatty
+     * et al. Default speedup is 4 compared to exhaustive search.
+     *
+     * @param node
+     * @return
+     */
+    public final int fastAdd(final Node<T> node) {
+        return fastAdd(node, DEFAULT_SEARCH_SPEEDUP);
+    }
+
+    /**
+     * Add a node to the online graph, using approximate online graph building
+     * algorithm presented in "Fast Online k-nn Graph Building" by Debatty
+     * et al.
+     *
+     * @param new_node
+     * @param speedup compared to exhaustive search
+     * @return
+     */
+    public final int fastAdd(final Node<T> new_node, final double speedup) {
+
+        if (containsKey(new_node)) {
+            throw new IllegalArgumentException(
+                    "This graph already contains a node with the same id!");
+        }
+
+        int similarities = 0;
+
+        // 1. Give a sequence number to the node (if it has to be removed later)
+        new_node.setAttribute(NODE_SEQUENCE_KEY, current_sequence);
+        current_sequence++;
+
+        // 2. If needed, remove a node
+        // We remove before adding the new node, as this reduces computation
+        if (window_size != 0) {
+            int node_to_delete = current_sequence - window_size - 1;
+            for (Node<T> node : getNodes()) {
+                if (node.getAttribute(NODE_SEQUENCE_KEY)
+                        .equals(node_to_delete)) {
+                     similarities += this.fastRemove(node);
+                     break;
+                }
             }
-            return nl;
-
         }
+
+        // 3. Search the neighbors of the new node
+        similarities += (int) (size() / speedup);
+        NeighborList neighborlist = fastSearch(
+                new_node.value, k, speedup);
+        put(new_node, neighborlist);
+
+        // 4. Update existing edges
+        // Nodes to analyze at this iteration
+        LinkedList<Node<T>> analyze = new LinkedList<Node<T>>();
+
+        // Nodes to analyze at next iteration
+        LinkedList<Node<T>> next_analyze = new LinkedList<Node<T>>();
+
+        // List of already analyzed nodes
+        HashMap<Node<T>, Boolean> visited = new HashMap<Node<T>, Boolean>();
+
+        // Fill the list of nodes to analyze
+        for (Neighbor neighbor : get(new_node)) {
+            analyze.add(neighbor.node);
+        }
+
+        for (int d = 0; d < update_depth; d++) {
+            while (!analyze.isEmpty()) {
+                Node<T> other = analyze.pop();
+                NeighborList other_neighborlist = get(other);
+
+                // Add neighbors to the list of nodes to analyze at
+                // next iteration
+                for (Neighbor other_neighbor : other_neighborlist) {
+                    if (!visited.containsKey(other_neighbor.node)) {
+                        next_analyze.add(other_neighbor.node);
+                    }
+                }
+
+                // Try to add the new node (if sufficiently similar)
+                similarities++;
+                other_neighborlist.add(new Neighbor(
+                        new_node,
+                        similarity.similarity(
+                                new_node.value,
+                                other.value)));
+
+                visited.put(other, Boolean.TRUE);
+            }
+
+            analyze = next_analyze;
+            next_analyze = new LinkedList<Node<T>>();
+        }
+
+        return similarities;
+    }
+
+    /**
+     * Remove a node from the graph (and update the graph) using fast
+     * approximate algorithm.
+     * @param node_to_remove
+     * @return the number of similarities that were computed.
+     */
+    public final int fastRemove(final Node<T> node_to_remove) {
+        // Build the list of nodes to update
+        LinkedList<Node<T>> nodes_to_update = new LinkedList<Node<T>>();
+
+        for (Node<T> node : getNodes()) {
+            NeighborList nl = get(node);
+            if (nl.containsNode(node_to_remove)) {
+                nodes_to_update.add(node);
+                nl.removeNode(node_to_remove);
+            }
+        }
+
+        // Build the list of candidates
+        LinkedList<Node<T>> initial_candidates = new LinkedList<Node<T>>();
+        initial_candidates.add(node_to_remove);
+        initial_candidates.addAll(nodes_to_update);
+
+        LinkedList<Node<T>> candidates = findNeighbors(
+                initial_candidates, update_depth);
+        while (candidates.contains(node_to_remove)) {
+            candidates.remove(node_to_remove);
+        }
+
+        // Update the nodes_to_update
+        int similarities = 0;
+        for (Node<T> node_to_update : nodes_to_update) {
+            NeighborList nl_to_update = get(node_to_update);
+            for (Node<T> candidate : candidates) {
+                similarities++;
+                double sim = similarity.similarity(
+                        node_to_update.value,
+                        candidate.value);
+
+                nl_to_update.add(new Neighbor(candidate, sim));
+            }
+        }
+
+        // Remove node_to_remove
+        map.remove(node_to_remove);
+
+        return similarities;
+
     }
 }

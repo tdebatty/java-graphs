@@ -74,7 +74,7 @@ public class SearchExample {
 
             // Perform GNNS
             System.out.println("Query: " + query);
-            NeighborList resultset_gnss = graph.search(
+            NeighborList resultset_gnss = graph.fastSearch(
                     query.value,
                     k);
             System.out.println(resultset_gnss);

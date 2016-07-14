@@ -38,20 +38,6 @@ import junit.framework.TestCase;
  */
 public class GraphTest extends TestCase {
 
-    public GraphTest(String testName) {
-        super(testName);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
-
     /**
      * Test of connectedComponents method, of class Graph.
      */
@@ -159,7 +145,7 @@ public class GraphTest extends TestCase {
         for (int i = 0; i < 100; i++) {
             double query = 400.0 * rand.nextDouble();
 
-            NeighborList approximate_result = graph.search(
+            NeighborList approximate_result = graph.fastSearch(
                     query,
                     1);
 
@@ -172,5 +158,248 @@ public class GraphTest extends TestCase {
         //System.out.println(data.size());
         System.out.println("Found " + correct + " correct results!");
         assertTrue(correct > 50);
+    }
+
+    public final void testAdd() {
+        System.out.println("Test graph.add()");
+        System.out.println("================");
+
+        int n = 1000;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("Build exact online graph...");
+        Graph<Double> online_graph = new Graph<Double>();
+        online_graph.setSimilarity(similarity);
+        for (Node<Double> node : data) {
+            online_graph.add(node);
+        }
+
+        System.out.println("Build reference graph...");
+        GraphBuilder builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        Graph<Double> graph = builder.computeGraph(data);
+
+        int correct = 0;
+        for (Node<Double> node : data) {
+            correct += graph.get(node).countCommons(online_graph.get(node));
+        }
+        System.out.println("Found " + correct + " correct edges");
+        assertEquals(data.size() * 10, correct);
+
+    }
+
+    public void testFastAdd() {
+        System.out.println("Fast add");
+        System.out.println("========");
+
+        int n = 1000;
+        int n_test = 1000;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("Compute initial graph using exhaustive search...");
+        Graph<Double> graph = new Graph<Double>();
+        graph.setK(10);
+        graph.setSimilarity(similarity);
+        for (Node<Double> node : data) {
+            graph.add(node);
+        }
+
+        System.out.println("Add some nodes using fast algorithm...");
+        for (int i = 0; i < n_test; i++) {
+            Node<Double> query = new Node<Double>(
+                    String.valueOf(n + i), 400.0 * rand.nextDouble());
+
+            graph.fastAdd(query);
+            data.add(query);
+        }
+
+        assertEquals(n + n_test, graph.size());
+
+        System.out.println("Compute validation graph...");
+        GraphBuilder builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        Graph validation_graph = builder.computeGraph(data);
+
+        int correct = 0;
+        for (Node<Double> node : data) {
+            correct += graph.get(node).countCommons(validation_graph.get(node));
+        }
+        System.out.println("Found " + correct + " correct edges");
+        System.out.printf("= %f \n", 100.0 * correct / (10 * data.size()));
+        assertTrue(1.0 * correct / (10 * data.size()) > 0.5);
+
+    }
+
+    public void testRemove() {
+        System.out.println("Fast remove");
+        System.out.println("===========");
+
+        int n = 1000;
+        int n_test = 100;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("Compute initial graph using exhaustive search...");
+        Graph<Double> graph = new Graph<Double>();
+        graph.setK(10);
+        graph.setSimilarity(similarity);
+        for (Node<Double> node : data) {
+            graph.add(node);
+        }
+
+        System.out.println("Remove some nodes...");
+        for (int i = 0; i < n_test; i++) {
+            Node<Double> query = data.get(rand.nextInt(data.size() - 1));
+
+            graph.fastRemove(query);
+            data.remove(query);
+
+            for (Node node : graph.getNodes()) {
+                assertEquals(10, graph.get(node).size());
+                assertTrue(
+                        "Graph still contains references to deleted node!!!",
+                        !graph.get(node).containsNode(query));
+            }
+        }
+
+        assertEquals(n - n_test, graph.size());
+    }
+
+    public void testWindow() {
+        System.out.println("window");
+
+        int n = 1000;
+        int n_test = 1000;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("Compute initial graph using exhaustive search...");
+        Graph<Double> graph = new Graph<Double>();
+        graph.setK(10);
+        graph.setSimilarity(similarity);
+        for (Node<Double> node : data) {
+            graph.add(node);
+        }
+
+        graph.setWindowSize(n);
+
+        System.out.println("add some nodes...");
+        for (int i = 0; i < n_test; i++) {
+            Node<Double> query = new Node<Double>(
+                    String.valueOf(n + i), 400.0 * rand.nextDouble());
+
+            graph.fastAdd(query);
+            data.add(query);
+
+            for (Node<Double> node : graph.getNodes()) {
+                if (graph.get(node) == null) {
+                    System.err.println("NL is null!!");
+                }
+            }
+        }
+
+        assertEquals(n, graph.size());
+    }
+
+
+    public void testAddNodeSameId() {
+        System.out.println("addNode with same id");
+
+        int n = 1000;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        while (data.size() < n) {
+            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+        }
+
+        System.out.println("Compute initial graph using exhaustive search...");
+        Graph<Double> graph = new Graph<Double>();
+        graph.setK(10);
+        graph.setSimilarity(similarity);
+        for (Node<Double> node : data) {
+            graph.add(node);
+        }
+
+        System.out.println("Add a node with same id...");
+        try {
+            graph.fastAdd(data.get(1));
+            fail("Should throw exception!!");
+        } catch (IllegalArgumentException ex) {
+        }
     }
 }
