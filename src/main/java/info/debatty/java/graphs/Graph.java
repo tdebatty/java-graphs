@@ -33,6 +33,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -303,6 +304,67 @@ public class Graph<T> implements GraphInterface<T>, Serializable {
 
     public Iterable<Node<T>> getNodes() {
         return map.keySet();
+    }
+
+
+
+        /**
+     * Recursively search neighbors of neighbors, up to a given depth.
+     * @param starting_points
+     * @param depth
+     * @return
+     */
+    public LinkedList<Node<T>> findNeighbors(
+            final LinkedList<Node<T>> starting_points,
+            int depth) {
+        LinkedList<Node<T>> neighbors = new LinkedList<Node<T>>();
+        neighbors.addAll(starting_points);
+
+        // I can NOT loop over candidates as I will add items to it inside the
+        // loop!
+        for (Node<T> start_node : starting_points) {
+
+            // As depth will be small, I can use recursion here...
+            findNeighbors(neighbors, start_node, depth);
+        }
+
+
+        return neighbors;
+    }
+
+    private void findNeighbors(
+            final LinkedList<Node<T>> candidates,
+            final Node<T> node,
+            final int current_depth) {
+
+        // With the distributed online algorithm, the nl might be null
+        // because it is located on another partition
+        NeighborList nl = get(node);
+        if (nl == null) {
+            return;
+        }
+
+        for (Neighbor n : nl) {
+            if (!candidates.contains(n.node)) {
+                candidates.add(n.node);
+
+                if (current_depth > 0) {
+                    // don't use current_depth++ here as we will reuse it in
+                    // the for loop !
+                    findNeighbors(candidates, n.node, current_depth - 1);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Get the underlying hash map that stores the nodes and associated
+     * neighborlists.
+     * @return
+     */
+    public HashMap<Node<T>, NeighborList> getHashMap() {
+        return map;
     }
 
     /**

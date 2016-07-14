@@ -128,7 +128,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
      */
     public final boolean containsNode(final Node node) {
         for (Neighbor n : this) {
-            if (n.node == node) {
+            if (n.node.equals(node)) {
                 return true;
             }
         }
@@ -143,7 +143,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
      */
     public final boolean removeNode(final Node node) {
         for (Neighbor n : this) {
-            if (n.node == node) {
+            if (n.node.equals(node)) {
                 this.remove(n);
                 return true;
             }

@@ -101,7 +101,7 @@ public class NNDescentExample {
         OnlineGraph<Integer> online_graph = new OnlineGraph<Integer>(graph);
 
         // Now we can add a node to the graph (using a fast approximate algorithm)
-        online_graph.add(
+        online_graph.fastAdd(
                 new Node<Integer>("my new node 1", r.nextInt(10 * count)));
     }
 }

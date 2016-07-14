@@ -75,7 +75,7 @@ public class OnlineGraphTest extends TestCase {
             Node<Double> query = new Node<Double>(
                     String.valueOf(n + i), 400.0 * rand.nextDouble());
 
-            graph.add(query);
+            graph.fastAdd(query);
             data.add(query);
         }
 
@@ -127,7 +127,7 @@ public class OnlineGraphTest extends TestCase {
         for (int i = 0; i < n_test; i++) {
             Node<Double> query = data.get(rand.nextInt(data.size() - 1));
 
-            graph.remove(query);
+            graph.fastRemove(query);
             data.remove(query);
 
             for (Node node : graph.getNodes()) {
@@ -177,7 +177,7 @@ public class OnlineGraphTest extends TestCase {
             Node<Double> query = new Node<Double>(
                     String.valueOf(n + i), 400.0 * rand.nextDouble());
 
-            graph.add(query);
+            graph.fastAdd(query);
             data.add(query);
 
             for (Node<Double> node : graph.getNodes()) {
@@ -221,10 +221,9 @@ public class OnlineGraphTest extends TestCase {
 
         System.out.println("add some nodes...");
         try {
-            graph.add(data.get(1));
+            graph.fastAdd(data.get(1));
             fail("Should throw exception!!");
-        } catch (IllegalArgumentException aExp) {
-            //assert (aExp.getMessage().contains("negative number"));
+        } catch (IllegalArgumentException ex) {
         }
     }
 }
