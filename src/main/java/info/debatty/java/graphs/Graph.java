@@ -899,6 +899,10 @@ public class Graph<T> implements Serializable {
         for (Node<T> node_to_update : nodes_to_update) {
             NeighborList nl_to_update = get(node_to_update);
             for (Node<T> candidate : candidates) {
+                if (candidate.equals(node_to_update)) {
+                    continue;
+                }
+
                 similarities++;
                 double sim = similarity.similarity(
                         node_to_update.value,
