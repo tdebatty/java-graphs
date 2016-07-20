@@ -53,11 +53,11 @@ import java.util.concurrent.Future;
  */
 public class Graph<T> implements Serializable {
 
-    private static final double DEFAULT_EXPANSION = 1.2;
-    private static final int DEFAULT_SPEEDUP = 4;
-    private static final int DEFAULT_K = 10;
-    private static final int DEFAULT_UPDATE_DEPTH = 3;
-    private static final double DEFAULT_SEARCH_SPEEDUP = 4.0;
+    public static final double DEFAULT_EXPANSION = 1.2;
+    public static final int DEFAULT_K = 10;
+    public static final int DEFAULT_UPDATE_DEPTH = 3;
+    public static final double DEFAULT_SEARCH_SPEEDUP = 4.0;
+    public static final int DEFAULT_LONG_JUMPGS = 2;
     private static final String NODE_SEQUENCE_KEY = "ONLINE_GRAPH_SEQUENCE";
 
     private final HashMap<Node<T>, NeighborList> map;
@@ -514,7 +514,7 @@ public class Graph<T> implements Serializable {
      * @return
      */
     public final NeighborList fastSearch(final T query, final int k) {
-        return fastSearch(query, k, DEFAULT_SPEEDUP);
+        return fastSearch(query, k, DEFAULT_SEARCH_SPEEDUP);
     }
 
     /**
@@ -531,7 +531,12 @@ public class Graph<T> implements Serializable {
     public final NeighborList fastSearch(
             final T query, final int k, final double speedup) {
 
-        return this.fastSearch(query, k, speedup, DEFAULT_EXPANSION);
+        return this.fastSearch(
+                query,
+                k,
+                speedup,
+                DEFAULT_LONG_JUMPGS,
+                DEFAULT_EXPANSION);
     }
 
     /**
@@ -551,6 +556,7 @@ public class Graph<T> implements Serializable {
             final T query,
             final int k,
             final double speedup,
+            final int long_jumps,
             final double expansion) {
 
         if (speedup <= 1.0) {
@@ -615,13 +621,36 @@ public class Graph<T> implements Serializable {
                     break;
                 }
 
-                // Check all neighbors and try to find a node with higher
-                // similarity
-                Iterator<Neighbor> y_nl_iterator = nl.iterator();
                 Node<T> node_higher_similarity = null;
+                Node<T> other_node = null;
+
+                for (int i = 0; i < long_jumps; i++) {
+                    // Check a random node (to simulate long jumps)
+                    other_node = nodes.get(rand.nextInt(nodes.size()));
+
+                    // Already been here => restart
+                    if (!visited_nodes.containsKey(other_node)) {
+                        // Compute similarity to query
+                        double sim = similarity.similarity(
+                                query,
+                                other_node.value);
+                        computed_similarities++;
+                        visited_nodes.put(other_node, sim);
+
+                        // If this node provides an improved similarity, keep it
+                        if (sim > restart_similarity) {
+                            node_higher_similarity = other_node;
+                            restart_similarity = sim;
+                        }
+                    }
+                }
+
+                // Check the neighbors of current_node and try to find a node
+                // with higher similarity
+                Iterator<Neighbor> y_nl_iterator = nl.iterator();
                 while (y_nl_iterator.hasNext()) {
 
-                    Node<T> other_node = y_nl_iterator.next().node;
+                    other_node = y_nl_iterator.next().node;
 
                     if (visited_nodes.containsKey(other_node)) {
                         continue;

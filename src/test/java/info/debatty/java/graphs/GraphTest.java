@@ -114,9 +114,10 @@ public class GraphTest extends TestCase {
      * @throws java.util.concurrent.ExecutionException
      */
     public void testSearch() throws InterruptedException, ExecutionException {
-        System.out.println("search");
+        System.out.println("Search");
+        System.out.println("======");
 
-        int n = 1000;
+        int n = 4000;
 
         SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
 
@@ -147,7 +148,8 @@ public class GraphTest extends TestCase {
 
             NeighborList approximate_result = graph.fastSearch(
                     query,
-                    1);
+                    1,
+                    30);
 
             // Search the (real) most similar
             NeighborList exhaustive_result = graph.searchExhaustive(query, 1);
