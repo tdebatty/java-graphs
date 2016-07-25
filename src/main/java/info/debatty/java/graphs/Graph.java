@@ -547,7 +547,8 @@ public class Graph<T> implements Serializable {
      * Building</a>
      * @param query query point
      * @param k number of neighbors to find (the K from K-nn search)
-     * @param speedup (default: 4)
+     * @param speedup (default: 4.0)
+     * @param long_jumps (default: 2)
      * @param expansion (default: 1.2)
      *
      * @return
