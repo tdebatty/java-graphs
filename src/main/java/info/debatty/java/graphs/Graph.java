@@ -811,13 +811,32 @@ public class Graph<T> implements Serializable {
     /**
      * Add a node to the online graph, using approximate online graph building
      * algorithm presented in "Fast Online k-nn Graph Building" by Debatty
+     * et al. Uses default number of long jumps (2) and default expansion (1.2).
+     *
+     * @param node
+     * @param speedup
+     * @return
+     */
+    public final int fastAdd(final Node<T> node, final double speedup) {
+        return fastAdd(node, speedup, DEFAULT_LONG_JUMPGS, DEFAULT_EXPANSION);
+    }
+
+    /**
+     * Add a node to the online graph, using approximate online graph building
+     * algorithm presented in "Fast Online k-nn Graph Building" by Debatty
      * et al.
      *
      * @param new_node
      * @param speedup compared to exhaustive search
+     * @param long_jumps
+     * @param expansion
      * @return
      */
-    public final int fastAdd(final Node<T> new_node, final double speedup) {
+    public final int fastAdd(
+            final Node<T> new_node,
+            final double speedup,
+            final int long_jumps,
+            final double expansion) {
 
         if (containsKey(new_node)) {
             throw new IllegalArgumentException(
@@ -846,7 +865,7 @@ public class Graph<T> implements Serializable {
         // 3. Search the neighbors of the new node
         similarities += (int) (size() / speedup);
         NeighborList neighborlist = fastSearch(
-                new_node.value, k, speedup);
+                new_node.value, k, speedup, long_jumps, expansion);
         put(new_node, neighborlist);
 
         // 4. Update existing edges
