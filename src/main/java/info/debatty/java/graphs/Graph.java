@@ -53,11 +53,32 @@ import java.util.concurrent.Future;
  */
 public class Graph<T> implements Serializable {
 
-    public static final double DEFAULT_EXPANSION = 1.2;
+    /**
+     * Number of edges per node.
+     */
     public static final int DEFAULT_K = 10;
-    public static final int DEFAULT_UPDATE_DEPTH = 3;
+
+    /**
+     * Fast search: speedup compared to exhaustive search.
+     */
     public static final double DEFAULT_SEARCH_SPEEDUP = 4.0;
-    public static final int DEFAULT_LONG_JUMPGS = 2;
+
+    /**
+     * Fast search: expansion parameter.
+     */
+    public static final double DEFAULT_EXPANSION = 1.2;
+
+    /**
+     * Fast search: number of random jumps per node (to simulate small world
+     * graph).
+     */
+    public static final int DEFAULT_RANDOM_JUMPS = 2;
+
+    /**
+     * Fast add or remove node: depth of search to update the graph.
+     */
+    public static final int DEFAULT_UPDATE_DEPTH = 3;
+
     private static final String NODE_SEQUENCE_KEY = "ONLINE_GRAPH_SEQUENCE";
 
     private final HashMap<Node<T>, NeighborList> map;
@@ -435,8 +456,8 @@ public class Graph<T> implements Serializable {
      * @param query
      * @param k
      * @return
-     * @throws InterruptedException
-     * @throws java.util.concurrent.ExecutionException
+     * @throws InterruptedException if thread is interrupted
+     * @throws ExecutionException if thread cannot complete
      */
     public final NeighborList searchExhaustive(final T query, final int k)
             throws InterruptedException, ExecutionException {
@@ -535,7 +556,7 @@ public class Graph<T> implements Serializable {
                 query,
                 k,
                 speedup,
-                DEFAULT_LONG_JUMPGS,
+                DEFAULT_RANDOM_JUMPS,
                 DEFAULT_EXPANSION);
     }
 
@@ -623,7 +644,7 @@ public class Graph<T> implements Serializable {
                 }
 
                 Node<T> node_higher_similarity = null;
-                Node<T> other_node = null;
+                Node<T> other_node;
 
                 for (int i = 0; i < long_jumps; i++) {
                     // Check a random node (to simulate long jumps)
@@ -818,7 +839,7 @@ public class Graph<T> implements Serializable {
      * @return
      */
     public final int fastAdd(final Node<T> node, final double speedup) {
-        return fastAdd(node, speedup, DEFAULT_LONG_JUMPGS, DEFAULT_EXPANSION);
+        return fastAdd(node, speedup, DEFAULT_RANDOM_JUMPS, DEFAULT_EXPANSION);
     }
 
     /**
