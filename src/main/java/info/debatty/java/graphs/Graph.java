@@ -66,13 +66,13 @@ public class Graph<T> implements Serializable {
     /**
      * Fast search: expansion parameter.
      */
-    public static final double DEFAULT_EXPANSION = 1.2;
+    public static final double DEFAULT_SEARCH_EXPANSION = 1.2;
 
     /**
      * Fast search: number of random jumps per node (to simulate small world
      * graph).
      */
-    public static final int DEFAULT_RANDOM_JUMPS = 2;
+    public static final int DEFAULT_SEARCH_RANDOM_JUMPS = 2;
 
     /**
      * Fast add or remove node: depth of search to update the graph.
@@ -556,8 +556,8 @@ public class Graph<T> implements Serializable {
                 query,
                 k,
                 speedup,
-                DEFAULT_RANDOM_JUMPS,
-                DEFAULT_EXPANSION);
+                DEFAULT_SEARCH_RANDOM_JUMPS,
+                DEFAULT_SEARCH_EXPANSION);
     }
 
     /**
@@ -584,9 +584,9 @@ public class Graph<T> implements Serializable {
                 query,
                 k,
                 speedup,
-                DEFAULT_RANDOM_JUMPS,
-                DEFAULT_EXPANSION,
-                new SearchStats());
+                DEFAULT_SEARCH_RANDOM_JUMPS,
+                DEFAULT_SEARCH_EXPANSION,
+                new StatisticsContainer());
     }
 
     /**
@@ -600,7 +600,7 @@ public class Graph<T> implements Serializable {
      * @param speedup (default: 4.0)
      * @param long_jumps (default: 2)
      * @param expansion (default: 1.2)
-     * @param search_stats
+     * @param stats
      *
      * @return
      */
@@ -610,7 +610,7 @@ public class Graph<T> implements Serializable {
             final double speedup,
             final int long_jumps,
             final double expansion,
-            final SearchStats search_stats) {
+            final StatisticsContainer stats) {
 
         if (speedup <= 1.0) {
             throw new InvalidParameterException("Speedup should be > 1.0");
@@ -631,7 +631,7 @@ public class Graph<T> implements Serializable {
                                 similarity.similarity(
                                         query,
                                         node.value)));
-                search_stats.incComputedSimilarities();
+                stats.incSearchSimilarities();
             }
             return nl;
         }
@@ -644,11 +644,11 @@ public class Graph<T> implements Serializable {
 
         while (true) { // Restart...
 
-            if (search_stats.getComputedSimilarities() >= max_similarities) {
+            if (stats.getSearchSimilarities() >= max_similarities) {
                 break;
             }
 
-            search_stats.incRestarts();
+            stats.incSearchRestarts();
 
             // Select a random node from the graph
             Node<T> current_node = nodes.get(rand.nextInt(nodes.size()));
@@ -662,18 +662,18 @@ public class Graph<T> implements Serializable {
             double restart_similarity = similarity.similarity(
                     query,
                     current_node.value);
-            search_stats.incComputedSimilarities();
+            stats.incSearchSimilarities();
             if (restart_similarity < global_highest_similarity / expansion) {
                 continue;
             }
 
-            while (search_stats.getComputedSimilarities() < max_similarities) {
+            while (stats.getSearchSimilarities() < max_similarities) {
 
                 NeighborList nl = this.get(current_node);
 
                 // Node has no neighbor (cross partition edge) => restart!
                 if (nl == null) {
-                    search_stats.incCrossPartitionRestarts();
+                    stats.incSearchCrossPartitionRestarts();
                     break;
                 }
 
@@ -693,7 +693,7 @@ public class Graph<T> implements Serializable {
                     double sim = similarity.similarity(
                             query,
                             other_node.value);
-                    search_stats.incComputedSimilarities();
+                    stats.incSearchSimilarities();
                     visited_nodes.put(other_node, sim);
 
                     // If this node provides an improved similarity, keep it
@@ -719,7 +719,7 @@ public class Graph<T> implements Serializable {
                     double sim = similarity.similarity(
                             query,
                             other_node.value);
-                    search_stats.incComputedSimilarities();
+                    stats.incSearchSimilarities();
                     visited_nodes.put(other_node, sim);
 
                     // If this node provides an improved similarity, keep it
@@ -860,10 +860,9 @@ public class Graph<T> implements Serializable {
      * et al. Default speedup is 4 compared to exhaustive search.
      *
      * @param node
-     * @return
      */
-    public final int fastAdd(final Node<T> node) {
-        return fastAdd(node, DEFAULT_SEARCH_SPEEDUP);
+    public final void fastAdd(final Node<T> node) {
+        fastAdd(node, DEFAULT_SEARCH_SPEEDUP);
     }
 
     /**
@@ -873,10 +872,13 @@ public class Graph<T> implements Serializable {
      *
      * @param node
      * @param speedup
-     * @return
      */
-    public final int fastAdd(final Node<T> node, final double speedup) {
-        return fastAdd(node, speedup, DEFAULT_RANDOM_JUMPS, DEFAULT_EXPANSION);
+    public final void fastAdd(final Node<T> node, final double speedup) {
+        fastAdd(
+                node,
+                speedup,
+                DEFAULT_SEARCH_RANDOM_JUMPS,
+                DEFAULT_SEARCH_EXPANSION);
     }
 
     /**
@@ -888,20 +890,43 @@ public class Graph<T> implements Serializable {
      * @param speedup compared to exhaustive search
      * @param long_jumps
      * @param expansion
-     * @return
      */
-    public final int fastAdd(
+    public final void fastAdd(
             final Node<T> new_node,
             final double speedup,
             final int long_jumps,
             final double expansion) {
 
+        fastAdd(
+                new_node,
+                speedup,
+                DEFAULT_SEARCH_RANDOM_JUMPS,
+                DEFAULT_SEARCH_EXPANSION,
+                new StatisticsContainer());
+    }
+
+    /**
+     * Add a node to the online graph, using approximate online graph building
+     * algorithm presented in "Fast Online k-nn Graph Building" by Debatty
+     * et al.
+     *
+     * @param new_node
+     * @param speedup compared to exhaustive search
+     * @param long_jumps
+     * @param expansion
+     * @param stats
+     */
+    public final void fastAdd(
+            final Node<T> new_node,
+            final double speedup,
+            final int long_jumps,
+            final double expansion,
+            final StatisticsContainer stats) {
+
         if (containsKey(new_node)) {
             throw new IllegalArgumentException(
                     "This graph already contains a node with the same id!");
         }
-
-        int similarities = 0;
 
         // 1. Give a sequence number to the node (if it has to be removed later)
         new_node.setAttribute(NODE_SEQUENCE_KEY, current_sequence);
@@ -914,16 +939,15 @@ public class Graph<T> implements Serializable {
             for (Node<T> node : getNodes()) {
                 if (node.getAttribute(NODE_SEQUENCE_KEY)
                         .equals(node_to_delete)) {
-                     similarities += this.fastRemove(node);
+                     fastRemove(node, stats);
                      break;
                 }
             }
         }
 
         // 3. Search the neighbors of the new node
-        similarities += (int) (size() / speedup);
         NeighborList neighborlist = fastSearch(
-                new_node.value, k, speedup, long_jumps, expansion);
+                new_node.value, k, speedup, long_jumps, expansion, stats);
         put(new_node, neighborlist);
 
         // 4. Update existing edges
@@ -955,7 +979,7 @@ public class Graph<T> implements Serializable {
                 }
 
                 // Try to add the new node (if sufficiently similar)
-                similarities++;
+                stats.incAddSimilarities();
                 other_neighborlist.add(new Neighbor(
                         new_node,
                         similarity.similarity(
@@ -968,17 +992,27 @@ public class Graph<T> implements Serializable {
             analyze = next_analyze;
             next_analyze = new LinkedList<Node<T>>();
         }
-
-        return similarities;
     }
 
     /**
      * Remove a node from the graph (and update the graph) using fast
      * approximate algorithm.
      * @param node_to_remove
-     * @return the number of similarities that were computed.
      */
-    public final int fastRemove(final Node<T> node_to_remove) {
+    public final void fastRemove(final Node<T> node_to_remove) {
+        fastRemove(node_to_remove, new StatisticsContainer());
+    }
+
+    /**
+     * Remove a node from the graph (and update the graph) using fast
+     * approximate algorithm.
+     * @param node_to_remove
+     * @param stats
+     */
+    public final void fastRemove(
+            final Node<T> node_to_remove,
+            final StatisticsContainer stats) {
+
         // Build the list of nodes to update
         LinkedList<Node<T>> nodes_to_update = new LinkedList<Node<T>>();
 
@@ -1002,7 +1036,6 @@ public class Graph<T> implements Serializable {
         }
 
         // Update the nodes_to_update
-        int similarities = 0;
         for (Node<T> node_to_update : nodes_to_update) {
             NeighborList nl_to_update = get(node_to_update);
             for (Node<T> candidate : candidates) {
@@ -1010,7 +1043,7 @@ public class Graph<T> implements Serializable {
                     continue;
                 }
 
-                similarities++;
+                stats.incRemoveSimilarities();
                 double sim = similarity.similarity(
                         node_to_update.value,
                         candidate.value);
@@ -1021,8 +1054,6 @@ public class Graph<T> implements Serializable {
 
         // Remove node_to_remove
         map.remove(node_to_remove);
-
-        return similarities;
 
     }
 }

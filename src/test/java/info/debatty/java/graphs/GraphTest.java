@@ -243,7 +243,14 @@ public class GraphTest extends TestCase {
             Node<Double> query = new Node<Double>(
                     String.valueOf(n + i), 400.0 * rand.nextDouble());
 
-            graph.fastAdd(query);
+            StatisticsContainer stats = new StatisticsContainer();
+            graph.fastAdd(
+                    query,
+                    Graph.DEFAULT_SEARCH_SPEEDUP,
+                    Graph.DEFAULT_SEARCH_RANDOM_JUMPS,
+                    Graph.DEFAULT_SEARCH_EXPANSION,
+                    stats);
+            System.out.println(stats);
             data.add(query);
         }
 
@@ -316,7 +323,8 @@ public class GraphTest extends TestCase {
     }
 
     public void testWindow() {
-        System.out.println("window");
+        System.out.println("Window");
+        System.out.println("======");
 
         int n = 1000;
         int n_test = 1000;
