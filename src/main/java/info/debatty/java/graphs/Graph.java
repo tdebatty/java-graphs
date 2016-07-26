@@ -566,12 +566,11 @@ public class Graph<T> implements Serializable {
      *
      * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
      * Building</a>
-     * @param query query point
-     * @param k number of neighbors to find (the K from K-nn search)
-     * @param speedup (default: 4.0)
-     * @param long_jumps (default: 2)
-     * @param expansion (default: 1.2)
-     *
+     * @param query
+     * @param k
+     * @param speedup
+     * @param long_jumps
+     * @param expansion
      * @return
      */
     public final NeighborList fastSearch(
@@ -580,6 +579,38 @@ public class Graph<T> implements Serializable {
             final double speedup,
             final int long_jumps,
             final double expansion) {
+
+        return this.fastSearch(
+                query,
+                k,
+                speedup,
+                DEFAULT_RANDOM_JUMPS,
+                DEFAULT_EXPANSION,
+                new SearchStats());
+    }
+
+    /**
+     * Approximate fast graph based search, as published in "Fast Online k-nn
+     * Graph Building" by Debatty et al.
+     *
+     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+     * Building</a>
+     * @param query query point
+     * @param k number of neighbors to find (the K from K-nn search)
+     * @param speedup (default: 4.0)
+     * @param long_jumps (default: 2)
+     * @param expansion (default: 1.2)
+     * @param search_stats
+     *
+     * @return
+     */
+    public final NeighborList fastSearch(
+            final T query,
+            final int k,
+            final double speedup,
+            final int long_jumps,
+            final double expansion,
+            final SearchStats search_stats) {
 
         if (speedup <= 1.0) {
             throw new InvalidParameterException("Speedup should be > 1.0");
@@ -600,22 +631,24 @@ public class Graph<T> implements Serializable {
                                 similarity.similarity(
                                         query,
                                         node.value)));
+                search_stats.incComputedSimilarities();
             }
             return nl;
         }
 
         // Node => Similarity with query node
         HashMap<Node<T>, Double> visited_nodes = new HashMap<Node<T>, Double>();
-        int computed_similarities = 0;
         double global_highest_similarity = 0;
         ArrayList<Node<T>> nodes = new ArrayList<Node<T>>(map.keySet());
         Random rand = new Random();
 
         while (true) { // Restart...
-            //System.out.println("Restart...");
-            if (computed_similarities >= max_similarities) {
+
+            if (search_stats.getComputedSimilarities() >= max_similarities) {
                 break;
             }
+
+            search_stats.incRestarts();
 
             // Select a random node from the graph
             Node<T> current_node = nodes.get(rand.nextInt(nodes.size()));
@@ -629,17 +662,18 @@ public class Graph<T> implements Serializable {
             double restart_similarity = similarity.similarity(
                     query,
                     current_node.value);
-            computed_similarities++;
+            search_stats.incComputedSimilarities();
             if (restart_similarity < global_highest_similarity / expansion) {
                 continue;
             }
 
-            while (computed_similarities < max_similarities) {
+            while (search_stats.getComputedSimilarities() < max_similarities) {
 
                 NeighborList nl = this.get(current_node);
 
-                // Node has no neighbor => restart!
+                // Node has no neighbor (cross partition edge) => restart!
                 if (nl == null) {
+                    search_stats.incCrossPartitionRestarts();
                     break;
                 }
 
@@ -650,21 +684,24 @@ public class Graph<T> implements Serializable {
                     // Check a random node (to simulate long jumps)
                     other_node = nodes.get(rand.nextInt(nodes.size()));
 
-                    // Already been here => restart
-                    if (!visited_nodes.containsKey(other_node)) {
-                        // Compute similarity to query
-                        double sim = similarity.similarity(
-                                query,
-                                other_node.value);
-                        computed_similarities++;
-                        visited_nodes.put(other_node, sim);
-
-                        // If this node provides an improved similarity, keep it
-                        if (sim > restart_similarity) {
-                            node_higher_similarity = other_node;
-                            restart_similarity = sim;
-                        }
+                    // Already been here => skip
+                    if (visited_nodes.containsKey(other_node)) {
+                        continue;
                     }
+
+                    // Compute similarity to query
+                    double sim = similarity.similarity(
+                            query,
+                            other_node.value);
+                    search_stats.incComputedSimilarities();
+                    visited_nodes.put(other_node, sim);
+
+                    // If this node provides an improved similarity, keep it
+                    if (sim > restart_similarity) {
+                        node_higher_similarity = other_node;
+                        restart_similarity = sim;
+                    }
+
                 }
 
                 // Check the neighbors of current_node and try to find a node
@@ -682,7 +719,7 @@ public class Graph<T> implements Serializable {
                     double sim = similarity.similarity(
                             query,
                             other_node.value);
-                    computed_similarities++;
+                    search_stats.incComputedSimilarities();
                     visited_nodes.put(other_node, sim);
 
                     // If this node provides an improved similarity, keep it
