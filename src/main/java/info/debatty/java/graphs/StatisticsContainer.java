@@ -24,6 +24,8 @@
 
 package info.debatty.java.graphs;
 
+import java.io.Serializable;
+
 /**
  * This object will contain additional stats produced by fastSearch, fastAdd and
  * fastRemove algorithms. E.g. real number of computed similarities, restarts,
@@ -31,7 +33,7 @@ package info.debatty.java.graphs;
  *
  * @author Thibault Debatty
  */
-public class StatisticsContainer {
+public class StatisticsContainer implements Serializable {
     private int search_similarities;
     private int search_restarts;
     private int search_cross_partition_restarts;
@@ -87,24 +89,44 @@ public class StatisticsContainer {
         return remove_similarities;
     }
 
-    final void incSearchSimilarities() {
+    public final void incSearchSimilarities() {
         search_similarities++;
     }
 
-    final void incSearchRestarts() {
+    public final void incSearchRestarts() {
         search_restarts++;
     }
 
-    final void incSearchCrossPartitionRestarts() {
+    public final void incSearchCrossPartitionRestarts() {
         search_cross_partition_restarts++;
     }
 
-    final void incAddSimilarities() {
+    public final void incAddSimilarities() {
         add_similarities++;
     }
 
-    final void incRemoveSimilarities() {
+    public final void incRemoveSimilarities() {
         remove_similarities++;
+    }
+
+    public final void incSearchSimilarities(int value) {
+        search_similarities += value;
+    }
+
+    public final void incSearchRestarts(int value) {
+        search_restarts += value;
+    }
+
+    public final void incSearchCrossPartitionRestarts(int value) {
+        search_cross_partition_restarts += value;
+    }
+
+    public final void incAddSimilarities(int value) {
+        add_similarities += value;
+    }
+
+    public final void incRemoveSimilarities(int value) {
+        remove_similarities += value;
     }
 
     @Override
