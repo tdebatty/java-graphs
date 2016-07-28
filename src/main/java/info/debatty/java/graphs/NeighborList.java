@@ -84,8 +84,11 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
         return count;
     }
 
+    // double has 15 significant digits
+    private final static double EPSILON = 0.000000000001;
+
     /**
-     *
+     * Count the number of equivalent neighbors (using similarities).
      * @param other
      * @return
      */
@@ -104,7 +107,8 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
                 break;
             }
 
-            if (this_neighbor.similarity == other_neighbor.similarity) {
+            double delta = this_neighbor.similarity - other_neighbor.similarity;
+            if (delta < EPSILON && delta > -EPSILON) {
                 count++;
                 this_neighbor = copy_this.poll();
                 other_neighbor = copy_other.poll();
