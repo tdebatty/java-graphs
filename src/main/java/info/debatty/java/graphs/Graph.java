@@ -270,45 +270,48 @@ public class Graph<T> implements Serializable {
     }
 
     private ArrayList<Node> strongConnect(
-            final Node v,
+            final Node node,
             final Stack<Node> stack,
             final Index index,
             final HashMap<Node, NodeProperty> bookkeeping) {
 
-        bookkeeping.put(v, new NodeProperty(index.value(), index.value()));
+        bookkeeping.put(node, new NodeProperty(index.value(), index.value()));
         index.inc();
-        stack.add(v);
+        stack.add(node);
 
-        for (Neighbor neighbor : this.get(v)) {
-            Node w = neighbor.node;
+        for (Neighbor neighbor : this.get(node)) {
+            Node other_node = neighbor.node;
 
-            if (!this.containsKey(w) || this.get(w) == null) {
+            if (!this.containsKey(other_node) || this.get(other_node) == null) {
+                // other_node is actually part of another subgraph
+                // => skip
                 continue;
             }
 
-            if (!bookkeeping.containsKey(w)) {
-                strongConnect(w, stack, index, bookkeeping);
-                bookkeeping.get(v).lowlink = Math.min(
-                        bookkeeping.get(v).lowlink,
-                        bookkeeping.get(w).lowlink);
+            if (!bookkeeping.containsKey(other_node)) {
+                strongConnect(other_node, stack, index, bookkeeping);
+                bookkeeping.get(node).lowlink = Math.min(
+                        bookkeeping.get(node).lowlink,
+                        bookkeeping.get(other_node).lowlink);
 
             } else if (bookkeeping.get(neighbor.node).onstack) {
-                bookkeeping.get(v).lowlink = Math.min(
-                        bookkeeping.get(v).lowlink,
-                        bookkeeping.get(w).index);
-
+                bookkeeping.get(node).lowlink = Math.min(
+                        bookkeeping.get(node).lowlink,
+                        bookkeeping.get(other_node).index);
             }
         }
 
-        if (bookkeeping.get(v).lowlink == bookkeeping.get(v).index) {
+        if (bookkeeping.get(node).lowlink == bookkeeping.get(node).index) {
+            // node is the root of a strongly connected component
+            // => fetch and return all nodes in this component
             ArrayList<Node> connected_component = new ArrayList<Node>();
 
-            Node w;
+            Node other_node;
             do {
-                w = stack.pop();
-                bookkeeping.get(w).onstack = false;
-                connected_component.add(w);
-            } while (v != w);
+                other_node = stack.pop();
+                bookkeeping.get(other_node).onstack = false;
+                connected_component.add(other_node);
+            } while (!node.equals(other_node));
 
             return connected_component;
         }
