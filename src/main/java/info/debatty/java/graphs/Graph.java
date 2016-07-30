@@ -236,7 +236,7 @@ public class Graph<T> implements Serializable {
      */
     public final ArrayList<Graph<T>> stronglyConnectedComponents() {
 
-        Stack<Node> stack = new Stack<Node>();
+        Stack<NodeParent> explored_nodes = new Stack<NodeParent>();
         Index index = new Index();
         HashMap<Node, NodeProperty> bookkeeping =
                 new HashMap<Node, NodeProperty>(map.size());
@@ -251,7 +251,7 @@ public class Graph<T> implements Serializable {
             }
 
             ArrayList<Node> connected_component =
-                    this.strongConnect(n, stack, index, bookkeeping);
+                    this.strongConnect(n, explored_nodes, index, bookkeeping);
 
             if (connected_component == null) {
                 continue;
@@ -269,54 +269,111 @@ public class Graph<T> implements Serializable {
         return connected_components;
     }
 
+    /**
+     *
+     * @param starting_point
+     * @param explored_nodes
+     * connected component.
+     * @param index
+     * @param bookkeeping
+     * @return
+     */
     private ArrayList<Node> strongConnect(
-            final Node node,
-            final Stack<Node> stack,
+            final Node starting_point,
+            final Stack<NodeParent> explored_nodes,
             final Index index,
             final HashMap<Node, NodeProperty> bookkeeping) {
 
-        bookkeeping.put(node, new NodeProperty(index.value(), index.value()));
-        index.inc();
-        stack.add(node);
 
-        for (Neighbor neighbor : this.get(node)) {
-            Node other_node = neighbor.node;
+        // explored_nodes stores the history of nodes explored but not yet
+        // assigned to a strongly connected component
 
-            if (!this.containsKey(other_node) || this.get(other_node) == null) {
-                // other_node is actually part of another subgraph
-                // => skip
+        // use a stack to perform depth first search (DFS) without using
+        // recursion
+        final Stack<NodeParent> nodes_to_process = new Stack<NodeParent>();
+        nodes_to_process.push(new NodeParent(starting_point, null));
+
+
+        while (!nodes_to_process.empty()) {
+            NodeParent node_and_parent = nodes_to_process.pop();
+            Node node = node_and_parent.node;
+
+            bookkeeping.put(
+                    node,
+                    new NodeProperty(index.value(), index.value()));
+            index.inc();
+            explored_nodes.add(node_and_parent);
+
+            // process neighbors of this node
+            for (Neighbor neighbor : this.get(node)) {
+                Node neighbor_node = neighbor.node;
+
+                if (!this.containsKey(neighbor_node)
+                        || this.get(neighbor_node) == null) {
+                    // neighbor_node is actually part of another subgraph
+                    // (this can happen during distributed processing)
+                    // => skip
+                    continue;
+                }
+
+                if (bookkeeping.containsKey(neighbor_node)) {
+                    // this node was already processed
+                    continue;
+                }
+
+                // Perform depth first search...
+                nodes_to_process.push(new NodeParent(neighbor_node, node));
+            }
+        }
+
+        // Traverse the stack of explored nodes to update the lowlink value of
+        // each node
+        for (NodeParent node_and_parent : explored_nodes) {
+            Node node = node_and_parent.parent;
+            Node child = node_and_parent.node;
+
+            if (node == null) {
+                // this child is actually the starting point.
                 continue;
             }
 
-            if (!bookkeeping.containsKey(other_node)) {
-                strongConnect(other_node, stack, index, bookkeeping);
-                bookkeeping.get(node).lowlink = Math.min(
+            bookkeeping.get(node).lowlink = Math.min(
                         bookkeeping.get(node).lowlink,
-                        bookkeeping.get(other_node).lowlink);
+                        bookkeeping.get(child).lowlink);
+        }
 
-            } else if (bookkeeping.get(neighbor.node).onstack) {
-                bookkeeping.get(node).lowlink = Math.min(
-                        bookkeeping.get(node).lowlink,
-                        bookkeeping.get(other_node).index);
+        for (NodeParent node_and_parent : explored_nodes) {
+            Node node = node_and_parent.node;
+            if (bookkeeping.get(node).lowlink == bookkeeping.get(node).index) {
+                // node is the root of a strongly connected component
+                // => fetch and return all nodes in this component
+                ArrayList<Node> connected_component = new ArrayList<Node>();
+
+                Node other_node;
+                do {
+                    other_node = explored_nodes.pop().node;
+                    bookkeeping.get(other_node).onstack = false;
+                    connected_component.add(other_node);
+                } while (!starting_point.equals(other_node));
+
+                return connected_component;
             }
         }
 
-        if (bookkeeping.get(node).lowlink == bookkeeping.get(node).index) {
-            // node is the root of a strongly connected component
-            // => fetch and return all nodes in this component
-            ArrayList<Node> connected_component = new ArrayList<Node>();
-
-            Node other_node;
-            do {
-                other_node = stack.pop();
-                bookkeeping.get(other_node).onstack = false;
-                connected_component.add(other_node);
-            } while (!node.equals(other_node));
-
-            return connected_component;
-        }
-
         return null;
+    }
+
+    /**
+     * Store the node, and it's parent.
+     */
+    private static class NodeParent {
+        private Node node;
+        private Node parent;
+
+        NodeParent(Node node, Node parent) {
+            this.node = node;
+            this.parent = parent;
+        }
     }
 
     /**
@@ -1057,6 +1114,10 @@ public class Graph<T> implements Serializable {
 
         // Remove node_to_remove
         map.remove(node_to_remove);
+    }
 
+    @Override
+    public final String toString() {
+        return map.toString();
     }
 }

@@ -107,6 +107,45 @@ public class GraphTest extends TestCase {
         assertEquals(2, graph.stronglyConnectedComponents().size());
     }
 
+
+    /**
+     * Test of stronglyConnectedComponents method, of class Graph.
+     */
+    public void testStronglyConnectedComponents2() {
+        System.out.println("Strongly connected components");
+        System.out.println("=============================");
+
+        // Generate two series of nodes
+        ArrayList<Node> nodes = new ArrayList<Node>();
+
+        nodes.add(new Node<Integer>("1", 1));
+        nodes.add(new Node<Integer>("2", 2));
+        nodes.add(new Node<Integer>("3", 3));
+        nodes.add(new Node<Integer>("7", 7));
+        nodes.add(new Node<Integer>("8", 8));
+        nodes.add(new Node<Integer>("9", 9));
+
+
+        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
+
+            public double similarity(Integer value1, Integer value2) {
+                return 1.0 / (1.0 + Math.abs(value1 - value2));
+            }
+        };
+
+        // Instantiate and configure the brute-force graph building algorithm
+        // The minimum is to define k (number of edges per node)
+        // and a similarity metric between nodes
+        GraphBuilder builder = new Brute<Integer>();
+        builder.setK(2);
+        builder.setSimilarity(similarity);
+
+        // Run the algorithm, and get the resulting neighbor lists
+        Graph<Integer> graph = builder.computeGraph(nodes);
+        System.out.println(graph.stronglyConnectedComponents());
+        assertEquals(2, graph.stronglyConnectedComponents().size());
+    }
+
     /**
      * Test of search method, of class Graph.
      *
