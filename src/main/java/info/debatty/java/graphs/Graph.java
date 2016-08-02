@@ -321,6 +321,18 @@ public class Graph<T> implements Serializable {
                     continue;
                 }
 
+                boolean skip = false;
+                for (NodeParent node_in_queue : nodes_to_process) {
+                    // Already in the queue for processing
+                    if (node_in_queue.node.equals(neighbor_node)) {
+                        skip = true;
+                        break;
+                    }
+                }
+                if (skip) {
+                    continue;
+                }
+                
                 // Perform depth first search...
                 nodes_to_process.push(new NodeParent(neighbor_node, node));
             }
