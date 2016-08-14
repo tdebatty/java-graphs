@@ -37,7 +37,8 @@ import java.util.List;
 public class NNCTPH extends PartitioningGraphBuilder<String> {
 
     @Override
-    protected List<Node<String>>[] _partition(List<Node<String>> nodes) {
+    protected final List<Node<String>>[] _partition(
+            final List<Node<String>> nodes) {
         ESSum ess = new ESSum(oversampling, n_partitions, 1);
 
         ArrayList<Node<String>>[] buckets = new ArrayList[n_partitions];

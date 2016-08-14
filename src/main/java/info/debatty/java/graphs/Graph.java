@@ -332,7 +332,7 @@ public class Graph<T> implements Serializable {
                 if (skip) {
                     continue;
                 }
-                
+
                 // Perform depth first search...
                 nodes_to_process.push(new NodeParent(neighbor_node, node));
             }
@@ -382,7 +382,7 @@ public class Graph<T> implements Serializable {
         private Node node;
         private Node parent;
 
-        NodeParent(Node node, Node parent) {
+        NodeParent(final Node node, final Node parent) {
             this.node = node;
             this.parent = parent;
         }
