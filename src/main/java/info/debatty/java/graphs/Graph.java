@@ -81,11 +81,10 @@ public class Graph<T> implements Serializable {
 
     private static final String NODE_SEQUENCE_KEY = "ONLINE_GRAPH_SEQUENCE";
 
+
     private final HashMap<Node<T>, NeighborList> map;
     private SimilarityInterface<T> similarity;
     private int k = DEFAULT_K;
-
-    private int update_depth = DEFAULT_UPDATE_DEPTH;
     private int window_size = 0;
     private int current_sequence = 0;
 
@@ -877,15 +876,6 @@ public class Graph<T> implements Serializable {
 
 
 
-
-    /**
-     * Modify the depth for updating existing edges (default is 2).
-     * @param update_depth
-     */
-    public final void setDepth(final int update_depth) {
-        this.update_depth = update_depth;
-    }
-
     /**
      * Set the size of the window (number of nodes to keep in the graph).
      * Default = 0 = unlimited size
@@ -974,6 +964,7 @@ public class Graph<T> implements Serializable {
                 speedup,
                 DEFAULT_SEARCH_RANDOM_JUMPS,
                 DEFAULT_SEARCH_EXPANSION,
+                DEFAULT_UPDATE_DEPTH,
                 new StatisticsContainer());
     }
 
@@ -986,6 +977,7 @@ public class Graph<T> implements Serializable {
      * @param speedup compared to exhaustive search
      * @param long_jumps
      * @param expansion
+     * @param update_depth
      * @param stats
      */
     public final void fastAdd(
@@ -993,6 +985,7 @@ public class Graph<T> implements Serializable {
             final double speedup,
             final int long_jumps,
             final double expansion,
+            final int update_depth,
             final StatisticsContainer stats) {
 
         if (containsKey(new_node)) {
@@ -1011,7 +1004,7 @@ public class Graph<T> implements Serializable {
             for (Node<T> node : getNodes()) {
                 if (node.getAttribute(NODE_SEQUENCE_KEY)
                         .equals(node_to_delete)) {
-                     fastRemove(node, stats);
+                     fastRemove(node, update_depth, stats);
                      break;
                 }
             }
@@ -1072,17 +1065,19 @@ public class Graph<T> implements Serializable {
      * @param node_to_remove
      */
     public final void fastRemove(final Node<T> node_to_remove) {
-        fastRemove(node_to_remove, new StatisticsContainer());
+        fastRemove(node_to_remove, DEFAULT_UPDATE_DEPTH, new StatisticsContainer());
     }
 
     /**
      * Remove a node from the graph (and update the graph) using fast
      * approximate algorithm.
      * @param node_to_remove
+     * @param update_depth
      * @param stats
      */
     public final void fastRemove(
             final Node<T> node_to_remove,
+            final int update_depth,
             final StatisticsContainer stats) {
 
         // Build the list of nodes to update
