@@ -89,6 +89,23 @@ public class Graph<T> implements Serializable {
     private int current_sequence = 0;
 
     /**
+     * Copy constructor.
+     *
+     * @param origin
+     */
+    public Graph(Graph<T> origin) {
+        this.k = origin.k;
+        this.window_size = origin.window_size;
+        this.current_sequence = origin.current_sequence;
+        this.similarity = origin.similarity;
+        this.map = new HashMap<Node<T>, NeighborList>(origin.size());
+
+        for (Node node : origin.getNodes()) {
+            this.map.put(node, new NeighborList(origin.get(node)));
+        }
+    }
+
+    /**
      * Initialize an empty graph, and set k (number of edges per node).
      * Default k is 10.
      * @param k

@@ -29,6 +29,19 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
     }
 
     /**
+     * Copy constructor.
+     *
+     * @param origin
+     */
+    public NeighborList(final NeighborList origin) {
+        super(origin.size());
+        for (Neighbor neighbor : origin) {
+            this.add(neighbor);
+        }
+
+    }
+
+    /**
      * Create a new neighborlist of given size.
      * @param size size of the neighborlist
      */
