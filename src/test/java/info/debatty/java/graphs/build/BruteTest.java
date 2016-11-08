@@ -54,7 +54,7 @@ public class BruteTest extends TestCase {
 
         // Generate some nodes
         int count = 1000;
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
+        ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
             nodes.add(new Node<Integer>(String.valueOf(i), i));
@@ -63,19 +63,21 @@ public class BruteTest extends TestCase {
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        Brute builder = new Brute<Integer>();
+        Brute<Node<Integer>> builder = new Brute<Node<Integer>>();
         builder.setK(10);
-        builder.setSimilarity(new SimilarityInterface<Integer>() {
+        builder.setSimilarity(new SimilarityInterface<Node<Integer>>() {
 
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
+            public double similarity(Node<Integer> node1, Node<Integer> node2) {
+                return 1.0 / (1.0 + Math.abs(node1.value - node2.value));
             }
         });
 
         // Run the algorithm, and get the resulting neighbor lists
-        Graph<Integer> graph = builder.computeGraph(nodes);
+        Graph<Node<Integer>> graph = builder.computeGraph(nodes);
+
         // Test...
         Node node_0 = nodes.get(0);
+
         // this is the k'st most similar node (=> number 9)
         Node other_node = graph.get(node_0).peek().node;
 

@@ -45,7 +45,7 @@ public class NNCTPHExample {
     public static void main(String[] args) {
         // Read the file
         List<Node<String>> nodes = GraphBuilder.readFile(
-                SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
+                NNCTPHExample.class.getClassLoader().getResource("726-unique-spams").getFile());
 
         NNCTPH builder = new NNCTPH();
         builder.setNPartitions(20);

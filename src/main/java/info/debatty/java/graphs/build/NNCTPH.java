@@ -23,7 +23,7 @@
  */
 package info.debatty.java.graphs.build;
 
-import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.NodeInterface;
 import info.debatty.java.spamsum.ESSum;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,20 +37,20 @@ import java.util.List;
 public class NNCTPH extends PartitioningGraphBuilder<String> {
 
     @Override
-    protected final List<Node<String>>[] _partition(
-            final List<Node<String>> nodes) {
+    protected final List<NodeInterface<String>>[] _partition(
+            final List<NodeInterface> nodes) {
         ESSum ess = new ESSum(oversampling, n_partitions, 1);
 
-        ArrayList<Node<String>>[] buckets = new ArrayList[n_partitions];
+        ArrayList<NodeInterface<String>>[] buckets = new ArrayList[n_partitions];
 
-        for (Node<String> node : nodes) {
-            int[] hash = ess.HashString(node.value);
+        for (NodeInterface<String> node : nodes) {
+            int[] hash = ess.HashString(node.getValue());
 
             for (int stage = 0; stage < oversampling; stage++) {
                 int partition = hash[stage];
 
                 if (buckets[partition] == null) {
-                    buckets[partition] = new ArrayList<Node<String>>();
+                    buckets[partition] = new ArrayList<NodeInterface<String>>();
                 }
 
                 // !! this is not efficient !!!!

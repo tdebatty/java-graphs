@@ -54,12 +54,12 @@ public class DijkstraExample {
         }
 
         // Build the graph
-        Brute<Double> builder = new Brute<Double>();
+        Brute builder = new Brute<Double>();
         builder.setK(10);
         builder.setSimilarity(new SimilarityInterface<Double>() {
 
-            public double similarity(Double value1, Double value2) {
-                return 1 / (1 + Math.abs(value1 - value2));
+            public double similarity(Double node1, Double node2) {
+                return 1 / (1 + Math.abs(node1 - node2));
             }
         });
         Graph<Double> graph = builder.computeGraph(nodes);

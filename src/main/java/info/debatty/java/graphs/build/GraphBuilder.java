@@ -3,6 +3,7 @@ package info.debatty.java.graphs.build;
 import info.debatty.java.graphs.CallbackInterface;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.NodeInterface;
 import info.debatty.java.graphs.SimilarityInterface;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -18,12 +19,13 @@ import java.util.logging.Logger;
 /**
  *
  * @author Thibault Debatty
- * @param <T>
+ * @param <T> the actual type of the nodes
+ * @param <U> the type of node value
  */
-public abstract class GraphBuilder<T> implements Cloneable, Serializable {
+public abstract class GraphBuilder<T extends NodeInterface<U>, U> implements Cloneable, Serializable {
 
     protected int k = 10;
-    protected SimilarityInterface<T> similarity;
+    protected SimilarityInterface<U> similarity;
     protected CallbackInterface callback = null;
     protected int computed_similarities = 0;
 
@@ -47,7 +49,7 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
         return similarity;
     }
 
-    public void setSimilarity(SimilarityInterface<T> similarity) {
+    public void setSimilarity(SimilarityInterface<U> similarity) {
         this.similarity = similarity;
     }
 
@@ -63,13 +65,13 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
         return computed_similarities;
     }
 
-    public Graph<T> computeGraph(List<Node<T>> nodes) {
+    public Graph<T, U> computeGraph(List<T> nodes) {
 
         if (similarity == null) {
             throw new InvalidParameterException("Similarity is not defined");
         }
         computed_similarities = 0;
-        Graph<T> graph = _computeGraph(nodes);
+        Graph<T, U> graph = _computeGraph(nodes);
         graph.setK(k);
         graph.setSimilarity(similarity);
         return graph;
@@ -81,17 +83,17 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
      *
      * @param nodes
      */
-    public void test(List<Node<T>> nodes) {
-        Graph<T> approximate_graph = computeGraph(nodes);
+    public void test(List<T> nodes) {
+        Graph<T, U> approximate_graph = computeGraph(nodes);
 
         // Use Brute force to build the exact graph
         Brute brute = new Brute();
         brute.setK(k);
         brute.setSimilarity(similarity);
-        Graph<T> exact_graph = brute.computeGraph(nodes);
+        Graph<T, U> exact_graph = brute.computeGraph(nodes);
 
         int correct = 0;
-        for (Node node : nodes) {
+        for (NodeInterface node : nodes) {
             correct += approximate_graph.get(node).countCommons(exact_graph.get(node));
         }
 
@@ -143,5 +145,5 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
         return super.clone();
     }
 
-    protected abstract Graph<T> _computeGraph(List<Node<T>> nodes);
+    protected abstract Graph<T, U> _computeGraph(List<T> nodes);
 }

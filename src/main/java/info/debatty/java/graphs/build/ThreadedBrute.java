@@ -27,7 +27,7 @@ package info.debatty.java.graphs.build;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Neighbor;
 import info.debatty.java.graphs.NeighborList;
-import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.NodeInterface;
 import info.debatty.java.graphs.SimilarityInterface;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class ThreadedBrute<T> extends GraphBuilder<T> {
     public static final int NODES_PER_BLOCK = 1000;
 
     @Override
-    protected final Graph<T> _computeGraph(final List<Node<T>> nodes) {
+    protected final Graph<T> _computeGraph(final List<NodeInterface> nodes) {
 
         // Start all blocks
         int n = nodes.size();
@@ -67,7 +67,7 @@ public class ThreadedBrute<T> extends GraphBuilder<T> {
 
         // Initialize all NeighborLists
         Graph<T> graph = new Graph<T>();
-        for (Node node : nodes) {
+        for (NodeInterface node : nodes) {
             graph.put(node, new NeighborList(k));
         }
 
@@ -76,7 +76,7 @@ public class ThreadedBrute<T> extends GraphBuilder<T> {
             Graph<T> subgraph;
             try {
                 subgraph = future.get();
-                for (Map.Entry<Node<T>, NeighborList> entry : subgraph.entrySet()) {
+                for (Map.Entry<NodeInterface, NeighborList> entry : subgraph.entrySet()) {
                     graph.get(entry.getKey()).addAll(entry.getValue());
                 }
 
@@ -99,13 +99,13 @@ public class ThreadedBrute<T> extends GraphBuilder<T> {
  */
 class BruteBlock<T> implements Callable<Graph<T>> {
     private final int i_start;
-    private final List<Node<T>> nodes;
+    private final List<NodeInterface<T>> nodes;
     private final SimilarityInterface<T> similarity;
     private final int k;
     private final int j_start;
 
     BruteBlock(
-            final List<Node<T>> nodes,
+            final List<NodeInterface<T>> nodes,
             final int k,
             final SimilarityInterface<T> similarity,
             final int i_start,
@@ -127,17 +127,17 @@ class BruteBlock<T> implements Callable<Graph<T>> {
         // Initialize neighborlists
         Graph<T> graph = new Graph<T>();
         for (int i = i_start; i < i_end; i++) {
-            Node node = nodes.get(i);
+            NodeInterface node = nodes.get(i);
             graph.put(node, new NeighborList(k));
         }
 
         for (int j = j_start; j < j_end; j++) {
-            Node node = nodes.get(j);
+            NodeInterface node = nodes.get(j);
             graph.put(node, new NeighborList(k));
         }
 
         for (int i = i_start; i < i_end; i++) {
-            Node n1 = nodes.get(i);
+            NodeInterface<T> n1 = nodes.get(i);
 
             for (int j = j_start; j < j_end; j++) {
 
@@ -145,8 +145,8 @@ class BruteBlock<T> implements Callable<Graph<T>> {
                     break;
                 }
 
-                Node n2 = nodes.get(j);
-                double sim = similarity.similarity((T) n1.value, (T) n2.value);
+                NodeInterface<T> n2 = nodes.get(j);
+                double sim = similarity.similarity(n1.getValue(), n2.getValue());
 
                 graph.get(n1).add(new Neighbor(n2, sim));
                 graph.get(n2).add(new Neighbor(n1, sim));

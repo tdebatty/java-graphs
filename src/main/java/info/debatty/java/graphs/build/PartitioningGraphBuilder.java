@@ -26,6 +26,7 @@ package info.debatty.java.graphs.build;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.NodeInterface;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -102,14 +103,14 @@ public abstract class PartitioningGraphBuilder<T> extends GraphBuilder<T> {
     }
 
     @Override
-    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
+    protected Graph<T> _computeGraph(List<NodeInterface> nodes) {
         // Create $n_stages$ x $n_partitions$ partitions
-        List<Node<T>>[] partitioning = _partition(nodes);
+        List<NodeInterface<T>>[] partitioning = _partition(nodes);
         HashMap<String, Object> feedback_data = new HashMap<String, Object>();
 
         // Initialize the graph
         Graph<T> neighborlists = new Graph<T>(nodes.size());
-        for (Node node : nodes) {
+        for (NodeInterface node : nodes) {
             neighborlists.put(node, new NeighborList(k));
         }
 
@@ -126,7 +127,7 @@ public abstract class PartitioningGraphBuilder<T> extends GraphBuilder<T> {
                 computed_similarities += internal_builder.getComputedSimilarities();
 
                 // Add to current neighborlists
-                for (Entry<Node<T>, NeighborList> e : subgraph.entrySet()) {
+                for (Entry<NodeInterface, NeighborList> e : subgraph.entrySet()) {
                     neighborlists.get(e.getKey()).addAll(e.getValue());
                 }
             }
@@ -148,5 +149,5 @@ public abstract class PartitioningGraphBuilder<T> extends GraphBuilder<T> {
         return (double) n_partitions / (oversampling * oversampling);
     }
 
-    abstract protected List<Node<T>>[] _partition(List<Node<T>> nodes);
+    abstract protected List<NodeInterface<T>>[] _partition(List<NodeInterface> nodes);
 }

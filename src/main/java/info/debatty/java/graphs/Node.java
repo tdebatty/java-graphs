@@ -4,12 +4,13 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * The nodes of a graph have an id (String) and a value (type T).
+ * A general purpose node, that has an id (required by nodeInterface) and a
+ * value (of type T).
  *
  * @author Thibault Debatty
  * @param <T> Type of value field
  */
-public class Node<T> implements Serializable {
+public class Node<T> implements Serializable, NodeInterface<T> {
 
     /**
      * Unique id of the node.
@@ -89,5 +90,21 @@ public class Node<T> implements Serializable {
         int hash = 5;
         hash = 83 * hash + (this.id != null ? this.id.hashCode() : 0);
         return hash;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public final String getId() {
+        return id;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public final T getValue() {
+        return value;
     }
 }

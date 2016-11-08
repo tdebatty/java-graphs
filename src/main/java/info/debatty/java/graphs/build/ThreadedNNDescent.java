@@ -1,7 +1,7 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.Node;
+import info.debatty.java.graphs.NodeInterface;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,13 +20,13 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
     // Internal state, used by worker objects
     private int cores;
-    private List<Node<T>> nodes;
+    private List<NodeInterface> nodes;
     private Graph<T> neighborlists;
-    private HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2,
+    private HashMap<NodeInterface, ArrayList<NodeInterface>> old_lists, new_lists, old_lists_2,
             new_lists_2;
 
     @Override
-    protected final Graph<T> _computeGraph(final List<Node<T>> nodes) {
+    protected final Graph<T> _computeGraph(final List<NodeInterface> nodes) {
         // Create worker threads
         cores = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(cores);
@@ -40,14 +40,14 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         // Initialize state...
         this.nodes = nodes;
         this.neighborlists = new Graph<T>(nodes.size());
-        this.old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
-        this.new_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
+        this.old_lists = new HashMap<NodeInterface, ArrayList<NodeInterface>>(nodes.size());
+        this.new_lists = new HashMap<NodeInterface, ArrayList<NodeInterface>>(nodes.size());
 
         HashMap<String, Object> data = new HashMap<String, Object>();
 
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
-        for (Node v : nodes) {
+        for (NodeInterface v : nodes) {
             neighborlists.put(v, RandomNeighborList(nodes, v));
         }
 
@@ -61,7 +61,7 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
             // new[v]←− ρK items in B[v] with a true flag
             // Mark sampled items in B[v] as false;
             for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
+                NodeInterface v = nodes.get(i);
                 old_lists.put(v, PickFalses(neighborlists.get(v)));
                 new_lists.put(v, PickTruesAndMark(neighborlists.get(v)));
 
@@ -145,7 +145,7 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
             }
 
             for (int i = start; i < end; i++) {
-                Node v = nodes.get(i);
+                NodeInterface v = nodes.get(i);
                 // old[v]←− old[v] ∪ Sample(old′[v], ρK)
                 // new[v]←− new[v] ∪ Sample(new′[v], ρK)
                 old_lists.put(v,
@@ -159,10 +159,10 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
                 // for u1,u2 ∈ new[v], u1 < u2 do
                 for (int j = 0; j < new_lists.get(v).size(); j++) {
-                    Node u1 = (Node) new_lists.get(v).get(j);
+                    NodeInterface u1 = new_lists.get(v).get(j);
 
                     for (int k = j + 1; k < new_lists.get(u1).size(); k++) {
-                        Node u2 = (Node) new_lists.get(u1).get(k);
+                        NodeInterface u2 = new_lists.get(u1).get(k);
                         //int u2_i = Find(u2);
 
                         // l←− σ(u1,u2)
@@ -175,7 +175,7 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
                     // or u1 ∈ new[v], u2 ∈ old[v] do
                     for (int k = 0; k < old_lists.get(v).size(); k++) {
-                        Node u2 = (Node) old_lists.get(v).get(k);
+                        NodeInterface u2 = old_lists.get(v).get(k);
 
                         if (u1.equals(u2)) {
                             continue;

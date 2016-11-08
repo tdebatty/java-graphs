@@ -25,11 +25,13 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
-import info.debatty.java.graphs.build.ThreadedNNDescent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 import junit.framework.TestCase;
 
 /**
@@ -51,36 +53,31 @@ public class GraphTest extends TestCase {
 
         }
 
-        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
-
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
-            }
-        };
 
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        GraphBuilder builder = new ThreadedNNDescent<Integer>();
+        GraphBuilder builder = new Brute<Node<Integer>>();
         builder.setK(20);
-        builder.setSimilarity(similarity);
+        builder.setSimilarity(new IntegerNodeSimilarity());
 
         // Run the algorithm, and get the resulting neighbor lists
-        Graph<Integer> graph = builder.computeGraph(nodes);
+        Graph<Node<Integer>> graph = builder.computeGraph(nodes);
 
         assertEquals(2, graph.connectedComponents().size());
     }
 
-    /**
+        /**
      * Test of stronglyConnectedComponents method, of class Graph.
      */
     public void testStronglyConnectedComponents() {
         // Generate two series of nodes
-        ArrayList<Node> nodes = new ArrayList<Node>();
+        ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>();
         for (int i = 0; i <= 1000; i++) {
             // The value of our nodes will be an int
             nodes.add(new Node<Integer>(String.valueOf(i), i));
         }
+
         for (int i = 1010; i < 2000; i += 20) {
             // This will generate a link from node 1010 to node 1000
             // but not in the other direction
@@ -88,22 +85,15 @@ public class GraphTest extends TestCase {
             nodes.add(new Node<Integer>(String.valueOf(i), i));
         }
 
-        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
-
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
-            }
-        };
-
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        GraphBuilder builder = new Brute<Integer>();
+        Brute<Node<Integer>> builder = new Brute<Node<Integer>>();
         builder.setK(5);
-        builder.setSimilarity(similarity);
+        builder.setSimilarity(new IntegerNodeSimilarity());
 
         // Run the algorithm, and get the resulting neighbor lists
-        Graph<Integer> graph = builder.computeGraph(nodes);
+        Graph<Node<Integer>> graph = builder.computeGraph(nodes);
         assertEquals(2, graph.stronglyConnectedComponents().size());
     }
 
@@ -116,7 +106,7 @@ public class GraphTest extends TestCase {
         System.out.println("=============================");
 
         // Generate two series of nodes
-        ArrayList<Node> nodes = new ArrayList<Node>();
+        ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>();
 
         nodes.add(new Node<Integer>("1", 1));
         nodes.add(new Node<Integer>("2", 2));
@@ -126,22 +116,15 @@ public class GraphTest extends TestCase {
         nodes.add(new Node<Integer>("9", 9));
 
 
-        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
-
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
-            }
-        };
-
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        GraphBuilder builder = new Brute<Integer>();
+        Brute<Node<Integer>> builder = new Brute<Node<Integer>>();
         builder.setK(2);
-        builder.setSimilarity(similarity);
+        builder.setSimilarity(new IntegerNodeSimilarity());
 
         // Run the algorithm, and get the resulting neighbor lists
-        Graph<Integer> graph = builder.computeGraph(nodes);
+        Graph<Node<Integer>> graph = builder.computeGraph(nodes);
         System.out.println(graph.stronglyConnectedComponents());
         assertEquals(2, graph.stronglyConnectedComponents().size());
     }
@@ -175,10 +158,10 @@ public class GraphTest extends TestCase {
         }
 
         System.out.println("compute graph...");
-        GraphBuilder builder = new Brute<Double>();
+        GraphBuilder builder = new Brute<Node<Double>>();
         builder.setK(10);
         builder.setSimilarity(similarity);
-        Graph<Double> graph = builder.computeGraph(data);
+        Graph<Node<Double>> graph = builder.computeGraph(data);
 
         System.out.println("perform evaluation...");
         int correct = 0;
@@ -452,3 +435,10 @@ public class GraphTest extends TestCase {
         }
     }
 }
+
+class IntegerNodeSimilarity implements SimilarityInterface<Node<Integer>> {
+
+    public double similarity(Node<Integer> value1, Node<Integer> value2) {
+        return 1.0 / (1.0 + Math.abs(value1.value - value2.value));
+    }
+};
