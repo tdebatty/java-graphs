@@ -288,6 +288,7 @@ public class GraphTest extends TestCase {
                     Graph.DEFAULT_SEARCH_SPEEDUP,
                     Graph.DEFAULT_SEARCH_RANDOM_JUMPS,
                     Graph.DEFAULT_SEARCH_EXPANSION,
+                    Graph.DEFAULT_UPDATE_DEPTH,
                     stats);
             System.out.println(stats);
             data.add(query);
