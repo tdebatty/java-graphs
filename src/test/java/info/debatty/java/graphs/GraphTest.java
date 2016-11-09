@@ -290,7 +290,7 @@ public class GraphTest extends TestCase {
                     Graph.DEFAULT_SEARCH_EXPANSION,
                     Graph.DEFAULT_UPDATE_DEPTH,
                     stats);
-            System.out.println(stats);
+            //System.out.println(stats);
             data.add(query);
         }
 
