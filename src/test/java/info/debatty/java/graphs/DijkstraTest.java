@@ -51,7 +51,7 @@ public class DijkstraTest extends TestCase {
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        Brute builder = new Brute<Integer>();
+        Brute<Integer> builder = new Brute<Integer>();
         builder.setK(10);
         builder.setSimilarity(new SimilarityInterface<Integer>() {
 

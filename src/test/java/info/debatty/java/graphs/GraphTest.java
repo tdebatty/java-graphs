@@ -25,6 +25,8 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -132,6 +134,39 @@ public class GraphTest extends TestCase {
         Graph<Integer> graph = builder.computeGraph(nodes);
         System.out.println(graph.stronglyConnectedComponents());
         assertEquals(2, graph.stronglyConnectedComponents().size());
+    }
+
+    public void testWriteGEXF() throws IOException {
+        System.out.println("WiteGEXF");
+        System.out.println("========");
+
+        int n = 4000;
+
+        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
+
+            public double similarity(Double value1, Double value2) {
+                return 1.0 / (1 + Math.abs(value1 - value2));
+            }
+        };
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Double> data = new ArrayList<Double>();
+        while (data.size() < n) {
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+            data.add(150.0 + 100.0 * rand.nextGaussian());
+            data.add(300.0 + 100.0 * rand.nextGaussian());
+        }
+
+        System.out.println("compute graph...");
+        GraphBuilder<Double> builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        Graph<Double> graph = builder.computeGraph(data);
+
+        System.out.println("write graph...");
+        graph.writeGEXF(
+                File.createTempFile("graph", ".gexf").getAbsolutePath());
     }
 
     /**

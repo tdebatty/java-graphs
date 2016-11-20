@@ -23,6 +23,7 @@
  */
 package info.debatty.java.graphs;
 
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.io.Writer;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -844,14 +846,20 @@ public class Graph<T> implements Serializable {
      */
     public final void writeGEXF(final String filename)
             throws FileNotFoundException, IOException {
-        Writer out = new OutputStreamWriter(new FileOutputStream(filename));
+        Writer out = new OutputStreamWriter(
+                new BufferedOutputStream(new FileOutputStream(filename)));
         out.write(GEXF_HEADER);
 
         // Write nodes
         out.write("<nodes>\n");
+        int node_id = 0;
+        Map<T, Integer> node_registry = new IdentityHashMap<T, Integer>();
+
         for (T node : map.keySet()) {
-            out.write("<node id=\"" + node
+            node_registry.put(node, node_id);
+            out.write("<node id=\"" + node_id
                     + "\" label=\"" + node.toString() + "\" />\n");
+            node_id++;
         }
         out.write("</nodes>\n");
 
@@ -859,15 +867,17 @@ public class Graph<T> implements Serializable {
         out.write("<edges>\n");
         int i = 0;
         for (T source : map.keySet()) {
-            for (Neighbor target : this.getNeighbors(source)) {
-                out.write("<edge id=\"" + i + "\" source=\"" + source + "\" "
-                        + "target=\"" + target.node + "\" "
+            int source_id = node_registry.get(source);
+            for (Neighbor<T> target : this.getNeighbors(source)) {
+                int target_id = node_registry.get(target.node);
+                out.write("<edge id=\"" + i + "\" source=\"" + source_id + "\" "
+                        + "target=\"" + target_id + "\" "
                         + "weight=\"" + target.similarity + "\" />\n");
                 i++;
             }
         }
 
-        out.write("</edges>");
+        out.write("</edges>\n");
 
         // End the file
         out.write("</graph>\n"
