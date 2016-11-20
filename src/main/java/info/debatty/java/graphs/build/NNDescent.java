@@ -3,7 +3,6 @@ package info.debatty.java.graphs.build;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Neighbor;
 import info.debatty.java.graphs.NeighborList;
-import info.debatty.java.graphs.Node;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,7 +101,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
     }
 
     @Override
-    protected Graph<T> _computeGraph(List<Node<T>> nodes) {
+    protected Graph<T> _computeGraph(List<T> nodes) {
 
         iterations = 0;
 
@@ -111,16 +110,16 @@ public class NNDescent<T> extends GraphBuilder<T> {
         }
 
         Graph<T> neighborlists = new Graph<T>(nodes.size());
-        HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2, new_lists_2;
+        HashMap<T, ArrayList<T>> old_lists, new_lists, old_lists_2, new_lists_2;
 
-        old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
-        new_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
+        old_lists = new HashMap<T, ArrayList<T>>(nodes.size());
+        new_lists = new HashMap<T, ArrayList<T>>(nodes.size());
 
         HashMap<String, Object> data = new HashMap<String, Object>();
 
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
-        for (Node v : nodes) {
+        for (T v : nodes) {
             neighborlists.put(v, RandomNeighborList(nodes, v));
         }
 
@@ -134,9 +133,9 @@ public class NNDescent<T> extends GraphBuilder<T> {
             // new[v]←− ρK items in B[v] with a true flag
             // Mark sampled items in B[v] as false;
             for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
-                old_lists.put(v, PickFalses(neighborlists.get(v)));
-                new_lists.put(v, PickTruesAndMark(neighborlists.get(v)));
+                T v = nodes.get(i);
+                old_lists.put(v, PickFalses(neighborlists.getNeighbors(v)));
+                new_lists.put(v, PickTruesAndMark(neighborlists.getNeighbors(v)));
 
             }
 
@@ -147,7 +146,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
 
             // for v ∈ V do
             for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
+                T v = nodes.get(i);
                 // old[v]←− old[v] ∪ Sample(old′[v], ρK)
                 // new[v]←− new[v] ∪ Sample(new′[v], ρK)
                 old_lists.put(v, Union(old_lists.get(v), Sample(old_lists_2.get(v), (int) (rho * k))));
@@ -155,24 +154,24 @@ public class NNDescent<T> extends GraphBuilder<T> {
 
                 // for u1,u2 ∈ new[v], u1 < u2 do
                 for (int j = 0; j < new_lists.get(v).size(); j++) {
-                    Node u1 = (Node) new_lists.get(v).get(j);
+                    T u1 = new_lists.get(v).get(j);
 
                     //int u1_i = Find(u1); // position of u1 in nodes
                     for (int l = j + 1; l < new_lists.get(u1).size(); l++) {
-                        Node u2 = (Node) new_lists.get(u1).get(l);
+                        T u2 = new_lists.get(u1).get(l);
                             //int u2_i = Find(u2);
 
                         // l←− σ(u1,u2)
                         // c←− c+UpdateNN(B[u1], u2, l, true)
                         // c←− c+UpdateNN(B[u2], u1, l, true)
                         double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
+                        c += UpdateNL(neighborlists.getNeighbors(u1), u2, s);
+                        c += UpdateNL(neighborlists.getNeighbors(u2), u1, s);
                     }
 
                     // or u1 ∈ new[v], u2 ∈ old[v] do
                     for (int l = 0; l < old_lists.get(v).size(); l++) {
-                        Node u2 = (Node) old_lists.get(v).get(l);
+                        T u2 = old_lists.get(v).get(l);
 
                         if (u1.equals(u2)) {
                             continue;
@@ -180,8 +179,8 @@ public class NNDescent<T> extends GraphBuilder<T> {
 
                         //int u2_i = Find(u2);
                         double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
+                        c += UpdateNL(neighborlists.getNeighbors(u1), u2, s);
+                        c += UpdateNL(neighborlists.getNeighbors(u2), u1, s);
                     }
                 }
             }
@@ -209,15 +208,15 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return neighborlists;
     }
 
-    protected ArrayList<Node> Union(ArrayList<Node> l1, ArrayList<Node> l2) {
-        ArrayList<Node> r = new ArrayList<Node>();
-        for (Node n : l1) {
+    protected ArrayList<T> Union(ArrayList<T> l1, ArrayList<T> l2) {
+        ArrayList<T> r = new ArrayList<T>();
+        for (T n : l1) {
             if (!r.contains(n)) {
                 r.add(n);
             }
         }
 
-        for (Node n : l2) {
+        for (T n : l2) {
             if (!r.contains(n)) {
                 r.add(n);
             }
@@ -226,13 +225,13 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return r;
     }
 
-    protected NeighborList RandomNeighborList(List<Node<T>> nodes, Node for_node) {
+    protected NeighborList RandomNeighborList(List<T> nodes, T for_node) {
         //System.out.println("Random NL for node " + for_node);
         NeighborList nl = new NeighborList(k);
         Random r = new Random();
 
         while (nl.size() < k) {
-            Node node = nodes.get(r.nextInt(nodes.size()));
+            T node = nodes.get(r.nextInt(nodes.size()));
             if (!node.equals(for_node)) {
                 double s = Similarity(node, for_node);
                 nl.add(new Neighbor(node, s));
@@ -242,9 +241,9 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return nl;
     }
 
-    protected ArrayList<Node> PickFalses(NeighborList neighborList) {
-        ArrayList<Node> falses = new ArrayList<Node>();
-        for (Neighbor n : neighborList) {
+    protected ArrayList<T> PickFalses(NeighborList neighborList) {
+        ArrayList<T> falses = new ArrayList<T>();
+        for (Neighbor<T> n : neighborList) {
             if (n.getAttribute(IS_PROCESSED) != null) { // !n.is_new
                 falses.add(n.node);
             }
@@ -259,9 +258,9 @@ public class NNDescent<T> extends GraphBuilder<T> {
      * @param neighborList
      * @return
      */
-    protected ArrayList<Node> PickTruesAndMark(NeighborList neighborList) {
-        ArrayList<Node> r = new ArrayList<Node>();
-        for (Neighbor n : neighborList) {
+    protected ArrayList<T> PickTruesAndMark(NeighborList neighborList) {
+        ArrayList<T> r = new ArrayList<T>();
+        for (Neighbor<T> n : neighborList) {
             if (n.getAttribute(IS_PROCESSED) == null && Math.random() < rho) { // n.is_new
                 n.setAttribute(IS_PROCESSED, true); // n.is_new = false;
                 r.add(n.node);
@@ -271,19 +270,19 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return r;
     }
 
-    protected HashMap<Node<T>, ArrayList> Reverse(List<Node<T>> nodes, HashMap<Node<T>, ArrayList> lists) {
+    protected HashMap<T, ArrayList<T>> Reverse(List<T> nodes, HashMap<T, ArrayList<T>> lists) {
 
-        HashMap<Node<T>, ArrayList> R = new HashMap<Node<T>, ArrayList>(nodes.size());
+        HashMap<T, ArrayList<T>> R = new HashMap<T, ArrayList<T>>(nodes.size());
 
         // Create all arraylists
-        for (Node n : nodes) {
-            R.put(n, new ArrayList<Node>());
+        for (T n : nodes) {
+            R.put(n, new ArrayList<T>());
         }
 
         // For each node and corresponding arraylist
-        for (Node node : nodes) {
-            ArrayList<Node> list = lists.get(node);
-            for (Node other_node : list) {
+        for (T node : nodes) {
+            ArrayList<T> list = lists.get(node);
+            for (T other_node : list) {
                 R.get(other_node).add(node);
             }
         }
@@ -299,7 +298,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
      * @param count
      * @return
      */
-    protected ArrayList<Node> Sample(ArrayList<Node> nodes, int count) {
+    protected ArrayList<T> Sample(ArrayList<T> nodes, int count) {
         Random r = new Random();
         while (nodes.size() > count) {
             nodes.remove(r.nextInt(nodes.size()));
@@ -309,22 +308,22 @@ public class NNDescent<T> extends GraphBuilder<T> {
 
     }
 
-    protected int UpdateNL(NeighborList nl, Node n, double similarity) {
+    protected int UpdateNL(NeighborList nl, T n, double similarity) {
         Neighbor neighbor = new Neighbor(n, similarity);
         return nl.add(neighbor) ? 1 : 0;
     }
 
-    protected double Similarity(Node n1, Node n2) {
+    protected double Similarity(T n1, T n2) {
         computed_similarities++;
-        return similarity.similarity((T) n1.value, (T) n2.value);
+        return similarity.similarity(n1, n2);
 
     }
 
-    protected Graph<T> MakeFullyLinked(List<Node<T>> nodes) {
+    protected Graph<T> MakeFullyLinked(List<T> nodes) {
         Graph<T> neighborlists = new Graph<T>(nodes.size());
-        for (Node node : nodes) {
+        for (T node : nodes) {
             NeighborList neighborlist = new NeighborList(k);
-            for (Node other_node : nodes) {
+            for (T other_node : nodes) {
                 if (node.equals(other_node)) {
                     continue;
                 }

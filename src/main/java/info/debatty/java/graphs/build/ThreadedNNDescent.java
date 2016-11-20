@@ -1,7 +1,6 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.Node;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,17 +18,17 @@ import java.util.concurrent.Future;
 public class ThreadedNNDescent<T> extends NNDescent<T> {
 
     // Internal state, used by worker objects
-    private int cores;
-    private List<Node<T>> nodes;
-    private Graph<T> neighborlists;
-    private HashMap<Node<T>, ArrayList> old_lists, new_lists, old_lists_2,
+    private int thread_count;
+    private List<T> nodes;
+    private Graph<T> graph;
+    private HashMap<T, ArrayList<T>> old_lists, new_lists, old_lists_2,
             new_lists_2;
 
     @Override
-    protected final Graph<T> _computeGraph(final List<Node<T>> nodes) {
+    protected final Graph<T> _computeGraph(final List<T> nodes) {
         // Create worker threads
-        cores = Runtime.getRuntime().availableProcessors();
-        ExecutorService executor = Executors.newFixedThreadPool(cores);
+        thread_count = Runtime.getRuntime().availableProcessors() + 1;
+        ExecutorService executor = Executors.newFixedThreadPool(thread_count);
 
         iterations = 0;
 
@@ -39,16 +38,16 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
         // Initialize state...
         this.nodes = nodes;
-        this.neighborlists = new Graph<T>(nodes.size());
-        this.old_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
-        this.new_lists = new HashMap<Node<T>, ArrayList>(nodes.size());
+        this.graph = new Graph<T>(nodes.size());
+        this.old_lists = new HashMap<T, ArrayList<T>>(nodes.size());
+        this.new_lists = new HashMap<T, ArrayList<T>>(nodes.size());
 
         HashMap<String, Object> data = new HashMap<String, Object>();
 
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
-        for (Node v : nodes) {
-            neighborlists.put(v, RandomNeighborList(nodes, v));
+        for (T v : nodes) {
+            graph.put(v, RandomNeighborList(nodes, v));
         }
 
         // loop
@@ -61,9 +60,9 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
             // new[v]←− ρK items in B[v] with a true flag
             // Mark sampled items in B[v] as false;
             for (int i = 0; i < nodes.size(); i++) {
-                Node v = nodes.get(i);
-                old_lists.put(v, PickFalses(neighborlists.get(v)));
-                new_lists.put(v, PickTruesAndMark(neighborlists.get(v)));
+                T v = nodes.get(i);
+                old_lists.put(v, PickFalses(graph.getNeighbors(v)));
+                new_lists.put(v, PickTruesAndMark(graph.getNeighbors(v)));
 
             }
 
@@ -74,7 +73,7 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
             ArrayList<Future<Integer>> list = new ArrayList<Future<Integer>>();
             // Start threads...
-            for (int t = 0; t < cores; t++) {
+            for (int t = 0; t < thread_count; t++) {
                 list.add(executor.submit(new ThreadedNNDescent.NNThread(t)));
 
             }
@@ -110,15 +109,13 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         executor.shutdown();
 
         // Clear local state
-        Graph<T> n = this.neighborlists;
-        this.neighborlists = null;
         this.new_lists = null;
         this.new_lists_2 = null;
         this.nodes = null;
         this.old_lists = null;
         this.old_lists_2 = null;
 
-        return n;
+        return graph;
     }
 
     /**
@@ -136,16 +133,16 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         public Integer call() {
             int c = 0;
             // for v ∈ V do
-            int start = slice * nodes.size() / cores;
-            int end = (slice + 1) * nodes.size() / cores;
+            int start = slice * nodes.size() / thread_count;
+            int end = (slice + 1) * nodes.size() / thread_count;
 
             // Last slice should go to the end...
-            if (slice == (cores - 1)) {
+            if (slice == (thread_count - 1)) {
                 end = nodes.size();
             }
 
             for (int i = start; i < end; i++) {
-                Node v = nodes.get(i);
+                T v = nodes.get(i);
                 // old[v]←− old[v] ∪ Sample(old′[v], ρK)
                 // new[v]←− new[v] ∪ Sample(new′[v], ρK)
                 old_lists.put(v,
@@ -159,23 +156,23 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
                 // for u1,u2 ∈ new[v], u1 < u2 do
                 for (int j = 0; j < new_lists.get(v).size(); j++) {
-                    Node u1 = (Node) new_lists.get(v).get(j);
+                    T u1 = new_lists.get(v).get(j);
 
                     for (int k = j + 1; k < new_lists.get(u1).size(); k++) {
-                        Node u2 = (Node) new_lists.get(u1).get(k);
+                        T u2 = new_lists.get(u1).get(k);
                         //int u2_i = Find(u2);
 
                         // l←− σ(u1,u2)
                         // c←− c+UpdateNN(B[u1], u2, l, true)
                         // c←− c+UpdateNN(B[u2], u1, l, true)
                         double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
+                        c += UpdateNL(graph.getNeighbors(u1), u2, s);
+                        c += UpdateNL(graph.getNeighbors(u2), u1, s);
                     }
 
                     // or u1 ∈ new[v], u2 ∈ old[v] do
                     for (int k = 0; k < old_lists.get(v).size(); k++) {
-                        Node u2 = (Node) old_lists.get(v).get(k);
+                        T u2 = old_lists.get(v).get(k);
 
                         if (u1.equals(u2)) {
                             continue;
@@ -183,8 +180,8 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
                         //int u2_i = Find(u2);
                         double s = Similarity(u1, u2);
-                        c += UpdateNL(neighborlists.get(u1), u2, s);
-                        c += UpdateNL(neighborlists.get(u2), u1, s);
+                        c += UpdateNL(graph.getNeighbors(u1), u2, s);
+                        c += UpdateNL(graph.getNeighbors(u2), u1, s);
                     }
                 }
             }

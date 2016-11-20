@@ -25,9 +25,8 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Random;
 import static junit.framework.Assert.assertEquals;
 import junit.framework.TestCase;
@@ -55,15 +54,14 @@ public class ThreadedBruteTest extends TestCase {
     public void testComputeGraph() {
         System.out.println("computeGraph");
 
-        int count = 5500;
+        int count = 550;
         int k = 10;
 
         // Generate some nodes
-        Random r = new Random();
-        ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(count);
+        LinkedList<Integer> nodes = new LinkedList<Integer>();
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), r.nextInt(100 * count)));
+            nodes.add(i);
         }
         // Define the similarity
         SimilarityInterface<Integer> similarity =
@@ -82,18 +80,18 @@ public class ThreadedBruteTest extends TestCase {
 
 
         System.out.println("Single thread graph builder...");
-        Brute builder = new Brute<Integer>();
+        Brute<Integer> builder = new Brute<Integer>();
         builder.setK(k);
         builder.setSimilarity(similarity);
         Graph<Integer> graph = builder.computeGraph(nodes);
 
-        Node<Integer> first_node = graph.first();
-        System.out.println(threaded_graph.get(first_node));
-        assertEquals(graph.get(first_node).countCommons(threaded_graph.get(first_node)), k);
+        Integer first_node = graph.first();
+        System.out.println(threaded_graph.getNeighbors(first_node));
+        assertEquals(graph.getNeighbors(first_node).countCommons(threaded_graph.getNeighbors(first_node)), k);
 
         int correct_edges = 0;
-        for (Node n : nodes) {
-            correct_edges += graph.get(n).countCommons(threaded_graph.get(n));
+        for (Integer n : nodes) {
+            correct_edges += graph.getNeighbors(n).countCommons(threaded_graph.getNeighbors(n));
         }
 
         assertEquals(count, graph.size());

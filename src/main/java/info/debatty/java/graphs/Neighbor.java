@@ -9,19 +9,15 @@ import java.util.HashMap;
  *
  * @author Thibault Debatty
  */
-public class Neighbor implements Comparable, Serializable {
+public class Neighbor<T>
+        implements Comparable, Serializable {
 
-    public Node node;
+    public T node;
     public double similarity;
 
     protected HashMap<String, Object> attributes;
 
-    public Neighbor() {
-        this.attributes = new HashMap<String, Object>();
-        node = new Node();
-    }
-
-    public Neighbor(Node node, double similarity) {
+    public Neighbor(T node, double similarity) {
         this.attributes = new HashMap<String, Object>();
         this.node = node;
         this.similarity = similarity;
@@ -53,7 +49,7 @@ public class Neighbor implements Comparable, Serializable {
      */
     @Override
     public String toString() {
-        return "(" + node.id + "," + node.value + "," + similarity + ")";
+        return "(" + node.toString() + "," + similarity + ")"; //node.value + "," + similarity + ")";
     }
 
     @Override

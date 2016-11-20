@@ -24,9 +24,8 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import junit.framework.TestCase;
 
 /**
@@ -54,32 +53,34 @@ public class BruteTest extends TestCase {
 
         // Generate some nodes
         int count = 1000;
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
+        LinkedList<Integer> nodes = new LinkedList<Integer>();
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), i));
+            nodes.add(i);
         }
 
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        Brute builder = new Brute<Integer>();
+        Brute<Integer> builder = new Brute<Integer>();
         builder.setK(10);
         builder.setSimilarity(new SimilarityInterface<Integer>() {
 
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
+            public double similarity(Integer node1, Integer node2) {
+                return 1.0 / (1.0 + Math.abs(node1 - node2));
             }
         });
 
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
-        // Test...
-        Node node_0 = nodes.get(0);
-        // this is the k'st most similar node (=> number 9)
-        Node other_node = graph.get(node_0).peek().node;
 
-        assertEquals(other_node.id, "10");
+        // Test...
+        Integer node_0 = nodes.get(0);
+
+        // this is the k'st most similar node (=> number 9)
+        Integer other_node = (Integer) graph.getNeighbors(node_0).peek().node;
+
+        assertEquals(other_node.intValue(), 10);
 
     }
 }

@@ -25,7 +25,6 @@ package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.NeighborList;
-import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.GraphBuilder;
 import info.debatty.java.graphs.build.NNCTPH;
@@ -44,8 +43,8 @@ public class NNCTPHExample {
      */
     public static void main(String[] args) {
         // Read the file
-        List<Node<String>> nodes = GraphBuilder.readFile(
-                SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
+        List<String> nodes = GraphBuilder.readFile(
+                NNCTPHExample.class.getClassLoader().getResource("726-unique-spams").getFile());
 
         NNCTPH builder = new NNCTPH();
         builder.setNPartitions(20);
@@ -60,7 +59,7 @@ public class NNCTPHExample {
 
         Graph<String> graph = builder.computeGraph(nodes);
 
-        for (Map.Entry<Node<String>, NeighborList> entry : graph.entrySet()) {
+        for (Map.Entry<String, NeighborList> entry : graph.entrySet()) {
             System.out.println(entry);
         }
 

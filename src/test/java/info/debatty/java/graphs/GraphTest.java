@@ -25,11 +25,14 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
-import info.debatty.java.graphs.build.ThreadedNNDescent;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 import junit.framework.TestCase;
 
 /**
@@ -43,27 +46,21 @@ public class GraphTest extends TestCase {
      */
     public void testConnectedComponents() {
         // Generate two series of nodes
-        ArrayList<Node> nodes = new ArrayList<Node>();
+        LinkedList<Integer> nodes = new LinkedList<Integer>();
         for (int i = 0; i < 1000; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), i));
-            nodes.add(new Node<Integer>(String.valueOf(1000000 + i), 1000000 + i));
+            nodes.add(i);
+            nodes.add(1000000 + i);
 
         }
 
-        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
-
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
-            }
-        };
 
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        GraphBuilder builder = new ThreadedNNDescent<Integer>();
+        GraphBuilder<Integer> builder = new Brute<Integer>();
         builder.setK(20);
-        builder.setSimilarity(similarity);
+        builder.setSimilarity(new IntegerNodeSimilarity());
 
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
@@ -71,40 +68,38 @@ public class GraphTest extends TestCase {
         assertEquals(2, graph.connectedComponents().size());
     }
 
-    /**
+        /**
      * Test of stronglyConnectedComponents method, of class Graph.
      */
     public void testStronglyConnectedComponents() {
+        System.out.println("Strongly connected components");
+        System.out.println("=============================");
+
         // Generate two series of nodes
-        ArrayList<Node> nodes = new ArrayList<Node>();
+        ArrayList<Integer> nodes = new ArrayList<Integer>();
         for (int i = 0; i <= 1000; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), i));
+            nodes.add(i);
         }
-        for (int i = 1010; i < 2000; i += 20) {
+
+        for (int i = 1011; i < 2000; i += 10) {
             // This will generate a link from node 1010 to node 1000
             // but not in the other direction
             // => will not be strongly connected
-            nodes.add(new Node<Integer>(String.valueOf(i), i));
+            nodes.add(i);
         }
-
-        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
-
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
-            }
-        };
 
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        GraphBuilder builder = new Brute<Integer>();
-        builder.setK(5);
-        builder.setSimilarity(similarity);
+        Brute<Integer> builder = new Brute<Integer>();
+        builder.setK(6);
+        builder.setSimilarity(new IntegerNodeSimilarity());
 
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
-        assertEquals(2, graph.stronglyConnectedComponents().size());
+        ArrayList<Graph<Integer>> components = graph.stronglyConnectedComponents();
+        assertEquals(2, components.size());
     }
 
 
@@ -116,29 +111,22 @@ public class GraphTest extends TestCase {
         System.out.println("=============================");
 
         // Generate two series of nodes
-        ArrayList<Node> nodes = new ArrayList<Node>();
+        ArrayList<Integer> nodes = new ArrayList<Integer>();
 
-        nodes.add(new Node<Integer>("1", 1));
-        nodes.add(new Node<Integer>("2", 2));
-        nodes.add(new Node<Integer>("3", 3));
-        nodes.add(new Node<Integer>("7", 7));
-        nodes.add(new Node<Integer>("8", 8));
-        nodes.add(new Node<Integer>("9", 9));
+        nodes.add(1);
+        nodes.add(2);
+        nodes.add(3);
+        nodes.add(7);
+        nodes.add(8);
+        nodes.add(9);
 
-
-        SimilarityInterface<Integer> similarity = new SimilarityInterface<Integer>() {
-
-            public double similarity(Integer value1, Integer value2) {
-                return 1.0 / (1.0 + Math.abs(value1 - value2));
-            }
-        };
 
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        GraphBuilder builder = new Brute<Integer>();
+        Brute<Integer> builder = new Brute<Integer>();
         builder.setK(2);
-        builder.setSimilarity(similarity);
+        builder.setSimilarity(new IntegerNodeSimilarity());
 
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
@@ -167,15 +155,15 @@ public class GraphTest extends TestCase {
 
         System.out.println("create some random nodes...");
         Random rand = new Random();
-        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        List<Double> data = new ArrayList<Double>();
         while (data.size() < n) {
-            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+            data.add(150.0 + 100.0 * rand.nextGaussian());
+            data.add(300.0 + 100.0 * rand.nextGaussian());
         }
 
         System.out.println("compute graph...");
-        GraphBuilder builder = new Brute<Double>();
+        GraphBuilder<Double> builder = new Brute<Double>();
         builder.setK(10);
         builder.setSimilarity(similarity);
         Graph<Double> graph = builder.computeGraph(data);
@@ -191,7 +179,7 @@ public class GraphTest extends TestCase {
                     30);
 
             // Search the (real) most similar
-            NeighborList exhaustive_result = graph.searchExhaustive(query, 1);
+            NeighborList exhaustive_result = graph.search(query, 1);
             correct += approximate_result.countCommons(exhaustive_result);
 
         }
@@ -216,29 +204,29 @@ public class GraphTest extends TestCase {
 
         System.out.println("create some random nodes...");
         Random rand = new Random();
-        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        List<Double> data = new ArrayList<Double>();
         while (data.size() < n) {
-            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+            data.add(150.0 + 100.0 * rand.nextGaussian());
+            data.add(300.0 + 100.0 * rand.nextGaussian());
         }
 
         System.out.println("Build exact online graph...");
         Graph<Double> online_graph = new Graph<Double>();
         online_graph.setSimilarity(similarity);
-        for (Node<Double> node : data) {
+        for (Double node : data) {
             online_graph.add(node);
         }
 
         System.out.println("Build reference graph...");
-        GraphBuilder builder = new Brute<Double>();
+        GraphBuilder<Double> builder = new Brute<Double>();
         builder.setK(10);
         builder.setSimilarity(similarity);
         Graph<Double> graph = builder.computeGraph(data);
 
         int correct = 0;
-        for (Node<Double> node : data) {
-            correct += graph.get(node).countCommons(online_graph.get(node));
+        for (Double node : data) {
+            correct += graph.getNeighbors(node).countCommons(online_graph.getNeighbors(node));
         }
         System.out.println("Found " + correct + " correct edges");
         assertEquals(data.size() * 10, correct);
@@ -261,26 +249,25 @@ public class GraphTest extends TestCase {
 
         System.out.println("create some random nodes...");
         Random rand = new Random();
-        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        List<Double> data = new ArrayList<Double>();
         while (data.size() < n) {
-            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+            data.add(150.0 + 100.0 * rand.nextGaussian());
+            data.add(300.0 + 100.0 * rand.nextGaussian());
+            data.add(200.0 + 50.0 * rand.nextGaussian());
         }
 
         System.out.println("Compute initial graph using exhaustive search...");
         Graph<Double> graph = new Graph<Double>();
         graph.setK(10);
         graph.setSimilarity(similarity);
-        for (Node<Double> node : data) {
+        for (Double node : data) {
             graph.add(node);
         }
 
         System.out.println("Add some nodes using fast algorithm...");
         for (int i = 0; i < n_test; i++) {
-            Node<Double> query = new Node<Double>(
-                    String.valueOf(n + i), 400.0 * rand.nextDouble());
+            Double query = 400.0 * rand.nextDouble();
 
             StatisticsContainer stats = new StatisticsContainer();
             graph.fastAdd(
@@ -297,14 +284,14 @@ public class GraphTest extends TestCase {
         assertEquals(n + n_test, graph.size());
 
         System.out.println("Compute validation graph...");
-        GraphBuilder builder = new Brute<Double>();
+        GraphBuilder<Double> builder = new Brute<Double>();
         builder.setK(10);
         builder.setSimilarity(similarity);
         Graph validation_graph = builder.computeGraph(data);
 
         int correct = 0;
-        for (Node<Double> node : data) {
-            correct += graph.get(node).countCommons(validation_graph.get(node));
+        for (Double node : data) {
+            correct += graph.getNeighbors(node).countCommons(validation_graph.getNeighbors(node));
         }
         System.out.println("Found " + correct + " correct edges");
         System.out.printf("= %f \n", 100.0 * correct / (10 * data.size()));
@@ -328,92 +315,39 @@ public class GraphTest extends TestCase {
 
         System.out.println("create some random nodes...");
         Random rand = new Random();
-        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        List<Double> data = new ArrayList<Double>();
         while (data.size() < n) {
-            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+            data.add(150.0 + 100.0 * rand.nextGaussian());
+            data.add(300.0 + 100.0 * rand.nextGaussian());
+            data.add(200.0 + 50.0 * rand.nextGaussian());
         }
 
         System.out.println("Compute initial graph using exhaustive search...");
         Graph<Double> graph = new Graph<Double>();
         graph.setK(10);
         graph.setSimilarity(similarity);
-        for (Node<Double> node : data) {
+        for (Double node : data) {
             graph.add(node);
         }
 
         System.out.println("Remove some nodes...");
         for (int i = 0; i < n_test; i++) {
-            Node<Double> query = data.get(rand.nextInt(data.size() - 1));
+            Double query = data.get(rand.nextInt(data.size() - 1));
 
             graph.fastRemove(query);
             data.remove(query);
 
-            for (Node node : graph.getNodes()) {
-                assertEquals(10, graph.get(node).size());
+            for (Double node : graph.getNodes()) {
+                assertEquals(10, graph.getNeighbors(node).size());
                 assertTrue(
                         "Graph still contains references to deleted node!!!",
-                        !graph.get(node).containsNode(query));
+                        !graph.getNeighbors(node).containsNode(query));
             }
         }
 
         assertEquals(n - n_test, graph.size());
     }
-
-    public void testWindow() {
-        System.out.println("Window");
-        System.out.println("======");
-
-        int n = 1000;
-        int n_test = 1000;
-
-        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
-
-            public double similarity(Double value1, Double value2) {
-                return 1.0 / (1 + Math.abs(value1 - value2));
-            }
-        };
-
-        System.out.println("create some random nodes...");
-        Random rand = new Random();
-        List<Node<Double>> data = new ArrayList<Node<Double>>();
-        while (data.size() < n) {
-            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
-        }
-
-        System.out.println("Compute initial graph using exhaustive search...");
-        Graph<Double> graph = new Graph<Double>();
-        graph.setK(10);
-        graph.setSimilarity(similarity);
-        for (Node<Double> node : data) {
-            graph.add(node);
-        }
-
-        graph.setWindowSize(n);
-
-        System.out.println("add some nodes...");
-        for (int i = 0; i < n_test; i++) {
-            Node<Double> query = new Node<Double>(
-                    String.valueOf(n + i), 400.0 * rand.nextDouble());
-
-            graph.fastAdd(query);
-            data.add(query);
-
-            for (Node<Double> node : graph.getNodes()) {
-                if (graph.get(node) == null) {
-                    System.err.println("NL is null!!");
-                }
-            }
-        }
-
-        assertEquals(n, graph.size());
-    }
-
 
     public void testAddNodeSameId() {
         System.out.println("addNode with same id");
@@ -429,23 +363,23 @@ public class GraphTest extends TestCase {
 
         System.out.println("create some random nodes...");
         Random rand = new Random();
-        List<Node<Double>> data = new ArrayList<Node<Double>>();
+        List<Double> data = new ArrayList<Double>();
         while (data.size() < n) {
-            data.add(new Node<Double>(String.valueOf(data.size()), 100.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 150.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 300.0 + 100.0 * rand.nextGaussian()));
-            data.add(new Node<Double>(String.valueOf(data.size()), 200.0 + 50.0 * rand.nextGaussian()));
-        }
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+            data.add(150.0 + 100.0 * rand.nextGaussian());
+            data.add(300.0 + 100.0 * rand.nextGaussian());
+            data.add(200.0 + 50.0 * rand.nextGaussian());
+    }
 
         System.out.println("Compute initial graph using exhaustive search...");
         Graph<Double> graph = new Graph<Double>();
         graph.setK(10);
         graph.setSimilarity(similarity);
-        for (Node<Double> node : data) {
+        for (Double node : data) {
             graph.add(node);
         }
 
-        System.out.println("Add a node with same id...");
+        System.out.println("Add the same node twice...");
         try {
             graph.fastAdd(data.get(1));
             fail("Should throw exception!!");
@@ -453,3 +387,10 @@ public class GraphTest extends TestCase {
         }
     }
 }
+
+class IntegerNodeSimilarity implements SimilarityInterface<Integer> {
+
+    public double similarity(Integer value1, Integer value2) {
+        return 1.0 / (1.0 + Math.abs(value1 - value2));
+    }
+};

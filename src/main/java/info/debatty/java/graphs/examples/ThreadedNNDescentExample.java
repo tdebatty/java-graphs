@@ -41,10 +41,10 @@ public class ThreadedNNDescentExample {
 
         int k = 10;
 
-        ArrayList<Node<Double>> nodes = new ArrayList<Node<Double>>(count);
+        ArrayList<Double> nodes = new ArrayList<Double>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Double>(String.valueOf(i), r.nextDouble()));
+            nodes.add(r.nextDouble());
         }
 
         SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
@@ -55,7 +55,7 @@ public class ThreadedNNDescentExample {
         };
 
         // Instantiate and configure the algorithm
-        ThreadedNNDescent builder = new ThreadedNNDescent<Double>();
+        ThreadedNNDescent<Double> builder = new ThreadedNNDescent<Double>();
         builder.setK(k);
         builder.setSimilarity(similarity);
         builder.setMaxIterations(20);
@@ -74,8 +74,8 @@ public class ThreadedNNDescentExample {
         Graph<Double> graph = builder.computeGraph(nodes);
 
         // Display neighbor lists
-        for (Node n : nodes) {
-            NeighborList nl = graph.get(n);
+        for (Double n : nodes) {
+            NeighborList nl = graph.getNeighbors(n);
             System.out.print(n);
             System.out.println(nl);
         }
