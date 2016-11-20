@@ -15,12 +15,12 @@ import java.util.PriorityQueue;
 public class NeighborList extends BoundedPriorityQueue<Neighbor>
         implements Serializable {
 
-    public static ArrayList<Edge>
-        Convert2Edges(HashMap<NodeInterface, NeighborList> graph) {
+    public static <T> ArrayList<Edge>
+        Convert2Edges(HashMap<T, NeighborList> graph) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
 
-        for (Map.Entry<NodeInterface, NeighborList> pair : graph.entrySet()) {
-            for (Neighbor neighbor : pair.getValue()) {
+        for (Map.Entry<T, NeighborList> pair : graph.entrySet()) {
+            for (Neighbor<T> neighbor : pair.getValue()) {
                 edges.add(
                         new Edge(
                                 pair.getKey(),
@@ -48,7 +48,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
      * @param other_nl
      * @return
      */
-    public final int countCommonIds(final NeighborList other_nl) {
+    public final int countCommonNodes(final NeighborList other_nl) {
         int count = 0;
         for (Neighbor n : this) {
             if (other_nl.contains(n)) {
@@ -59,7 +59,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
     }
 
     // double has 15 significant digits
-    private static final double EPSILON = 0.000000000001;
+    private static final double EPSILON = 1E-12;
 
     /**
      * Count the number of equivalent neighbors (using similarities).
@@ -104,7 +104,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
      * @param node
      * @return
      */
-    public final boolean containsNode(final NodeInterface node) {
+    public final <T> boolean containsNode(final T node) {
         for (Neighbor n : this) {
             if (n.node.equals(node)) {
                 return true;
@@ -119,7 +119,7 @@ public class NeighborList extends BoundedPriorityQueue<Neighbor>
      * @param node
      * @return true if a neighbor was effectively removed from the list.
      */
-    public final boolean removeNode(final NodeInterface node) {
+    public final <T> boolean removeNode(final T node) {
         for (Neighbor n : this) {
             if (n.node.equals(node)) {
                 this.remove(n);

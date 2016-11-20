@@ -42,10 +42,10 @@ public class DijkstraTest extends TestCase {
 
         // Generate some nodes
         int count = 1000;
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
+        ArrayList<Integer> nodes = new ArrayList<Integer>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), i));
+            nodes.add(i);
         }
 
         // Instantiate and configure the brute-force graph building algorithm
@@ -77,16 +77,16 @@ public class DijkstraTest extends TestCase {
     public final void testGetLargestDistance() {
         // Generate some nodes
         int count = 1000;
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
+        ArrayList<Integer> nodes = new ArrayList<Integer>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), i));
+            nodes.add(i);
         }
 
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        Brute builder = new Brute<Integer>();
+        Brute<Integer> builder = new Brute<Integer>();
         builder.setK(10);
         builder.setSimilarity(new SimilarityInterface<Integer>() {
 

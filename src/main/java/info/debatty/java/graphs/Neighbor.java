@@ -9,7 +9,7 @@ import java.util.HashMap;
  *
  * @author Thibault Debatty
  */
-public class Neighbor<T extends NodeInterface>
+public class Neighbor<T>
         implements Comparable, Serializable {
 
     public T node;
@@ -49,7 +49,7 @@ public class Neighbor<T extends NodeInterface>
      */
     @Override
     public String toString() {
-        return "(" + node.getId() + "," + similarity + ")"; //node.value + "," + similarity + ")";
+        return "(" + node.toString() + "," + similarity + ")"; //node.value + "," + similarity + ")";
     }
 
     @Override

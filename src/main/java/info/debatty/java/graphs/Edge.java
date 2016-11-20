@@ -5,10 +5,10 @@ package info.debatty.java.graphs;
  *
  * @author Thibault Debatty
  */
-public class Edge {
+public class Edge<T> {
 
-    public NodeInterface n1;
-    public NodeInterface n2;
+    public T n1;
+    public T n2;
     public double weight = 0;
 
     public static final String SEPARATOR = ";";
@@ -17,7 +17,7 @@ public class Edge {
 
     }
 
-    public Edge(NodeInterface n1, NodeInterface n2, double weight) {
+    public Edge(T n1, T n2, double weight) {
         this.n1 = n1;
         this.n2 = n2;
         this.weight = weight;
@@ -25,7 +25,7 @@ public class Edge {
 
     @Override
     public String toString() {
-        return n1.getId() + SEPARATOR + n2.getId() + SEPARATOR + weight;
+        return n1.toString() + SEPARATOR + n2.toString()+ SEPARATOR + weight;
 
     }
 }

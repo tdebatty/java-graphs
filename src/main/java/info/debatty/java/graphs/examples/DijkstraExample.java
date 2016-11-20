@@ -25,11 +25,11 @@ package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.Dijkstra;
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.Brute;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -46,15 +46,13 @@ public class DijkstraExample {
 
         // Create some nodes
         Random rand = new Random();
-        ArrayList<Node<Double>> nodes = new ArrayList<Node<Double>>();
+        LinkedList<Double> nodes = new LinkedList<Double>();
         for (int i = 0; i < 20; i++) {
-            nodes.add(new Node<Double>(
-                    String.valueOf(i),
-                    rand.nextDouble() * 100));
+            nodes.add(rand.nextDouble() * 100);
         }
 
         // Build the graph
-        Brute builder = new Brute<Double>();
+        Brute<Double> builder = new Brute<Double>();
         builder.setK(10);
         builder.setSimilarity(new SimilarityInterface<Double>() {
 

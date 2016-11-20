@@ -49,10 +49,9 @@ import java.util.concurrent.Future;
  * k-nn graph, represented as a mapping node => neighborlist.
  *
  * @author Thibault Debatty
- * @param <T> The actual class of the node, used when getting a node
- * @param <U> The type of node value, used to perform nn search
+ * @param <T> The class of the node, used when getting a node
  */
-public class Graph<T extends NodeInterface<U>, U> implements Serializable {
+public class Graph<T> implements Serializable {
 
     /**
      * Number of edges per node.
@@ -82,7 +81,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
 
     private final HashMap<T, NeighborList> map;
-    private SimilarityInterface<U> similarity;
+    private SimilarityInterface<T> similarity;
     private int k = DEFAULT_K;
 
     private int update_depth = DEFAULT_UPDATE_DEPTH;
@@ -108,7 +107,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * Get the similarity measure.
      * @return
      */
-    public final SimilarityInterface<U> getSimilarity() {
+    public final SimilarityInterface<T> getSimilarity() {
         return similarity;
     }
 
@@ -116,7 +115,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * Set the similarity measure used to build or search the graph.
      * @param similarity
      */
-    public final void setSimilarity(final SimilarityInterface<U> similarity) {
+    public final void setSimilarity(final SimilarityInterface<T> similarity) {
         this.similarity = similarity;
     }
 
@@ -143,7 +142,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @param node
      * @return the neighborlist of this node
      */
-    public final NeighborList get(final NodeInterface node) {
+    public final NeighborList getNeighbors(final T node) {
         return map.get(node);
     }
 
@@ -153,7 +152,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @return The first node in the graph
      * @throws NoSuchElementException if the graph is empty...
      */
-    public final NodeInterface first() throws NoSuchElementException {
+    public final T first() throws NoSuchElementException {
         return this.getNodes().iterator().next();
     }
 
@@ -184,9 +183,9 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      *
      * @return
      */
-    public final ArrayList<Graph<T, U>> connectedComponents() {
+    public final ArrayList<Graph<T>> connectedComponents() {
 
-        ArrayList<Graph<T, U>> subgraphs = new ArrayList<Graph<T, U>>();
+        ArrayList<Graph<T>> subgraphs = new ArrayList<Graph<T>>();
         ArrayList<T> nodes_to_process =
                 new ArrayList<T>(map.keySet());
 
@@ -195,7 +194,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
             if (n == null) {
                 continue;
             }
-            Graph<T, U> subgraph = new Graph<T, U>();
+            Graph<T> subgraph = new Graph<T>();
             subgraphs.add(subgraph);
 
             addAndFollow(subgraph, n, nodes_to_process);
@@ -205,20 +204,20 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
     }
 
     private void addAndFollow(
-            final Graph<T, U> subgraph,
+            final Graph<T> subgraph,
             final T node,
             final ArrayList<T> nodes_to_process) {
 
         nodes_to_process.remove(node);
 
-        NeighborList neighborlist = this.get(node);
+        NeighborList neighborlist = this.getNeighbors(node);
         subgraph.put(node, neighborlist);
 
         if (neighborlist == null) {
             return;
         }
 
-        for (Neighbor neighbor : this.get(node)) {
+        for (Neighbor<T> neighbor : this.getNeighbors(node)) {
             if (!subgraph.containsKey(neighbor.node)) {
                 addAndFollow(subgraph, neighbor.node, nodes_to_process);
             }
@@ -232,14 +231,14 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      *
      * @return
      */
-    public final ArrayList<Graph<T, U>> stronglyConnectedComponents() {
+    public final ArrayList<Graph<T>> stronglyConnectedComponents() {
 
         Stack<NodeParent> explored_nodes = new Stack<NodeParent>();
         Index index = new Index();
-        HashMap<NodeInterface, NodeProperty> bookkeeping =
-                new HashMap<NodeInterface, NodeProperty>(map.size());
+        HashMap<T, NodeProperty> bookkeeping =
+                new HashMap<T, NodeProperty>(map.size());
 
-        ArrayList<Graph<T, U>> connected_components = new ArrayList<Graph<T, U>>();
+        ArrayList<Graph<T>> connected_components = new ArrayList<Graph<T>>();
 
         for (T n : map.keySet()) {
 
@@ -256,9 +255,9 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
             }
 
             // We found a connected component
-            Graph<T, U> subgraph = new Graph<T, U>(connected_component.size());
+            Graph<T> subgraph = new Graph<T>(connected_component.size());
             for (T node : connected_component) {
-                subgraph.put(node, this.get(node));
+                subgraph.put(node, this.getNeighbors(node));
             }
             connected_components.add(subgraph);
 
@@ -280,7 +279,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
             final T starting_point,
             final Stack<NodeParent> explored_nodes,
             final Index index,
-            final HashMap<NodeInterface, NodeProperty> bookkeeping) {
+            final HashMap<T, NodeProperty> bookkeeping) {
 
 
         // explored_nodes stores the history of nodes explored but not yet
@@ -294,7 +293,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
         while (!nodes_to_process.empty()) {
             NodeParent node_and_parent = nodes_to_process.pop();
-            NodeInterface node = node_and_parent.node;
+            T node = node_and_parent.node;
 
             bookkeeping.put(
                     node,
@@ -303,11 +302,11 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
             explored_nodes.add(node_and_parent);
 
             // process neighbors of this node
-            for (Neighbor neighbor : this.get(node)) {
+            for (Neighbor<T> neighbor : this.getNeighbors(node)) {
                 T neighbor_node = neighbor.node;
 
                 if (!this.containsKey(neighbor_node)
-                        || this.get(neighbor_node) == null) {
+                        || this.getNeighbors(neighbor_node) == null) {
                     // neighbor_node is actually part of another subgraph
                     // (this can happen during distributed processing)
                     // => skip
@@ -493,12 +492,12 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
         // With the distributed online algorithm, the nl might be null
         // because it is located on another partition
-        NeighborList nl = get(node);
+        NeighborList nl = getNeighbors(node);
         if (nl == null) {
             return;
         }
 
-        for (Neighbor n : nl) {
+        for (Neighbor<T> n : nl) {
             if (!candidates.contains(n.node)) {
                 candidates.add(n.node);
 
@@ -529,7 +528,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @throws InterruptedException if thread is interrupted
      * @throws ExecutionException if thread cannot complete
      */
-    public final NeighborList searchExhaustive(final U query, final int k)
+    public final NeighborList search(final T query, final int k)
             throws InterruptedException, ExecutionException {
 
         // Read all nodes
@@ -564,13 +563,13 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
     private class SearchTask implements Callable<NeighborList> {
 
         private final ArrayList<T> nodes;
-        private final U query;
+        private final T query;
         private final int start;
         private final int stop;
 
         SearchTask(
                 final ArrayList<T> nodes,
-                final U query,
+                final T query,
                 final int start,
                 final int stop) {
 
@@ -586,7 +585,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
                 T other = nodes.get(i);
                 nl.add(new Neighbor(
                         other,
-                        similarity.similarity(query, other.getValue())));
+                        similarity.similarity(query, other)));
             }
             return nl;
 
@@ -604,7 +603,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @param k search K neighbors
      * @return
      */
-    public final NeighborList fastSearch(final U query, final int k) {
+    public final NeighborList fastSearch(final T query, final int k) {
         return fastSearch(query, k, DEFAULT_SEARCH_SPEEDUP);
     }
 
@@ -620,7 +619,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @return
      */
     public final NeighborList fastSearch(
-            final U query, final int k, final double speedup) {
+            final T query, final int k, final double speedup) {
 
         return this.fastSearch(
                 query,
@@ -644,7 +643,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @return
      */
     public final NeighborList fastSearch(
-            final U query,
+            final T query,
             final int k,
             final double speedup,
             final int long_jumps,
@@ -675,7 +674,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @return
      */
     public final NeighborList fastSearch(
-            final U query,
+            final T query,
             final int k,
             final double speedup,
             final int long_jumps,
@@ -700,14 +699,14 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
                                 node,
                                 similarity.similarity(
                                         query,
-                                        node.getValue())));
+                                        node)));
                 stats.incSearchSimilarities();
             }
             return nl;
         }
 
         // Node => Similarity with query node
-        HashMap<NodeInterface, Double> visited_nodes = new HashMap<NodeInterface, Double>();
+        HashMap<T, Double> visited_nodes = new HashMap<T, Double>();
         double global_highest_similarity = 0;
         ArrayList<T> nodes = new ArrayList<T>(map.keySet());
         Random rand = new Random();
@@ -731,7 +730,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
             // starting point too far (similarity too small) => restart!
             double restart_similarity = similarity.similarity(
                     query,
-                    current_node.getValue());
+                    current_node);
             stats.incSearchSimilarities();
             if (restart_similarity < global_highest_similarity / expansion) {
                 continue;
@@ -739,7 +738,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
             while (stats.getSearchSimilarities() < max_similarities) {
 
-                NeighborList nl = this.get(current_node);
+                NeighborList nl = this.getNeighbors(current_node);
 
                 // Node has no neighbor (cross partition edge) => restart!
                 if (nl == null) {
@@ -762,7 +761,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
                     // Compute similarity to query
                     double sim = similarity.similarity(
                             query,
-                            other_node.getValue());
+                            other_node);
                     stats.incSearchSimilarities();
                     visited_nodes.put(other_node, sim);
 
@@ -779,7 +778,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
                 Iterator<Neighbor> y_nl_iterator = nl.iterator();
                 while (y_nl_iterator.hasNext()) {
 
-                    other_node = y_nl_iterator.next().node;
+                    other_node = (T) y_nl_iterator.next().node;
 
                     if (visited_nodes.containsKey(other_node)) {
                         continue;
@@ -788,7 +787,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
                     // Compute similarity to query
                     double sim = similarity.similarity(
                             query,
-                            other_node.getValue());
+                            other_node);
                     stats.incSearchSimilarities();
                     visited_nodes.put(other_node, sim);
 
@@ -818,7 +817,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
         }
 
         NeighborList neighbor_list = new NeighborList(k);
-        for (Map.Entry<NodeInterface, Double> entry : visited_nodes.entrySet()) {
+        for (Map.Entry<T, Double> entry : visited_nodes.entrySet()) {
             neighbor_list.add(new Neighbor(entry.getKey(), entry.getValue()));
         }
         return neighbor_list;
@@ -838,19 +837,19 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
         // Write nodes
         out.write("<nodes>\n");
-        for (NodeInterface node : map.keySet()) {
-            out.write("<node id=\"" + node.getId()
-                    + "\" label=\"" + node.getId() + "\" />\n");
+        for (T node : map.keySet()) {
+            out.write("<node id=\"" + node
+                    + "\" label=\"" + node.toString() + "\" />\n");
         }
         out.write("</nodes>\n");
 
         // Write edges
         out.write("<edges>\n");
         int i = 0;
-        for (NodeInterface source : map.keySet()) {
-            for (Neighbor target : this.get(source)) {
-                out.write("<edge id=\"" + i + "\" source=\"" + source.getId() + "\" "
-                        + "target=\"" + target.node.getId() + "\" "
+        for (T source : map.keySet()) {
+            for (Neighbor target : this.getNeighbors(source)) {
+                out.write("<edge id=\"" + i + "\" source=\"" + source + "\" "
+                        + "target=\"" + target.node + "\" "
                         + "weight=\"" + target.similarity + "\" />\n");
                 i++;
             }
@@ -894,16 +893,16 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
     public final int add(final T new_node) {
         if (containsKey(new_node)) {
             throw new IllegalArgumentException(
-                    "This graph already contains a node with the same id!");
+                    "This graph already contains this node");
         }
 
         NeighborList nl = new NeighborList(k);
 
         for (T other_node : getNodes()) {
             double sim = similarity.similarity(
-                    new_node.getValue(), other_node.getValue());
+                    new_node, other_node);
             nl.add(new Neighbor(other_node, sim));
-            get(other_node).add(new Neighbor(new_node, sim));
+            getNeighbors(other_node).add(new Neighbor(new_node, sim));
         }
 
         this.put(new_node, nl);
@@ -918,7 +917,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      *
      * @param node
      */
-    public final void fastAdd(final NodeInterface node) {
+    public final void fastAdd(final T node) {
         fastAdd(node, DEFAULT_SEARCH_SPEEDUP);
     }
 
@@ -930,7 +929,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @param node
      * @param speedup
      */
-    public final void fastAdd(final NodeInterface node, final double speedup) {
+    public final void fastAdd(final T node, final double speedup) {
         fastAdd(
                 node,
                 speedup,
@@ -949,7 +948,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * @param expansion
      */
     public final void fastAdd(
-            final NodeInterface new_node,
+            final T new_node,
             final double speedup,
             final int long_jumps,
             final double expansion) {
@@ -982,12 +981,12 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
         if (containsKey(new_node)) {
             throw new IllegalArgumentException(
-                    "This graph already contains a node with the same id!");
+                    "This graph already contains this node");
         }
 
         // 3. Search the neighbors of the new node
         NeighborList neighborlist = fastSearch(
-                new_node.getValue(), k, speedup, long_jumps, expansion, stats);
+                new_node, k, speedup, long_jumps, expansion, stats);
         put(new_node, neighborlist);
 
         // 4. Update existing edges
@@ -998,21 +997,21 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
         LinkedList<T> next_analyze = new LinkedList<T>();
 
         // List of already analyzed nodes
-        HashMap<NodeInterface, Boolean> visited = new HashMap<NodeInterface, Boolean>();
+        HashMap<T, Boolean> visited = new HashMap<T, Boolean>();
 
         // Fill the list of nodes to analyze
-        for (Neighbor neighbor : get(new_node)) {
+        for (Neighbor<T> neighbor : getNeighbors(new_node)) {
             analyze.add(neighbor.node);
         }
 
         for (int d = 0; d < update_depth; d++) {
             while (!analyze.isEmpty()) {
                 T other = analyze.pop();
-                NeighborList other_neighborlist = get(other);
+                NeighborList other_neighborlist = getNeighbors(other);
 
                 // Add neighbors to the list of nodes to analyze at
                 // next iteration
-                for (Neighbor other_neighbor : other_neighborlist) {
+                for (Neighbor<T> other_neighbor : other_neighborlist) {
                     if (!visited.containsKey(other_neighbor.node)) {
                         next_analyze.add(other_neighbor.node);
                     }
@@ -1023,8 +1022,8 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
                 other_neighborlist.add(new Neighbor(
                         new_node,
                         similarity.similarity(
-                                new_node.getValue(),
-                                other.getValue())));
+                                new_node,
+                                other)));
 
                 visited.put(other, Boolean.TRUE);
             }
@@ -1039,7 +1038,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
      * approximate algorithm.
      * @param node_to_remove
      */
-    public final void fastRemove(final NodeInterface node_to_remove) {
+    public final void fastRemove(final T node_to_remove) {
         fastRemove(node_to_remove, new StatisticsContainer());
     }
 
@@ -1057,7 +1056,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
         LinkedList<T> nodes_to_update = new LinkedList<T>();
 
         for (T node : getNodes()) {
-            NeighborList nl = get(node);
+            NeighborList nl = getNeighbors(node);
             if (nl.containsNode(node_to_remove)) {
                 nodes_to_update.add(node);
                 nl.removeNode(node_to_remove);
@@ -1077,7 +1076,7 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
         // Update the nodes_to_update
         for (T node_to_update : nodes_to_update) {
-            NeighborList nl_to_update = get(node_to_update);
+            NeighborList nl_to_update = getNeighbors(node_to_update);
             for (T candidate : candidates) {
                 if (candidate.equals(node_to_update)) {
                     continue;
@@ -1085,8 +1084,8 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
                 stats.incRemoveSimilarities();
                 double sim = similarity.similarity(
-                        node_to_update.getValue(),
-                        candidate.getValue());
+                        node_to_update,
+                        candidate);
 
                 nl_to_update.add(new Neighbor(candidate, sim));
             }
@@ -1094,6 +1093,22 @@ public class Graph<T extends NodeInterface<U>, U> implements Serializable {
 
         // Remove node_to_remove
         map.remove(node_to_remove);
+    }
+
+    /**
+     * Count the number of edges/neighbors that are the same (based on
+     * similarity) in both graphs.
+     *
+     * @param other
+     * @return
+     */
+    public final int compare(Graph<T> other) {
+        int correct_edges = 0;
+        for (T node : map.keySet()) {
+            correct_edges += getNeighbors(node).countCommons(
+                    other.getNeighbors(node));
+        }
+        return correct_edges;
     }
 
     @Override

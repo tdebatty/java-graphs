@@ -3,7 +3,6 @@ package info.debatty.java.graphs.build;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Neighbor;
 import info.debatty.java.graphs.NeighborList;
-import info.debatty.java.graphs.NodeInterface;
 import java.util.HashMap;
 import java.util.List;
 
@@ -12,16 +11,16 @@ import java.util.List;
  * @author Thibault Debatty
  * @param <T>
  */
-public class Brute<T extends NodeInterface<U>, U> extends GraphBuilder<T, U> {
+public class Brute<T> extends GraphBuilder<T> {
 
     @Override
-    protected final Graph<T, U> _computeGraph(final List<T> nodes) {
+    protected final Graph<T> _computeGraph(final List<T> nodes) {
 
         int n = nodes.size();
 
         // Initialize all NeighborLists
-        Graph<T, U> graph = new Graph<T, U>();
-        for (NodeInterface node : nodes) {
+        Graph<T> graph = new Graph<T>();
+        for (T node : nodes) {
             graph.put(node, new NeighborList(k));
         }
 
@@ -36,15 +35,15 @@ public class Brute<T extends NodeInterface<U>, U> extends GraphBuilder<T, U> {
             n1 = nodes.get(i);
             for (int j = 0; j < i; j++) {
                 n2 = nodes.get(j);
-                sim = similarity.similarity(n1.getValue(), n2.getValue());
+                sim = similarity.similarity(n1, n2);
                 computed_similarities++;
 
-                graph.get(n1).add(new Neighbor(n2, sim));
-                graph.get(n2).add(new Neighbor(n1, sim));
+                graph.getNeighbors(n1).add(new Neighbor(n2, sim));
+                graph.getNeighbors(n2).add(new Neighbor(n1, sim));
             }
 
             if (callback != null) {
-                callback_data.put("node_id", n1.getId());
+                callback_data.put("node_id", n1);
                 callback_data.put(
                         "computed_similarities",
                         computed_similarities);

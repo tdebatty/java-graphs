@@ -26,11 +26,11 @@ package info.debatty.java.graphs.examples;
 import info.debatty.java.graphs.CallbackInterface;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.NeighborList;
-import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.Brute;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Random;
 
 public class BruteExample {
@@ -41,16 +41,16 @@ public class BruteExample {
         Random r = new Random();
         int count = 1000;
 
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
+        LinkedList<Integer> nodes = new LinkedList<Integer>();
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), r.nextInt(10 * count)));
+            nodes.add(r.nextInt(10 * count));
         }
 
         // Instantiate and configure the brute-force graph building algorithm
         // The minimum is to define k (number of edges per node)
         // and a similarity metric between nodes
-        Brute builder = new Brute<Integer>();
+        Brute<Integer> builder = new Brute<Integer>();
         builder.setK(10);
         builder.setSimilarity(new SimilarityInterface<Integer>() {
 
@@ -73,8 +73,8 @@ public class BruteExample {
         Graph<Integer> graph = builder.computeGraph(nodes);
 
         // Display the computed neighbor lists
-        for (Node n : nodes) {
-            NeighborList nl = graph.get(n);
+        for (Integer n : nodes) {
+            NeighborList nl = graph.getNeighbors(n);
             System.out.print(n);
             System.out.println(nl);
         }

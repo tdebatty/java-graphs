@@ -24,11 +24,9 @@
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Random;
-import static junit.framework.Assert.assertEquals;
 import junit.framework.TestCase;
 
 /**
@@ -59,9 +57,9 @@ public class NNDescentTest extends TestCase {
 
         // Generate some nodes
         Random rand = new Random();
-        ArrayList<Node<Integer>> nodes = new ArrayList<Node<Integer>>(n);
+        LinkedList<Integer> nodes = new LinkedList<Integer>();
         for (int i = 0; i < n; i++) {
-            nodes.add(new Node<Integer>(String.valueOf(i), rand.nextInt()));
+            nodes.add(rand.nextInt());
         }
 
         SimilarityInterface<Integer> sim = new SimilarityInterface<Integer>() {
@@ -89,8 +87,8 @@ public class NNDescentTest extends TestCase {
         Graph exact_graph = brute.computeGraph(nodes);
 
         int correct = 0;
-        for (Node<Integer> node : nodes) {
-            correct += graph.get(node).countCommons(exact_graph.get(node));
+        for (Integer node : nodes) {
+            correct += graph.getNeighbors(node).countCommons(exact_graph.getNeighbors(node));
         }
         System.out.println("found " + correct + " correct edges");
         System.out.println("" + 100.0 * correct / (n * k) + "%");

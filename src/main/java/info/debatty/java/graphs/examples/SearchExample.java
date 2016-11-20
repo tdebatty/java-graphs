@@ -28,11 +28,13 @@ import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
 import info.debatty.java.stringsimilarity.JaroWinkler;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 public class SearchExample {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         int tests = 100;
 
         // Number of neighbors to search
@@ -41,12 +43,12 @@ public class SearchExample {
         int max_similaritites = 100;
 
         // Read the file
-        ArrayList<Node<String>> nodes = GraphBuilder.readFile(
+        List<String> nodes = GraphBuilder.readFile(
                 SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
 
         // Leave some random nodes out for the search queries
         Random rand = new Random();
-        ArrayList<Node<String>> queries = new ArrayList<Node<String>>(tests);
+        ArrayList<String> queries = new ArrayList<String>(tests);
         for (int i = 0; i < tests; i++) {
             queries.add(nodes.remove(rand.nextInt(nodes.size())));
         }
@@ -70,25 +72,15 @@ public class SearchExample {
         // Perform some research...
         int correct = 0;
 
-        for (Node<String> query : queries) {
+        for (String query : queries) {
 
             // Perform GNNS
             System.out.println("Query: " + query);
-            NeighborList resultset_gnss = graph.fastSearch(
-                    query.value,
-                    k);
+            NeighborList resultset_gnss = graph.fastSearch(query, k);
             System.out.println(resultset_gnss);
 
             // Perform linear search
-            NeighborList resultset_linear = new NeighborList(k);
-            for (Node<String> candidate : nodes) {
-                resultset_linear.add(
-                        new Neighbor(
-                                candidate,
-                                similarity.similarity(
-                                        query.value,
-                                        candidate.value)));
-            }
+            NeighborList resultset_linear = graph.search(query, k);
             System.out.println(resultset_linear);
 
             correct += resultset_gnss.countCommons(resultset_linear);

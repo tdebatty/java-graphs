@@ -24,7 +24,6 @@
 package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.Graph;
-import info.debatty.java.graphs.Node;
 import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.Brute;
 import java.util.ArrayList;
@@ -42,15 +41,10 @@ public class StronglyConnectedExample {
     public static void main(String[] args) {
         // Create some nodes
         Random rand = new Random();
-        ArrayList<Node<Double>> nodes = new ArrayList<Node<Double>>();
+        ArrayList<Double> nodes = new ArrayList<Double>();
         for (int i = 0; i < 100; i++) {
-            nodes.add(new Node<Double>(
-                    String.valueOf(i),
-                    rand.nextDouble() * 100));
-
-            nodes.add(new Node<Double>(
-                    String.valueOf(100 + i),
-                    1000000 + rand.nextDouble() * 100));
+            nodes.add(rand.nextDouble() * 100);
+            nodes.add(1000000 + rand.nextDouble() * 100);
         }
 
         // Build the graph

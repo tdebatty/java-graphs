@@ -37,10 +37,10 @@ public class NNDescentExample {
         int k = 10;
 
         // Create the nodes
-        ArrayList<Node> nodes = new ArrayList<Node>(count);
+        ArrayList<Integer> nodes = new ArrayList<Integer>(count);
         for (int i = 0; i < count; i++) {
             // The value of our nodes will be an int
-            nodes.add(new Node<Integer>(String.valueOf(i), r.nextInt(10 * count)));
+            nodes.add(r.nextInt(10 * count));
         }
 
         // Instantiate and configure the build algorithm
@@ -76,8 +76,8 @@ public class NNDescentExample {
         Graph<Integer> graph = builder.computeGraph(nodes);
 
         // Display neighborlists
-        for (Node n : nodes) {
-            NeighborList nl = graph.get(n);
+        for (Integer n : nodes) {
+            NeighborList nl = graph.getNeighbors(n);
             System.out.print(n);
             System.out.println(nl);
         }
@@ -98,7 +98,6 @@ public class NNDescentExample {
         System.out.println(graph.stronglyConnectedComponents().size());
 
         // Now we can add a node to the graph (using a fast approximate algorithm)
-        graph.fastAdd(
-                new Node<Integer>("my new node 1", r.nextInt(10 * count)));
+        graph.fastAdd(r.nextInt(10 * count));
     }
 }
