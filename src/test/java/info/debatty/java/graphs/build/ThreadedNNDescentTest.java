@@ -21,12 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.SimilarityInterface;
 import java.util.LinkedList;
+import java.util.Random;
 import static junit.framework.Assert.assertEquals;
 import junit.framework.TestCase;
 
@@ -34,20 +34,23 @@ import junit.framework.TestCase;
  *
  * @author Thibault Debatty
  */
-public class ThreadedBruteTest extends TestCase {
+public class ThreadedNNDescentTest extends TestCase {
 
-    public void testComputeGraph() {
+    private static final double MIN_CORRECT_RATIO = 0.95;
+
+    public void testSomeMethod() {
         System.out.println("computeGraph");
 
-        int count = 550;
+        int count = 8123;
         int k = 10;
 
         // Generate some nodes
+        Random r = new Random();
         LinkedList<Integer> nodes = new LinkedList<Integer>();
         for (int i = 0; i < count; i++) {
-            // The value of our nodes will be an int
-            nodes.add(i);
+            nodes.add(r.nextInt());
         }
+
         // Define the similarity
         SimilarityInterface<Integer> similarity =
                 new SimilarityInterface<Integer>() {
@@ -57,15 +60,15 @@ public class ThreadedBruteTest extends TestCase {
             }
         };
 
-        System.out.println("Multi threaded graph builder...");
-        ThreadedBrute<Integer> threaded_builder = new ThreadedBrute<Integer>();
+        System.out.println("NNdescent threaded graph builder...");
+        ThreadedNNDescent<Integer> threaded_builder =
+                new ThreadedNNDescent<Integer>();
         threaded_builder.setK(k);
         threaded_builder.setSimilarity(similarity);
         Graph<Integer> threaded_graph = threaded_builder.computeGraph(nodes);
 
-
-        System.out.println("Single thread graph builder...");
-        Brute<Integer> builder = new Brute<Integer>();
+        System.out.println("Brute force threaded graph builder...");
+        ThreadedBrute<Integer> builder = new ThreadedBrute<Integer>();
         builder.setK(k);
         builder.setSimilarity(similarity);
         Graph<Integer> graph = builder.computeGraph(nodes);
@@ -74,13 +77,14 @@ public class ThreadedBruteTest extends TestCase {
         System.out.println(threaded_graph.getNeighbors(first_node));
         assertEquals(graph.getNeighbors(first_node).countCommons(threaded_graph.getNeighbors(first_node)), k);
 
-        int correct_edges = 0;
-        for (Integer n : nodes) {
-            correct_edges += graph.getNeighbors(n).countCommons(threaded_graph.getNeighbors(n));
-        }
+        int correct_edges = threaded_graph.compare(graph);
+        double correct_ratio = 1.0 * correct_edges / (count * k);
 
-        assertEquals(count, graph.size());
-        assertEquals(count * k, correct_edges);
+        System.out.println("Correct edges: " + correct_edges + " : "
+                + correct_ratio);
+
+        assertEquals(count, threaded_graph.size());
+        assertTrue("Too many wrong edges!", correct_ratio >= MIN_CORRECT_RATIO);
     }
 
 }

@@ -7,6 +7,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -270,7 +271,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return r;
     }
 
-    protected HashMap<T, ArrayList<T>> Reverse(List<T> nodes, HashMap<T, ArrayList<T>> lists) {
+    protected HashMap<T, ArrayList<T>> Reverse(List<T> nodes, Map<T, ArrayList<T>> lists) {
 
         HashMap<T, ArrayList<T>> R = new HashMap<T, ArrayList<T>>(nodes.size());
 

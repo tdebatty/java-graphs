@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,11 +19,13 @@ import java.util.concurrent.Future;
 public class ThreadedNNDescent<T> extends NNDescent<T> {
 
     // Internal state, used by worker objects
-    private int thread_count;
-    private List<T> nodes;
-    private Graph<T> graph;
-    private HashMap<T, ArrayList<T>> old_lists, new_lists, old_lists_2,
-            new_lists_2;
+    private volatile int thread_count;
+    private volatile List<T> nodes;
+    private volatile Graph<T> graph;
+    private volatile HashMap<T, ArrayList<T>>  old_lists_2, new_lists_2;
+
+    // Multiple threads will write these at the same time
+    private volatile ConcurrentHashMap<T, ArrayList<T>> old_lists, new_lists;
 
     @Override
     protected final Graph<T> _computeGraph(final List<T> nodes) {
@@ -38,9 +41,10 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
         // Initialize state...
         this.nodes = nodes;
-        this.graph = new Graph<T>(nodes.size());
-        this.old_lists = new HashMap<T, ArrayList<T>>(nodes.size());
-        this.new_lists = new HashMap<T, ArrayList<T>>(nodes.size());
+        this.graph = new Graph<T>();
+        this.graph.setK(getK());
+        this.old_lists = new ConcurrentHashMap<T, ArrayList<T>>(nodes.size());
+        this.new_lists = new ConcurrentHashMap<T, ArrayList<T>>(nodes.size());
 
         HashMap<String, Object> data = new HashMap<String, Object>();
 
@@ -63,7 +67,6 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                 T v = nodes.get(i);
                 old_lists.put(v, PickFalses(graph.getNeighbors(v)));
                 new_lists.put(v, PickTruesAndMark(graph.getNeighbors(v)));
-
             }
 
             // old′ ←Reverse(old)
@@ -75,7 +78,6 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
             // Start threads...
             for (int t = 0; t < thread_count; t++) {
                 list.add(executor.submit(new ThreadedNNDescent.NNThread(t)));
-
             }
 
             for (Future<Integer> future : list) {

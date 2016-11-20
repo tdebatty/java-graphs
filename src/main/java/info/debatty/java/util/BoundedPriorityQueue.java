@@ -1,6 +1,6 @@
 package info.debatty.java.util;
 
-import java.util.PriorityQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * This class implements a bounded priority queue A structure that always keeps
@@ -9,7 +9,7 @@ import java.util.PriorityQueue;
  * @author Thibault Debatty
  * @param <E>
  */
-public class BoundedPriorityQueue<E> extends PriorityQueue<E> {
+public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> {
 
     private final int capacity;
 
