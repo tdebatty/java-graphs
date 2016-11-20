@@ -71,6 +71,10 @@ public class Neighbor<T>
 
     @Override
     public int compareTo(Object other) {
+        if (other == null) {
+            return 1;
+        }
+
         if (!other.getClass().isInstance(this)) {
             throw new InvalidParameterException();
         }
