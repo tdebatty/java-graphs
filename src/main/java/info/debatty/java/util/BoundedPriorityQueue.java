@@ -61,4 +61,8 @@ public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> {
 
         return false;
     }
+
+    public final int getCapacity() {
+        return capacity;
+    }
 }
