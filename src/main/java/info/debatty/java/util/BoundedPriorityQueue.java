@@ -1,5 +1,6 @@
 package info.debatty.java.util;
 
+import java.io.Serializable;
 import java.util.concurrent.PriorityBlockingQueue;
 
 /**
@@ -9,7 +10,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  * @author Thibault Debatty
  * @param <E>
  */
-public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> {
+public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> implements Serializable {
 
     private final int capacity;
 
@@ -19,7 +20,7 @@ public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> {
      * @param capacity The maximum capacity of the queue
      */
     public BoundedPriorityQueue(final int capacity) {
-        super();
+        super(capacity);
         this.capacity = capacity;
     }
 
@@ -28,7 +29,7 @@ public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> {
      */
     public BoundedPriorityQueue() {
         super();
-        this.capacity = Integer.MAX_VALUE;
+        this.capacity = 0;
     }
 
     /**
@@ -54,6 +55,14 @@ public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> {
             return super.add(element);
         }
 
+        // Unlimited capacity (degenerate to classical PriorityQueue)
+        // This is also required for correct deserialization because
+        // elements are deserialized before the "capacity" field
+        // => capacity is 0 when elements are added to the deserialized queue
+        if (this.capacity == 0) {
+            return super.add(element);
+        }
+
         if (((Comparable) element).compareTo(this.peek()) > 0) {
             this.poll();
             return super.add(element);
@@ -62,7 +71,31 @@ public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> {
         return false;
     }
 
+    /**
+     *
+     * @return
+     */
     public final int getCapacity() {
         return capacity;
+    }
+
+    /**
+     *
+     * @param other
+     * @return
+     */
+    public boolean equals(final Object other) {
+        if (other == null) {
+            return false;
+        }
+
+        if (!other.getClass().isInstance(this)) {
+            return false;
+        }
+
+        BoundedPriorityQueue<E> other_queue = (BoundedPriorityQueue<E>) other;
+
+        return this.containsAll(other_queue) && other_queue.containsAll(this);
+
     }
 }

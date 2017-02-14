@@ -1,4 +1,4 @@
-/*
+ /*
  * The MIT License
  *
  * Copyright 2015 Thibault Debatty.
@@ -25,8 +25,14 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
+import info.debatty.java.util.BoundedPriorityQueue;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -136,11 +142,48 @@ public class GraphTest extends TestCase {
         assertEquals(2, graph.stronglyConnectedComponents().size());
     }
 
+
+    public void testSerialize() throws IOException, ClassNotFoundException {
+        System.out.println("Serialize");
+        System.out.println("=========");
+
+        int n = 100;
+
+        SimilarityInterface<Double> similarity = new DoubleSimilarity();
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Double> data = new ArrayList<Double>();
+        while (data.size() < n) {
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+        }
+
+        System.out.println("compute graph...");
+        GraphBuilder<Double> builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(similarity);
+        Graph<Double> graph = builder.computeGraph(data);
+
+        File temp_file = File.createTempFile("tempfile", ".tmp");
+
+        ObjectOutputStream output = new ObjectOutputStream(
+                new BufferedOutputStream(new FileOutputStream(temp_file)));
+        output.writeObject(graph);
+        output.close();
+
+
+        ObjectInputStream ois = new ObjectInputStream(
+                new FileInputStream(temp_file));
+        Graph<Double> deserialized_graph = (Graph<Double>) ois.readObject();
+
+        assertTrue(graph.equals(deserialized_graph));
+    }
+
     public void testWriteGEXF() throws IOException {
         System.out.println("WiteGEXF");
         System.out.println("========");
 
-        int n = 4000;
+        int n = 1000;
 
         SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
 
@@ -429,3 +472,11 @@ class IntegerNodeSimilarity implements SimilarityInterface<Integer> {
         return 1.0 / (1.0 + Math.abs(value1 - value2));
     }
 };
+
+
+class DoubleSimilarity implements SimilarityInterface<Double> {
+
+    public double similarity(Double value1, Double value2) {
+        return 1.0 / (1 + Math.abs(value1 - value2));
+    }
+}

@@ -90,7 +90,7 @@ public class Graph<T> implements Serializable {
      *
      * @param origin
      */
-    public Graph(Graph<T> origin) {
+    public Graph(final Graph<T> origin) {
         this.k = origin.k;
         this.similarity = origin.similarity;
         this.map = new HashMap<T, NeighborList>(origin.size());
@@ -1121,7 +1121,7 @@ public class Graph<T> implements Serializable {
      * @param other
      * @return
      */
-    public final int compare(Graph<T> other) {
+    public final int compare(final Graph<T> other) {
         int correct_edges = 0;
         for (T node : map.keySet()) {
             correct_edges += getNeighbors(node).countCommons(
@@ -1134,4 +1134,28 @@ public class Graph<T> implements Serializable {
     public final String toString() {
         return map.toString();
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 23 * hash + (this.map != null ? this.map.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Graph<?> other = (Graph<?>) obj;
+        if (this.map != other.map && (this.map == null || !this.map.equals(other.map))) {
+            return false;
+        }
+        return true;
+    }
+
+    
 }
