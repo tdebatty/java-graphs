@@ -115,8 +115,8 @@ public class GraphTest extends TestCase {
      * Test of stronglyConnectedComponents method, of class Graph.
      */
     public void testStronglyConnectedComponents2() {
-        System.out.println("Strongly connected components");
-        System.out.println("=============================");
+        System.out.println("Strongly connected components 2");
+        System.out.println("===============================");
 
         // Generate two series of nodes
         ArrayList<Integer> nodes = new ArrayList<Integer>();

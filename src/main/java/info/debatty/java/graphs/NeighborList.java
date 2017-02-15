@@ -1,6 +1,6 @@
 package info.debatty.java.graphs;
 
-import info.debatty.java.util.BoundedPriorityQueue;
+import info.debatty.java.util.SynchronizedBoundedPriorityQueue;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import java.util.PriorityQueue;
  *
  * @author Thibault Debatty
  */
-public class NeighborList extends BoundedPriorityQueue<Neighbor>
+public class NeighborList extends SynchronizedBoundedPriorityQueue<Neighbor>
         implements Serializable {
 
     public static <T> ArrayList<Edge>

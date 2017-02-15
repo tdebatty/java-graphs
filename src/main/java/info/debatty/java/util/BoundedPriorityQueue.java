@@ -1,7 +1,7 @@
 package info.debatty.java.util;
 
 import java.io.Serializable;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.PriorityQueue;
 
 /**
  * This class implements a bounded priority queue A structure that always keeps
@@ -10,7 +10,8 @@ import java.util.concurrent.PriorityBlockingQueue;
  * @author Thibault Debatty
  * @param <E>
  */
-public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> implements Serializable {
+public class BoundedPriorityQueue<E> extends PriorityQueue<E>
+        implements Serializable {
 
     private final int capacity;
 
@@ -84,6 +85,7 @@ public class BoundedPriorityQueue<E> extends PriorityBlockingQueue<E> implements
      * @param other
      * @return
      */
+    @Override
     public boolean equals(final Object other) {
         if (other == null) {
             return false;

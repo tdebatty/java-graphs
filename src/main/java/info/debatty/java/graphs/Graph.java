@@ -1143,7 +1143,7 @@ public class Graph<T> implements Serializable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (obj == null) {
             return false;
         }
@@ -1151,11 +1151,12 @@ public class Graph<T> implements Serializable {
             return false;
         }
         final Graph<?> other = (Graph<?>) obj;
+        System.out.println("Delegating to map...");
         if (this.map != other.map && (this.map == null || !this.map.equals(other.map))) {
             return false;
         }
         return true;
     }
 
-    
+
 }
