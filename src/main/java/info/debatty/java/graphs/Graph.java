@@ -200,11 +200,11 @@ public class Graph<T> implements Serializable {
     public final ArrayList<Graph<T>> connectedComponents() {
 
         ArrayList<Graph<T>> subgraphs = new ArrayList<Graph<T>>();
-        ArrayList<T> nodes_to_process =
-                new ArrayList<T>(map.keySet());
+        LinkedList<T> nodes_to_process =
+                new LinkedList<T>(map.keySet());
 
-        for (int i = 0; i < nodes_to_process.size(); i++) {
-            T n = nodes_to_process.get(i);
+        while (!nodes_to_process.isEmpty()) {
+            T n = nodes_to_process.peek();
             if (n == null) {
                 continue;
             }
@@ -220,7 +220,7 @@ public class Graph<T> implements Serializable {
     private void addAndFollow(
             final Graph<T> subgraph,
             final T node,
-            final ArrayList<T> nodes_to_process) {
+            final LinkedList<T> nodes_to_process) {
 
         nodes_to_process.remove(node);
 

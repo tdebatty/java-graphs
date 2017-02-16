@@ -25,7 +25,6 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
-import info.debatty.java.util.BoundedPriorityQueue;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -74,6 +73,28 @@ public class GraphTest extends TestCase {
         Graph<Integer> graph = builder.computeGraph(nodes);
 
         assertEquals(2, graph.connectedComponents().size());
+    }
+
+    /**
+     * Test the connectedComponents method with isolated nodes (that have no
+     * neighbors).
+     */
+    public void testConnectedComponentsIsolated() {
+        System.out.println("Connected components with isolated nodes...");
+        System.out.println("===========================================");
+        int k = 10;
+        Graph<Double> graph = new Graph<Double>(k);
+        graph.put(15.5, new NeighborList(k));
+        graph.put(1.55, new NeighborList(k));
+        graph.put(1.56, new NeighborList(k));
+        graph.put(1.57, new NeighborList(k));
+        graph.put(1.58, new NeighborList(k));
+        graph.put(1.59, new NeighborList(k));
+        graph.put(1.60, new NeighborList(k));
+
+        ArrayList<Graph<Double>> components = graph.connectedComponents();
+        System.out.println(components);
+        assertEquals(graph.size(), components.size());
     }
 
         /**
