@@ -21,7 +21,7 @@ public class BoundedPriorityQueue<E> extends PriorityQueue<E>
      * @param capacity The maximum capacity of the queue
      */
     public BoundedPriorityQueue(final int capacity) {
-        super(capacity);
+        super();
         this.capacity = capacity;
     }
 
