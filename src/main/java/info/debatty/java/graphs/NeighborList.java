@@ -2,9 +2,6 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.util.SynchronizedBoundedPriorityQueue;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.PriorityQueue;
 
 /**
@@ -14,24 +11,6 @@ import java.util.PriorityQueue;
  */
 public class NeighborList extends SynchronizedBoundedPriorityQueue<Neighbor>
         implements Serializable {
-
-    public static <T> ArrayList<Edge>
-        Convert2Edges(HashMap<T, NeighborList> graph) {
-        ArrayList<Edge> edges = new ArrayList<Edge>();
-
-        for (Map.Entry<T, NeighborList> pair : graph.entrySet()) {
-            for (Neighbor<T> neighbor : pair.getValue()) {
-                edges.add(
-                        new Edge(
-                                pair.getKey(),
-                                neighbor.node,
-                                neighbor.similarity));
-
-            }
-        }
-
-        return edges;
-    }
 
     /**
      * Copy constructor.

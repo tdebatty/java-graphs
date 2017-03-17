@@ -1,8 +1,11 @@
 package info.debatty.java.graphs.build;
 
+import info.debatty.java.graphs.Edge;
 import info.debatty.java.graphs.Graph;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,6 +37,8 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         ExecutorService executor = Executors.newFixedThreadPool(thread_count);
 
         iterations = 0;
+        processed = Collections.synchronizedSet(
+                new HashSet<Edge>(nodes.size() * k));
 
         if (nodes.size() <= (k + 1)) {
             return MakeFullyLinked(nodes);
@@ -65,8 +70,8 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
             // Mark sampled items in B[v] as false;
             for (int i = 0; i < nodes.size(); i++) {
                 T v = nodes.get(i);
-                old_lists.put(v, PickFalses(graph.getNeighbors(v)));
-                new_lists.put(v, PickTruesAndMark(graph.getNeighbors(v)));
+                old_lists.put(v, PickFalses(v, graph.getNeighbors(v)));
+                new_lists.put(v, PickTruesAndMark(v, graph.getNeighbors(v)));
             }
 
             // old′ ←Reverse(old)

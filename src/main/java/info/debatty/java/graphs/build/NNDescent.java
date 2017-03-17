@@ -1,14 +1,40 @@
+/*
+ * The MIT License
+ *
+ * Copyright 2016 Thibault Debatty.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 package info.debatty.java.graphs.build;
 
+import info.debatty.java.graphs.Edge;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Neighbor;
 import info.debatty.java.graphs.NeighborList;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Implementation of NN-Descent k-nn graph building algorithm. Based on the
@@ -30,7 +56,12 @@ public class NNDescent<T> extends GraphBuilder<T> {
     protected int iterations = 0;
     protected int c;
 
-    protected static final String IS_PROCESSED = "NNDescent_IS_PROCESSED_KEY";
+    /**
+     * Contains the list of neighbors that have been processed. Has we use a
+     * hashset, we have to use edges (which contain a reference to the source
+     * node) instead of neighbors for the concrete implementation.
+     */
+    protected Set<Edge> processed;
 
     /**
      * Get the number of edges modified at the last iteration
@@ -105,6 +136,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
     protected Graph<T> _computeGraph(List<T> nodes) {
 
         iterations = 0;
+        processed = new HashSet<Edge>(nodes.size() * k);
 
         if (nodes.size() <= (k + 1)) {
             return MakeFullyLinked(nodes);
@@ -135,8 +167,8 @@ public class NNDescent<T> extends GraphBuilder<T> {
             // Mark sampled items in B[v] as false;
             for (int i = 0; i < nodes.size(); i++) {
                 T v = nodes.get(i);
-                old_lists.put(v, PickFalses(neighborlists.getNeighbors(v)));
-                new_lists.put(v, PickTruesAndMark(neighborlists.getNeighbors(v)));
+                old_lists.put(v, PickFalses(v, neighborlists.getNeighbors(v)));
+                new_lists.put(v, PickTruesAndMark(v, neighborlists.getNeighbors(v)));
 
             }
 
@@ -242,10 +274,11 @@ public class NNDescent<T> extends GraphBuilder<T> {
         return nl;
     }
 
-    protected ArrayList<T> PickFalses(NeighborList neighborList) {
+    protected ArrayList<T> PickFalses(T node, NeighborList neighborList) {
         ArrayList<T> falses = new ArrayList<T>();
         for (Neighbor<T> n : neighborList) {
-            if (n.getAttribute(IS_PROCESSED) != null) { // !n.is_new
+            Edge edge = new Edge(node, n);
+            if (processed.contains(edge)) {
                 falses.add(n.node);
             }
         }
@@ -259,11 +292,12 @@ public class NNDescent<T> extends GraphBuilder<T> {
      * @param neighborList
      * @return
      */
-    protected ArrayList<T> PickTruesAndMark(NeighborList neighborList) {
+    protected ArrayList<T> PickTruesAndMark(T node, NeighborList neighborList) {
         ArrayList<T> r = new ArrayList<T>();
         for (Neighbor<T> n : neighborList) {
-            if (n.getAttribute(IS_PROCESSED) == null && Math.random() < rho) { // n.is_new
-                n.setAttribute(IS_PROCESSED, true); // n.is_new = false;
+            Edge<T> edge = new Edge<T>(node, n);
+            if (!processed.contains(edge) && Math.random() < rho) {
+                processed.add(edge);
                 r.add(n.node);
             }
         }
