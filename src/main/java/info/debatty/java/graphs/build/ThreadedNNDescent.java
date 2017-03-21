@@ -13,6 +13,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -20,6 +22,9 @@ import java.util.concurrent.Future;
  * @param <T>
  */
 public class ThreadedNNDescent<T> extends NNDescent<T> {
+
+    private static final Logger LOGGER  = LoggerFactory.getLogger(
+            ThreadedNNDescent.class);
 
     // Internal state, used by worker objects
     private volatile int thread_count;
@@ -32,6 +37,11 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
 
     @Override
     protected final Graph<T> _computeGraph(final List<T> nodes) {
+        if (nodes.size() < 2 * k) {
+            LOGGER.warn(
+                    "ThreadedNNDescent should be used for very large graphs!");
+        }
+
         // Create worker threads
         thread_count = Runtime.getRuntime().availableProcessors() + 1;
         ExecutorService executor = Executors.newFixedThreadPool(thread_count);

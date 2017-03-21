@@ -27,7 +27,6 @@ import info.debatty.java.graphs.Edge;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.Neighbor;
 import info.debatty.java.graphs.NeighborList;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of NN-Descent k-nn graph building algorithm. Based on the
@@ -48,6 +49,9 @@ import java.util.Set;
  * @param <T> The type of nodes value
  */
 public class NNDescent<T> extends GraphBuilder<T> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            NNDescent.class);
 
     protected double rho = 0.5; // Standard : 1, Fast: 0.5
     protected double delta = 0.001;
@@ -93,7 +97,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
      */
     public void setRho(double rho) {
         if (rho > 1.0 || rho <= 0.0) {
-            throw new InvalidParameterException("0 < rho <= 1.0");
+            throw new IllegalArgumentException("0 < rho <= 1.0");
         }
         this.rho = rho;
     }
@@ -110,7 +114,7 @@ public class NNDescent<T> extends GraphBuilder<T> {
      */
     public void setDelta(double delta) {
         if (rho >= 1.0 || rho <= 0.0) {
-            throw new InvalidParameterException("0 < delta < 1.0");
+            throw new IllegalArgumentException("0 < delta < 1.0");
         }
         this.delta = delta;
     }
@@ -127,13 +131,18 @@ public class NNDescent<T> extends GraphBuilder<T> {
      */
     public void setMaxIterations(int max_iterations) {
         if (max_iterations < 0) {
-            throw new InvalidParameterException("max_iterations should be positive!");
+            throw new IllegalArgumentException(
+                    "max_iterations should be positive!");
         }
         this.max_iterations = max_iterations;
     }
 
     @Override
     protected Graph<T> _computeGraph(List<T> nodes) {
+
+        if (nodes.size() < 2 * k) {
+            LOGGER.warn("NNDescent should be used for large graphs!");
+        }
 
         iterations = 0;
         processed = new HashSet<Edge>(nodes.size() * k);
