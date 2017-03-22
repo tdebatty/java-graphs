@@ -59,16 +59,6 @@ public class BruteExample {
             }
         });
 
-        // Optionaly, we can define a callback, to get some feedback...
-        builder.setCallback(new CallbackInterface() {
-
-            @Override
-            public void call(HashMap<String, Object> data) {
-                System.out.println(data);
-            }
-
-        });
-
         // Run the algorithm, and get the resulting neighbor lists
         Graph<Integer> graph = builder.computeGraph(nodes);
 

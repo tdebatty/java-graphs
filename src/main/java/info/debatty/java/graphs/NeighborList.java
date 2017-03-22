@@ -73,13 +73,15 @@ public class NeighborList extends SynchronizedBoundedPriorityQueue<Neighbor>
                 break;
             }
 
-            double delta = this_neighbor.similarity - other_neighbor.similarity;
+            double delta = this_neighbor.getSimilarity()
+                    - other_neighbor.getSimilarity();
             if (delta < EPSILON && delta > -EPSILON) {
                 count++;
                 this_neighbor = copy_this.poll();
                 other_neighbor = copy_other.poll();
 
-            } else if (this_neighbor.similarity > other_neighbor.similarity) {
+            } else if (this_neighbor.getSimilarity()
+                    > other_neighbor.getSimilarity()) {
                 other_neighbor = copy_other.poll();
 
             } else {
@@ -98,7 +100,7 @@ public class NeighborList extends SynchronizedBoundedPriorityQueue<Neighbor>
      */
     public final <T> boolean containsNode(final T node) {
         for (Neighbor n : this) {
-            if (n.node.equals(node)) {
+            if (n.getNode().equals(node)) {
                 return true;
             }
         }
@@ -113,7 +115,7 @@ public class NeighborList extends SynchronizedBoundedPriorityQueue<Neighbor>
      */
     public final <T> boolean removeNode(final T node) {
         for (Neighbor n : this) {
-            if (n.node.equals(node)) {
+            if (n.getNode().equals(node)) {
                 this.remove(n);
                 return true;
             }

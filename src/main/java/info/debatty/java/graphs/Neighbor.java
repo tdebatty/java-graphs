@@ -27,15 +27,16 @@ import java.io.Serializable;
 import java.security.InvalidParameterException;
 
 /**
- * Neighbor of an edge (stores the other node, and the similarity)
+ * Neighbor of an edge (stores the other node, and the similarity).
  *
  * @author Thibault Debatty
+ * @param <T> Type of nodes
  */
 public class Neighbor<T>
         implements Comparable, Serializable {
 
-    public T node;
-    public double similarity;
+    private final T node;
+    private final double similarity;
 
     /**
      *
@@ -49,6 +50,23 @@ public class Neighbor<T>
 
     /**
      *
+     * @return
+     */
+    public final T getNode() {
+        return node;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public final double getSimilarity() {
+        return similarity;
+    }
+
+
+    /**
+     *
      * @return (node.toString(),similarity)
      */
     @Override
@@ -56,6 +74,12 @@ public class Neighbor<T>
         return "(" + node.toString() + "," + similarity + ")";
     }
 
+    /**
+     * A neighbor has no reference to the origin node, hence only neighbors
+     * from the same origin can be compared.
+     * @param other
+     * @return
+     */
     @Override
     public final boolean equals(final Object other) {
         if (!other.getClass().getName().equals(this.getClass().getName())) {
@@ -68,9 +92,7 @@ public class Neighbor<T>
 
     @Override
     public final int hashCode() {
-        int hash = 7;
-        hash = 17 * hash + (this.node != null ? this.node.hashCode() : 0);
-        return hash;
+        return this.node.hashCode();
     }
 
     /**

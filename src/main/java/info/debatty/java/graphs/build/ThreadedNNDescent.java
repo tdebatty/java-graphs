@@ -2,31 +2,29 @@ package info.debatty.java.graphs.build;
 
 import info.debatty.java.graphs.Edge;
 import info.debatty.java.graphs.Graph;
+import info.debatty.java.graphs.SimilarityInterface;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Thibault Debatty
  * @param <T>
  */
-public class ThreadedNNDescent<T> extends NNDescent<T> {
-
-    private static final Logger LOGGER  = LoggerFactory.getLogger(
-            ThreadedNNDescent.class);
+public class ThreadedNNDescent<T> extends AbstractNNDescent<T> {
 
     // Internal state, used by worker objects
+    private SimilarityInterface<T> similarity;
     private volatile int thread_count;
     private volatile List<T> nodes;
     private volatile Graph<T> graph;
@@ -36,43 +34,34 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
     private volatile ConcurrentHashMap<T, ArrayList<T>> old_lists, new_lists;
 
     @Override
-    protected final Graph<T> _computeGraph(final List<T> nodes) {
-        if (nodes.size() < 2 * k) {
-            LOGGER.warn(
-                    "ThreadedNNDescent should be used for very large graphs!");
-        }
+    protected final Graph<T> nndescent(
+            final List<T> nodes,
+            final SimilarityInterface<T> similarity) {
 
         // Create worker threads
         thread_count = Runtime.getRuntime().availableProcessors() + 1;
         ExecutorService executor = Executors.newFixedThreadPool(thread_count);
 
-        iterations = 0;
-        processed = Collections.synchronizedSet(
-                new HashSet<Edge>(nodes.size() * k));
-
-        if (nodes.size() <= (k + 1)) {
-            return MakeFullyLinked(nodes);
-        }
-
         // Initialize state...
+        this.similarity = similarity;
         this.nodes = nodes;
         this.graph = new Graph<T>();
         this.graph.setK(getK());
         this.old_lists = new ConcurrentHashMap<T, ArrayList<T>>(nodes.size());
         this.new_lists = new ConcurrentHashMap<T, ArrayList<T>>(nodes.size());
 
-        HashMap<String, Object> data = new HashMap<String, Object>();
 
         // B[v]←− Sample(V,K)×{?∞, true?} ∀v ∈ V
         // For each node, create a random neighborlist
         for (T v : nodes) {
-            graph.put(v, RandomNeighborList(nodes, v));
+            graph.put(v, randomNeighborList(nodes, v));
         }
+
+        int iterations = 0;
 
         // loop
         while (true) {
             iterations++;
-            c = 0;
 
             // for v ∈ V do
             // old[v]←− all items in B[v] with a false flag
@@ -80,14 +69,14 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
             // Mark sampled items in B[v] as false;
             for (int i = 0; i < nodes.size(); i++) {
                 T v = nodes.get(i);
-                old_lists.put(v, PickFalses(v, graph.getNeighbors(v)));
-                new_lists.put(v, PickTruesAndMark(v, graph.getNeighbors(v)));
+                old_lists.put(v, pickFalses(v, graph.getNeighbors(v)));
+                new_lists.put(v, pickTruesAndMark(v, graph.getNeighbors(v)));
             }
 
             // old′ ←Reverse(old)
             // new′ ←Reverse(new)
-            old_lists_2 = Reverse(nodes, old_lists);
-            new_lists_2 = Reverse(nodes, new_lists);
+            old_lists_2 = reverse(nodes, old_lists);
+            new_lists_2 = reverse(nodes, new_lists);
 
             ArrayList<Future<Integer>> list = new ArrayList<Future<Integer>>();
             // Start threads...
@@ -95,6 +84,8 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                 list.add(executor.submit(new ThreadedNNDescent.NNThread(t)));
             }
 
+
+            int c = 0;
             for (Future<Integer> future : list) {
                 try {
                     c += future.get();
@@ -103,22 +94,11 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                 }
             }
 
-            //System.out.println("C : " + c);
-            if (callback != null) {
-                data.put("c", c);
-                data.put("computed_similarities", computed_similarities);
-                data.put("iterations", iterations);
-                data.put("computed_similarities_ratio",
-                        (double) computed_similarities
-                                / (nodes.size() * (nodes.size() - 1) / 2));
-                callback.call(data);
-            }
-
-            if (c <= (delta * nodes.size() * k)) {
+            if (c <= (getDelta() * nodes.size() * getK())) {
                 break;
             }
 
-            if (iterations >= max_iterations) {
+            if (iterations >= getMaxIterations()) {
                 break;
             }
         }
@@ -133,6 +113,11 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
         this.old_lists_2 = null;
 
         return graph;
+    }
+
+    @Override
+    protected final Set<Edge> getSetInstance(final int size) {
+        return Collections.synchronizedSet(new HashSet<Edge>(size));
     }
 
     /**
@@ -163,13 +148,17 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                 // old[v]←− old[v] ∪ Sample(old′[v], ρK)
                 // new[v]←− new[v] ∪ Sample(new′[v], ρK)
                 old_lists.put(v,
-                        Union(
+                        union(
                                 old_lists.get(v),
-                                Sample(old_lists_2.get(v), (int) (rho * k))));
+                                sample(
+                                        old_lists_2.get(v),
+                                        (int) (getRho() * getK()))));
                 new_lists.put(v,
-                        Union(
+                        union(
                                 new_lists.get(v),
-                                Sample(new_lists_2.get(v), (int) (rho * k))));
+                                sample(
+                                        new_lists_2.get(v),
+                                        (int) (getRho() * getK()))));
 
                 // for u1,u2 ∈ new[v], u1 < u2 do
                 for (int j = 0; j < new_lists.get(v).size(); j++) {
@@ -182,9 +171,9 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                         // l←− σ(u1,u2)
                         // c←− c+UpdateNN(B[u1], u2, l, true)
                         // c←− c+UpdateNN(B[u2], u1, l, true)
-                        double s = Similarity(u1, u2);
-                        c += UpdateNL(graph.getNeighbors(u1), u2, s);
-                        c += UpdateNL(graph.getNeighbors(u2), u1, s);
+                        double s = similarity.similarity(u1, u2);
+                        c += updateNL(graph.getNeighbors(u1), u2, s);
+                        c += updateNL(graph.getNeighbors(u2), u1, s);
                     }
 
                     // or u1 ∈ new[v], u2 ∈ old[v] do
@@ -196,9 +185,9 @@ public class ThreadedNNDescent<T> extends NNDescent<T> {
                         }
 
                         //int u2_i = Find(u2);
-                        double s = Similarity(u1, u2);
-                        c += UpdateNL(graph.getNeighbors(u1), u2, s);
-                        c += UpdateNL(graph.getNeighbors(u2), u1, s);
+                        double s = similarity.similarity(u1, u2);
+                        c += updateNL(graph.getNeighbors(u1), u2, s);
+                        c += updateNL(graph.getNeighbors(u2), u1, s);
                     }
                 }
             }

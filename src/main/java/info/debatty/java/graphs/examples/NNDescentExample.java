@@ -63,15 +63,6 @@ public class NNDescentExample {
             }
         });
 
-        // Optionnallly, define a callback to get some feedback...
-        builder.setCallback(new CallbackInterface() {
-
-            @Override
-            public void call(HashMap<String, Object> data) {
-                System.out.println(data);
-            }
-        });
-
         // Run the algorithm and get computed graph
         Graph<Integer> graph = builder.computeGraph(nodes);
 

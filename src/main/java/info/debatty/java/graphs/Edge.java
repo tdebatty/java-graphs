@@ -28,51 +28,77 @@ package info.debatty.java.graphs;
  * Internally, the edge is a source node plus a neighbor.
  *
  * @author Thibault Debatty
+ * @param <T> Type of the nodes
  */
 public class Edge<T> {
 
-    public T n1;
-    public Neighbor<T> neighbor;
+    private static final int HASH_BASE = 3;
+    private static final int HASH_MULT = 83;
 
-    public Edge() {
+    private final T origin;
+    private final Neighbor<T> neighbor;
 
-    }
-
-    public Edge(T n1, Neighbor<T> neighbor) {
-        this.n1 = n1;
+    /**
+     * Build an edge between n1 and neighbor.node.
+     * @param origin
+     * @param neighbor
+     */
+    public Edge(final T origin, final Neighbor<T> neighbor) {
+        this.origin = origin;
         this.neighbor = neighbor;
     }
 
+    /**
+     * Get the origin of the edge (the source node).
+     * @return
+     */
+    public final T getOrigin() {
+        return origin;
+    }
+
+    /**
+     * Get the neighbor.
+     * @return
+     */
+    public final Neighbor<T> getNeighbor() {
+        return neighbor;
+    }
+
+
+
     @Override
-    public String toString() {
-        return n1.toString() + " => " + neighbor.toString();
+    public final String toString() {
+        return origin.toString() + " => " + neighbor.toString();
     }
 
     @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 83 * hash + (this.n1 != null ? this.n1.hashCode() : 0);
-        hash = 83 * hash + (this.neighbor != null ? this.neighbor.hashCode() : 0);
+    public final int hashCode() {
+        int hash = HASH_BASE;
+        hash = HASH_MULT * hash + this.origin.hashCode();
+        hash = HASH_MULT * hash + this.neighbor.hashCode();
         return hash;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public final boolean equals(final Object obj) {
         if (obj == null) {
             return false;
         }
+
         if (getClass() != obj.getClass()) {
             return false;
         }
+
         final Edge<?> other = (Edge<?>) obj;
-        if (this.n1 != other.n1 && (this.n1 == null || !this.n1.equals(other.n1))) {
+
+        if (!this.origin.equals(other.origin)) {
             return false;
         }
-        if (this.neighbor != other.neighbor && (this.neighbor == null || !this.neighbor.equals(other.neighbor))) {
+
+        if (!this.neighbor.equals(other.neighbor)) {
             return false;
         }
+
         return true;
     }
-
-
 }

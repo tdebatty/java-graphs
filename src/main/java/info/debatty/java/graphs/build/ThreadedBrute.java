@@ -36,8 +36,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -46,10 +46,19 @@ import java.util.logging.Logger;
  */
 public class ThreadedBrute<T> extends GraphBuilder<T> {
 
+    /**
+     * Number of nodes per thread.
+     */
     public static final int NODES_PER_BLOCK = 1000;
 
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ThreadedBrute.class);
+
     @Override
-    protected final Graph<T> _computeGraph(final List<T> nodes) {
+    protected final Graph<T> computeGraph(
+            final List<T> nodes,
+            final int k,
+            final SimilarityInterface<T> similarity) {
 
         // Start all blocks
         int n = nodes.size();
@@ -80,10 +89,10 @@ public class ThreadedBrute<T> extends GraphBuilder<T> {
                 }
 
             } catch (InterruptedException ex) {
-                Logger.getLogger(ThreadedBrute.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.error("Interrupted", ex);
 
             } catch (ExecutionException ex) {
-                Logger.getLogger(ThreadedBrute.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.error("Exception", ex);
             }
         }
 

@@ -27,6 +27,7 @@ import info.debatty.java.graphs.*;
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
 import info.debatty.java.stringsimilarity.JaroWinkler;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -34,7 +35,8 @@ import java.util.concurrent.ExecutionException;
 
 public class SearchExample {
 
-    public static void main(String[] args) throws InterruptedException, ExecutionException {
+    public static void main(String[] args)
+            throws InterruptedException, ExecutionException, IOException {
         int tests = 100;
 
         // Number of neighbors to search
@@ -44,7 +46,8 @@ public class SearchExample {
 
         // Read the file
         List<String> nodes = GraphBuilder.readFile(
-                SearchExample.class.getClassLoader().getResource("726-unique-spams").getFile());
+                SearchExample.class.getClassLoader()
+                        .getResource("726-unique-spams").getFile());
 
         // Leave some random nodes out for the search queries
         Random rand = new Random();

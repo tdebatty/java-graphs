@@ -9,5 +9,11 @@ import java.io.Serializable;
  */
 public interface SimilarityInterface<T> extends Serializable {
 
-    public double similarity(T node1, T node2);
+    /**
+     * Compute the similarity between two nodes.
+     * @param node1
+     * @param node2
+     * @return
+     */
+    double similarity(final T node1, final T node2);
 }

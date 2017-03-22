@@ -29,6 +29,7 @@ import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.GraphBuilder;
 import info.debatty.java.graphs.build.NNCTPH;
 import info.debatty.java.stringsimilarity.Cosine;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -41,10 +42,11 @@ public class NNCTPHExample {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         // Read the file
         List<String> nodes = GraphBuilder.readFile(
-                NNCTPHExample.class.getClassLoader().getResource("726-unique-spams").getFile());
+                NNCTPHExample.class.getClassLoader()
+                        .getResource("726-unique-spams").getFile());
 
         NNCTPH builder = new NNCTPH();
         builder.setNPartitions(20);

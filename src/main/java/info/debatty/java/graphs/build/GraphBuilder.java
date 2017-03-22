@@ -1,6 +1,5 @@
 package info.debatty.java.graphs.build;
 
-import info.debatty.java.graphs.CallbackInterface;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.SimilarityInterface;
 import java.io.BufferedReader;
@@ -8,25 +7,34 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
-import java.security.InvalidParameterException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author Thibault Debatty
  * @param <T> the actual type of the nodes
  */
-public abstract class GraphBuilder<T> implements Cloneable, Serializable {
+public abstract class GraphBuilder<T> implements Serializable {
 
-    protected int k = 10;
-    protected SimilarityInterface<T> similarity;
-    protected CallbackInterface callback = null;
-    protected int computed_similarities = 0;
+    /**
+     * Default number of neighbors.
+     */
+    public static final int DEFAULT_K = 10;
 
-    public int getK() {
+    // Build parameters
+    private int k = DEFAULT_K;
+    private SimilarityInterface<T> similarity = null;
+
+    // Builder state
+    private SimilarityCounter<T> similarity_counter;
+
+
+    /**
+     *
+     * @return
+     */
+    public final int getK() {
         return k;
     }
 
@@ -35,40 +43,50 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
      *
      * @param k
      */
-    public void setK(int k) {
+    public final void setK(final int k) {
         if (k <= 0) {
-            throw new InvalidParameterException("k must be > 0");
+            throw new IllegalArgumentException("k must be > 0");
         }
         this.k = k;
     }
 
-    public SimilarityInterface getSimilarity() {
+    /**
+     *
+     * @return
+     */
+    public final SimilarityInterface getSimilarity() {
         return similarity;
     }
 
-    public void setSimilarity(SimilarityInterface<T> similarity) {
+    /**
+     *
+     * @param similarity
+     */
+    public final void setSimilarity(final SimilarityInterface<T> similarity) {
         this.similarity = similarity;
     }
 
-    public CallbackInterface getCallback() {
-        return callback;
+    /**
+     *
+     * @return
+     */
+    public final int getComputedSimilarities() {
+        return similarity_counter.getCount();
     }
 
-    public void setCallback(CallbackInterface callback) {
-        this.callback = callback;
-    }
-
-    public int getComputedSimilarities() {
-        return computed_similarities;
-    }
-
-    public Graph<T> computeGraph(List<T> nodes) {
+    /**
+     * Compute the graph.
+     * @param nodes
+     * @return
+     */
+    public final Graph<T> computeGraph(final List<T> nodes) {
 
         if (similarity == null) {
-            throw new InvalidParameterException("Similarity is not defined");
+            throw new IllegalArgumentException("Similarity is not defined");
         }
-        computed_similarities = 0;
-        Graph<T> graph = _computeGraph(nodes);
+        similarity_counter =
+                new SimilarityCounter<T>(similarity);
+        Graph<T> graph = computeGraph(nodes, k, similarity_counter);
         graph.setK(k);
         graph.setSimilarity(similarity);
         return graph;
@@ -76,14 +94,14 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
 
     /**
      * Build the approximate graph, then use brute-force to build the exact
-     * graph and compare the results
+     * graph and compare the results.
      *
      * @param nodes
      */
-    public void test(List<T> nodes) {
+    public final void test(final List<T> nodes) {
         Graph<T> approximate_graph = computeGraph(nodes);
 
-        // Tse Brute force to build the exact graph
+        // Use Brute force to build the exact graph
         Brute brute = new Brute();
         brute.setK(k);
         brute.setSimilarity(similarity);
@@ -91,11 +109,12 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
 
         int correct = 0;
         for (T node : nodes) {
-            correct += approximate_graph.getNeighbors(node).countCommons(exact_graph.getNeighbors(node));
+            correct += approximate_graph.getNeighbors(node)
+                    .countCommons(exact_graph.getNeighbors(node));
         }
 
-        System.out.println("Theoretical speedup: " + this.estimatedSpeedup());
-        System.out.println("Computed similarities: " + this.getComputedSimilarities());
+        System.out.println(
+                "Computed similarities: " + this.getComputedSimilarities());
         double speedup_ratio
                 = (double) (nodes.size() * (nodes.size() - 1) / 2)
                 / this.getComputedSimilarities();
@@ -109,38 +128,27 @@ public abstract class GraphBuilder<T> implements Cloneable, Serializable {
                 + speedup_ratio * correct_ratio);
     }
 
-    public double estimatedSpeedup() {
-        return 1.0;
-    }
+    /**
+     *
+     * @param path
+     * @return
+     * @throws java.io.FileNotFoundException if file does not exist
+     * @throws IOException if file cannot be read
+     */
+    public static LinkedList<String> readFile(final String path)
+            throws FileNotFoundException, IOException {
 
-    public static LinkedList<String> readFile(String path) {
-        try {
-            FileReader fileReader;
-            fileReader = new FileReader(path);
-
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            BufferedReader reader = new BufferedReader(
+                    new FileReader(path));
             LinkedList<String> nodes = new LinkedList<String>();
             String line;
-            int i = 0;
-            while ((line = bufferedReader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 nodes.add(line);
-                i++;
             }
-            bufferedReader.close();
+            reader.close();
             return nodes;
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(GraphBuilder.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(GraphBuilder.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        return null;
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
-
-    protected abstract Graph<T> _computeGraph(List<T> nodes);
+    protected abstract Graph<T> computeGraph(
+            List<T> nodes, int k, SimilarityInterface<T> similarity);
 }

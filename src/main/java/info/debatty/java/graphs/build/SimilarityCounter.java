@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2015 Thibault Debatty.
+ * Copyright 2017 Thibault Debatty.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,45 +21,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package info.debatty.java.graphs.build;
 
-import info.debatty.java.spamsum.ESSum;
-import java.util.ArrayList;
-import java.util.List;
+import info.debatty.java.graphs.SimilarityInterface;
 
 /**
- * Builds the k-nn graph by partitioning the graph using Context Triggered
- * Piecewize Hashing. This graph builder is meant for string node values.
- *
+ * Wraps a similarity interface with a counter, so we can check how many
+ * similarities were computed.
  * @author Thibault Debatty
- * @param <T> type of nodes
+ * @param <T> Type of nodes in the graph
  */
-public class NNCTPH<T> extends PartitioningGraphBuilder<T> {
+public class SimilarityCounter<T> implements SimilarityInterface<T> {
+    private final SimilarityInterface<T> similarity;
+    private int count = 0;
 
-    @Override
-    protected final List<T>[] partition(
-            final List<T> nodes) {
-        ESSum ess = new ESSum(getOversampling(), getNPartitions(), 1);
-
-        ArrayList<T>[] buckets = new ArrayList[getNPartitions()];
-
-        for (T node : nodes) {
-            int[] hash = ess.HashString(node.toString());
-
-            for (int stage = 0; stage < getOversampling(); stage++) {
-                int partition = hash[stage];
-
-                if (buckets[partition] == null) {
-                    buckets[partition] = new ArrayList<T>();
-                }
-
-                // !! this is not efficient !!!!
-                if (!buckets[partition].contains(node)) {
-                    buckets[partition].add(node);
-                }
-            }
-        }
-
-        return buckets;
+    /**
+     *
+     * @param similarity
+     */
+    public SimilarityCounter(final SimilarityInterface<T> similarity) {
+        this.similarity = similarity;
     }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param node1
+     * @param node2
+     * @return
+     */
+    public final double similarity(final T node1, final T node2) {
+        count++;
+        return similarity.similarity(node1, node2);
+    }
+
+    /**
+     * Get the number of computed similarities.
+     * @return
+     */
+    public final int getCount() {
+        return count;
+    }
+
 }

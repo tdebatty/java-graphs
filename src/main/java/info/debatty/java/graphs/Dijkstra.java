@@ -35,6 +35,7 @@ import java.util.Set;
  * node to every other node in the graph using Dijkstra algorithm.
  *
  * @author Thibault Debatty
+ * @param <T> type of nodes in the graph
  */
 public class Dijkstra<T> {
 
@@ -118,7 +119,7 @@ public class Dijkstra<T> {
         }
 
         for (Neighbor<T> neighbor : graph.getNeighbors(node)) {
-            T target = neighbor.node;
+            T target = neighbor.getNode();
 
             if (getShortestDistance(target) > (getShortestDistance(node) + 1)) {
                 distances.put(target, getShortestDistance(node) + 1);

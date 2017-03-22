@@ -39,119 +39,202 @@ public class SynchronizedBoundedPriorityQueue<E>
 
     private final BoundedPriorityQueue<E> queue;
 
+    /**
+     *
+     * @param capacity
+     */
     public SynchronizedBoundedPriorityQueue(final int capacity) {
         queue = new BoundedPriorityQueue<E>(capacity);
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public final Iterator<E> iterator() {
         return queue.iterator();
     }
 
     @Override
-    public int size() {
+    public final int size() {
         synchronized (this) {
             return queue.size();
         }
     }
 
-    public boolean offer(E e) {
+    /**
+     * {@inheritDoc}
+     * @param e
+     * @return
+     */
+    public final boolean offer(final E e) {
         synchronized (this) {
             return queue.offer(e);
         }
     }
 
-    public E poll() {
+    /**
+     * {@inheritDoc}
+     * @return
+     */
+    public final E poll() {
         synchronized (this) {
             return queue.poll();
         }
     }
 
-    public E peek() {
+    /**
+     * {@inheritDoc}
+     * @return
+     */
+    public final E peek() {
         synchronized (this) {
             return queue.peek();
         }
     }
 
-    public boolean isEmpty() {
+    /**
+     * {@inheritDoc}
+     * @return
+     */
+    public final boolean isEmpty() {
         synchronized (this) {
             return queue.isEmpty();
         }
     }
 
-    public boolean contains(Object o) {
+    /**
+     * {@inheritDoc}
+     * @param o
+     * @return
+     */
+    public final boolean contains(final Object o) {
         synchronized (this) {
             return queue.contains(o);
         }
     }
 
-    public Object[] toArray() {
+    /**
+     * {@inheritDoc}
+     * @return
+     */
+    public final Object[] toArray() {
         synchronized (this) {
             return queue.toArray();
         }
     }
 
-    public <T> T[] toArray(T[] a) {
+    /**
+     * {@inheritDoc}
+     * @param <T>
+     * @param a
+     * @return
+     */
+    public final <T> T[] toArray(final T[] a) {
         synchronized (this) {
             return queue.toArray(a);
         }
     }
 
-    public boolean add(E e) {
+    /**
+     * {@inheritDoc}
+     * @param e
+     * @return
+     */
+    public final boolean add(final E e) {
         synchronized (this) {
             return queue.add(e);
         }
     }
 
-    public boolean remove(Object o) {
+    /**
+     * {@inheritDoc}
+     * @param o
+     * @return
+     */
+    public final boolean remove(final Object o) {
         synchronized (this) {
             return queue.remove(o);
         }
     }
 
-    public boolean containsAll(Collection<?> c) {
+    /**
+     * {@inheritDoc}
+     * @param c
+     * @return
+     */
+    public final boolean containsAll(final Collection<?> c) {
         synchronized (this) {
             return queue.containsAll(c);
         }
     }
 
-    public boolean addAll(Collection<? extends E> c) {
+    /**
+     * {@inheritDoc}
+     * @param c
+     * @return
+     */
+    public final boolean addAll(final Collection<? extends E> c) {
         synchronized (this) {
             return queue.addAll(c);
         }
     }
 
-    public boolean removeAll(Collection<?> c) {
+    /**
+     * {@inheritDoc}
+     * @param c
+     * @return
+     */
+    public final boolean removeAll(final Collection<?> c) {
         synchronized (this) {
             return queue.removeAll(c);
         }
     }
 
-    public boolean retainAll(Collection<?> c) {
+    /**
+     * {@inheritDoc}
+     * @param c
+     * @return
+     */
+    public final boolean retainAll(final Collection<?> c) {
         synchronized (this) {
             return queue.retainAll(c);
         }
     }
 
-    public void clear() {
+    /**
+     * {@inheritDoc}
+     */
+    public final void clear() {
         synchronized (this) {
             queue.clear();
         }
     }
 
-    public E remove() {
+    /**
+     * {@inheritDoc}
+     * @return
+     */
+    public final E remove() {
         synchronized (this) {
             return queue.remove();
         }
     }
 
-    public E element() {
+    /**
+     * {@inheritDoc}
+     * @return
+     */
+    public final E element() {
         synchronized (this) {
             return queue.element();
         }
     }
 
-    public boolean equals(Object other) {
+    /**
+     * {@inheritDoc}
+     * @param other
+     * @return
+     */
+    @Override
+    public final boolean equals(final Object other) {
         if (other == null) {
             return false;
         }
@@ -168,7 +251,19 @@ public class SynchronizedBoundedPriorityQueue<E>
         }
     }
 
-    public String toString() {
+    @Override
+    public final int hashCode() {
+        synchronized (this) {
+            return this.queue.hashCode();
+        }
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public final String toString() {
         synchronized (this) {
             return queue.toString();
         }

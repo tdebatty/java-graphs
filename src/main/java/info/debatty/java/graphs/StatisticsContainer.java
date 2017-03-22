@@ -89,43 +89,78 @@ public class StatisticsContainer implements Serializable {
         return remove_similarities;
     }
 
+    /**
+     *
+     */
     public final void incSearchSimilarities() {
         search_similarities++;
     }
 
+    /**
+     *
+     */
     public final void incSearchRestarts() {
         search_restarts++;
     }
 
+    /**
+     *
+     */
     public final void incSearchCrossPartitionRestarts() {
         search_cross_partition_restarts++;
     }
 
+    /**
+     *
+     */
     public final void incAddSimilarities() {
         add_similarities++;
     }
 
+    /**
+     *
+     */
     public final void incRemoveSimilarities() {
         remove_similarities++;
     }
 
-    public final void incSearchSimilarities(int value) {
+    /**
+     *
+     * @param value
+     */
+    public final void incSearchSimilarities(final int value) {
         search_similarities += value;
     }
 
-    public final void incSearchRestarts(int value) {
+    /**
+     *
+     * @param value
+     */
+    public final void incSearchRestarts(final int value) {
         search_restarts += value;
     }
 
-    public final void incSearchCrossPartitionRestarts(int value) {
+    /**
+     *
+     * @param value
+     */
+    public final void incSearchCrossPartitionRestarts(final int value) {
         search_cross_partition_restarts += value;
     }
 
-    public final void incAddSimilarities(int value) {
+    /**
+     *
+     * @param value
+     */
+    public final void incAddSimilarities(final int value) {
         add_similarities += value;
     }
 
-    public final void incRemoveSimilarities(int value) {
+    /**
+     *
+     * @param value
+     */
+    public final void incRemoveSimilarities(final int value) {
         remove_similarities += value;
     }
 

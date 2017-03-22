@@ -62,14 +62,6 @@ public class ThreadedNNDescentExample {
         builder.setDelta(0.1);
         builder.setRho(0.5);
 
-        // Optionnally, define callback
-        builder.setCallback(new CallbackInterface() {
-            @Override
-            public void call(HashMap<String, Object> data) {
-                System.out.println(data);
-            }
-        });
-
         // Run the algorithm and get computed neighbor lists
         Graph<Double> graph = builder.computeGraph(nodes);
 

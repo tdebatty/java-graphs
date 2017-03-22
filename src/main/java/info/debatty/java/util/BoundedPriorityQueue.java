@@ -86,7 +86,7 @@ public class BoundedPriorityQueue<E> extends PriorityQueue<E>
      * @return
      */
     @Override
-    public boolean equals(final Object other) {
+    public final boolean equals(final Object other) {
         if (other == null) {
             return false;
         }
@@ -98,6 +98,10 @@ public class BoundedPriorityQueue<E> extends PriorityQueue<E>
         BoundedPriorityQueue<E> other_queue = (BoundedPriorityQueue<E>) other;
 
         return this.containsAll(other_queue) && other_queue.containsAll(this);
+    }
 
+    @Override
+    public final int hashCode() {
+        return super.hashCode();
     }
 }

@@ -182,7 +182,7 @@ public class Graph<T> implements Serializable {
             // => do it in 2 steps:
             ArrayList<Neighbor> to_remove = new ArrayList<Neighbor>();
             for (Neighbor n : nl) {
-                if (n.similarity < threshold) {
+                if (n.getSimilarity() < threshold) {
                     to_remove.add(n);
                 }
             }
@@ -232,8 +232,8 @@ public class Graph<T> implements Serializable {
         }
 
         for (Neighbor<T> neighbor : this.getNeighbors(node)) {
-            if (!subgraph.containsKey(neighbor.node)) {
-                addAndFollow(subgraph, neighbor.node, nodes_to_process);
+            if (!subgraph.containsKey(neighbor.getNode())) {
+                addAndFollow(subgraph, neighbor.getNode(), nodes_to_process);
             }
         }
     }
@@ -317,7 +317,7 @@ public class Graph<T> implements Serializable {
 
             // process neighbors of this node
             for (Neighbor<T> neighbor : this.getNeighbors(node)) {
-                T neighbor_node = neighbor.node;
+                T neighbor_node = neighbor.getNode();
 
                 if (!this.containsKey(neighbor_node)
                         || this.getNeighbors(neighbor_node) == null) {
@@ -512,13 +512,13 @@ public class Graph<T> implements Serializable {
         }
 
         for (Neighbor<T> n : nl) {
-            if (!candidates.contains(n.node)) {
-                candidates.add(n.node);
+            if (!candidates.contains(n.getNode())) {
+                candidates.add(n.getNode());
 
                 if (current_depth > 0) {
                     // don't use current_depth++ here as we will reuse it in
                     // the for loop !
-                    findNeighbors(candidates, n.node, current_depth - 1);
+                    findNeighbors(candidates, n.getNode(), current_depth - 1);
                 }
             }
         }
@@ -792,7 +792,7 @@ public class Graph<T> implements Serializable {
                 Iterator<Neighbor> y_nl_iterator = nl.iterator();
                 while (y_nl_iterator.hasNext()) {
 
-                    other_node = (T) y_nl_iterator.next().node;
+                    other_node = (T) y_nl_iterator.next().getNode();
 
                     if (visited_nodes.containsKey(other_node)) {
                         continue;
@@ -869,10 +869,10 @@ public class Graph<T> implements Serializable {
         for (T source : map.keySet()) {
             int source_id = node_registry.get(source);
             for (Neighbor<T> target : this.getNeighbors(source)) {
-                int target_id = node_registry.get(target.node);
+                int target_id = node_registry.get(target.getNode());
                 out.write("<edge id=\"" + i + "\" source=\"" + source_id + "\" "
                         + "target=\"" + target_id + "\" "
-                        + "weight=\"" + target.similarity + "\" />\n");
+                        + "weight=\"" + target.getSimilarity() + "\" />\n");
                 i++;
             }
         }
@@ -1017,7 +1017,7 @@ public class Graph<T> implements Serializable {
 
         // Fill the list of nodes to analyze
         for (Neighbor<T> neighbor : getNeighbors(new_node)) {
-            analyze.add(neighbor.node);
+            analyze.add(neighbor.getNode());
         }
 
         for (int d = 0; d < update_depth; d++) {
@@ -1028,8 +1028,8 @@ public class Graph<T> implements Serializable {
                 // Add neighbors to the list of nodes to analyze at
                 // next iteration
                 for (Neighbor<T> other_neighbor : other_neighborlist) {
-                    if (!visited.containsKey(other_neighbor.node)) {
-                        next_analyze.add(other_neighbor.node);
+                    if (!visited.containsKey(other_neighbor.getNode())) {
+                        next_analyze.add(other_neighbor.getNode());
                     }
                 }
 
@@ -1055,7 +1055,10 @@ public class Graph<T> implements Serializable {
      * @param node_to_remove
      */
     public final void fastRemove(final T node_to_remove) {
-        fastRemove(node_to_remove, DEFAULT_UPDATE_DEPTH, new StatisticsContainer());
+        fastRemove(
+                node_to_remove,
+                DEFAULT_UPDATE_DEPTH,
+                new StatisticsContainer());
 
     }
 
@@ -1135,15 +1138,18 @@ public class Graph<T> implements Serializable {
         return map.toString();
     }
 
+    private static final int HASH_BASE = 3;
+    private static final int HASH_MULT = 23;
+
     @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 23 * hash + (this.map != null ? this.map.hashCode() : 0);
+    public final int hashCode() {
+        int hash = HASH_BASE;
+        hash = HASH_MULT * hash + this.map.hashCode();
         return hash;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public final boolean equals(final Object obj) {
         if (obj == null) {
             return false;
         }
@@ -1151,12 +1157,7 @@ public class Graph<T> implements Serializable {
             return false;
         }
         final Graph<?> other = (Graph<?>) obj;
-        System.out.println("Delegating to map...");
-        if (this.map != other.map && (this.map == null || !this.map.equals(other.map))) {
-            return false;
-        }
-        return true;
+
+        return this.map.equals(other.map);
     }
-
-
 }

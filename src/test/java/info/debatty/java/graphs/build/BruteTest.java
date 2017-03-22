@@ -78,7 +78,8 @@ public class BruteTest extends TestCase {
         Integer node_0 = nodes.get(0);
 
         // this is the k'st most similar node (=> number 9)
-        Integer other_node = (Integer) graph.getNeighbors(node_0).peek().node;
+        Integer other_node = (Integer) graph.getNeighbors(node_0).peek()
+                .getNode();
 
         assertEquals(other_node.intValue(), 10);
 

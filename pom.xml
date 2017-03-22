@@ -177,7 +177,6 @@
                 </configuration>
             </plugin>
 
-            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -185,12 +184,13 @@
                 <executions>
                     <execution>
                         <id>validate</id>
-                        <phase>validate</phase>
+                        <phase>verify</phase>
                         <configuration>
                             <configLocation>checkstyle.xml</configLocation>
                             <encoding>UTF-8</encoding>
                             <consoleOutput>true</consoleOutput>
                             <linkXRef>false</linkXRef>
+                            <excludes>info/debatty/java/graphs/examples/**</excludes>
                         </configuration>
                         <goals>
                             <goal>check</goal>
@@ -198,7 +198,6 @@
                     </execution>
                 </executions>
             </plugin>
-            -->
 
         </plugins>
     </build>

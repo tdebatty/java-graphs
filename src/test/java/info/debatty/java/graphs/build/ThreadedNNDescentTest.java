@@ -38,8 +38,9 @@ public class ThreadedNNDescentTest extends TestCase {
 
     private static final double MIN_CORRECT_RATIO = 0.95;
 
-    public void testSomeMethod() {
+    public void testComputeGraph() {
         System.out.println("computeGraph");
+        System.out.println("============");
 
         int count = 8123;
         int k = 10;
@@ -55,7 +56,8 @@ public class ThreadedNNDescentTest extends TestCase {
         SimilarityInterface<Integer> similarity =
                 new SimilarityInterface<Integer>() {
 
-            public double similarity(Integer value1, Integer value2) {
+            public double similarity(
+                    final Integer value1, final Integer value2) {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
         };
@@ -74,8 +76,12 @@ public class ThreadedNNDescentTest extends TestCase {
         Graph<Integer> graph = builder.computeGraph(nodes);
 
         Integer first_node = graph.first();
+        System.out.println(graph.getNeighbors(first_node));
         System.out.println(threaded_graph.getNeighbors(first_node));
-        assertEquals(k, graph.getNeighbors(first_node).countCommons(threaded_graph.getNeighbors(first_node)));
+        assertEquals(
+                k,
+                graph.getNeighbors(first_node)
+                        .countCommons(threaded_graph.getNeighbors(first_node)));
 
         int correct_edges = threaded_graph.compare(graph);
         double correct_ratio = 1.0 * correct_edges / (count * k);
@@ -91,8 +97,9 @@ public class ThreadedNNDescentTest extends TestCase {
      * Test that the threaded nndescent algorithms produces neighborlists of
      * the correct size (might fail because of missing synchronization).
      */
-    public void testK() {
+    public final void testK() {
         System.out.println("test K");
+        System.out.println("======");
 
         int count = 10;
         int k = 5;
@@ -109,18 +116,19 @@ public class ThreadedNNDescentTest extends TestCase {
         SimilarityInterface<Integer> similarity =
                 new SimilarityInterface<Integer>() {
 
-            public double similarity(final Integer value1, final Integer value2) {
+            public double similarity(
+                    final Integer value1, final Integer value2) {
                 return 1.0 / (1.0 + Math.abs(value1 - value2));
             }
         };
 
         for (int i = 0; i < trials; i++) {
-            System.out.println("NNdescent threaded graph builder...");
             ThreadedNNDescent<Integer> threaded_builder =
                     new ThreadedNNDescent<Integer>();
             threaded_builder.setK(k);
             threaded_builder.setSimilarity(similarity);
-            Graph<Integer> threaded_graph = threaded_builder.computeGraph(nodes);
+            Graph<Integer> threaded_graph =
+                    threaded_builder.computeGraph(nodes);
 
             for (Integer value : threaded_graph.getNodes()) {
                 assertEquals(k, threaded_graph.getNeighbors(value).size());
