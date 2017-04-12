@@ -2,6 +2,7 @@ package info.debatty.java.graphs;
 
 import info.debatty.java.util.SynchronizedBoundedPriorityQueue;
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 
 /**
@@ -121,5 +122,19 @@ public class NeighborList extends SynchronizedBoundedPriorityQueue<Neighbor>
             }
         }
         return false;
+    }
+
+    /**
+     * Remove all neighbors with similarity inferior to threshold.
+     * @param threshold
+     */
+    public void prune(final double threshold) {
+        Iterator<Neighbor> iterator = iterator();
+        while (iterator.hasNext()) {
+            Neighbor neighbor = iterator.next();
+            if (neighbor.getSimilarity() < threshold) {
+                iterator.remove();
+            }
+        }
     }
 }

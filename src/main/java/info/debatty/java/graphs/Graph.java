@@ -178,16 +178,7 @@ public class Graph<T> implements Serializable {
     public final void prune(final double threshold) {
         for (NeighborList nl : map.values()) {
 
-            // We cannot remove inside the loop
-            // => do it in 2 steps:
-            ArrayList<Neighbor> to_remove = new ArrayList<Neighbor>();
-            for (Neighbor n : nl) {
-                if (n.getSimilarity() < threshold) {
-                    to_remove.add(n);
-                }
-            }
-
-            nl.removeAll(to_remove);
+            nl.prune(threshold);
         }
     }
 
