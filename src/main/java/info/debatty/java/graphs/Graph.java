@@ -1152,18 +1152,3 @@ public class Graph<T> implements Serializable {
         return this.map.equals(other.map);
     }
 }
-
-class RunnablePrune implements Runnable {
-
-    private final NeighborList nl;
-    private final double threshold;
-
-    RunnablePrune(final NeighborList nl, final double threshold) {
-        this.nl = nl;
-        this.threshold = threshold;
-    }
-
-    public void run() {
-        nl.prune(threshold);
-    }
-}
