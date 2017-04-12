@@ -25,16 +25,17 @@ package info.debatty.java.graphs.examples;
 
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.SimilarityInterface;
-import info.debatty.java.graphs.build.NNDescent;
+import info.debatty.java.graphs.build.ThreadedNNDescent;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 public class PruneExample {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         Random r = new Random();
-        int count = 50000;
-        int k = 10;
+        int count = 100000;
+        int k = 20;
 
         // Create the nodes
         ArrayList<Integer> nodes = new ArrayList<Integer>(count);
@@ -44,9 +45,9 @@ public class PruneExample {
         }
 
         // Instantiate and configure the build algorithm
-        NNDescent builder = new NNDescent();
+        ThreadedNNDescent builder = new ThreadedNNDescent();
         builder.setK(k);
-        builder.setDelta(0.01);
+        builder.setDelta(0.1);
         builder.setRho(0.5);
 
         builder.setSimilarity(new SimilarityInterface<Integer>() {
@@ -60,44 +61,11 @@ public class PruneExample {
         // Run the algorithm and get computed graph
         Graph<Integer> graph = builder.computeGraph(nodes);
 
+        System.out.println("Start prunning...");
         long start = System.nanoTime();
         graph.prune(0.5);
         long end = System.nanoTime();
         System.out.println("n = " + count);
         System.out.println("time: " + (end - start));
-
-        count = 100000;
-        k = 10;
-
-        // Create the nodes
-        nodes = new ArrayList<Integer>(count);
-        for (int i = 0; i < count; i++) {
-            // The value of our nodes will be an int
-            nodes.add(r.nextInt());
-        }
-
-        // Instantiate and configure the build algorithm
-        builder = new NNDescent();
-        builder.setK(k);
-        builder.setDelta(0.01);
-        builder.setRho(0.5);
-
-        builder.setSimilarity(new SimilarityInterface<Integer>() {
-
-            @Override
-            public double similarity(final Integer v1, final Integer v2) {
-                return 1.0 / (1.0 + Math.abs(v1 - v2));
-            }
-        });
-
-        // Run the algorithm and get computed graph
-        graph = builder.computeGraph(nodes);
-
-        start = System.nanoTime();
-        graph.prune(0.5);
-        end = System.nanoTime();
-        System.out.println("n = " + count);
-        System.out.println("time: " + (end - start));
-
     }
 }

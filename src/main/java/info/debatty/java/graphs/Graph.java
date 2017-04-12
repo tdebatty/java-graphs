@@ -176,9 +176,9 @@ public class Graph<T> implements Serializable {
      * @param threshold
      */
     public final void prune(final double threshold) {
-        for (NeighborList nl : map.values()) {
 
-            nl.prune(threshold);
+        for (NeighborList nl : map.values()) {
+             nl.prune(threshold);
         }
     }
 
@@ -1150,5 +1150,20 @@ public class Graph<T> implements Serializable {
         final Graph<?> other = (Graph<?>) obj;
 
         return this.map.equals(other.map);
+    }
+}
+
+class RunnablePrune implements Runnable {
+
+    private final NeighborList nl;
+    private final double threshold;
+
+    RunnablePrune(final NeighborList nl, final double threshold) {
+        this.nl = nl;
+        this.threshold = threshold;
+    }
+
+    public void run() {
+        nl.prune(threshold);
     }
 }
