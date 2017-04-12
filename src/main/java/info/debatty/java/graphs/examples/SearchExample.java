@@ -23,7 +23,9 @@
  */
 package info.debatty.java.graphs.examples;
 
-import info.debatty.java.graphs.*;
+import info.debatty.java.graphs.Graph;
+import info.debatty.java.graphs.NeighborList;
+import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.Brute;
 import info.debatty.java.graphs.build.GraphBuilder;
 import info.debatty.java.stringsimilarity.JaroWinkler;

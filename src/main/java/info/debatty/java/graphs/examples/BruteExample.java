@@ -23,13 +23,11 @@
  */
 package info.debatty.java.graphs.examples;
 
-import info.debatty.java.graphs.CallbackInterface;
 import info.debatty.java.graphs.Graph;
 import info.debatty.java.graphs.NeighborList;
 import info.debatty.java.graphs.SimilarityInterface;
 import info.debatty.java.graphs.build.Brute;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 

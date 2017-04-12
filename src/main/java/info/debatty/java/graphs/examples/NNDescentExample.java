@@ -26,7 +26,6 @@ package info.debatty.java.graphs.examples;
 import info.debatty.java.graphs.*;
 import info.debatty.java.graphs.build.NNDescent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 
 public class NNDescentExample {
