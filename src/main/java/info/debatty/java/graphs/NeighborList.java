@@ -128,7 +128,7 @@ public class NeighborList extends SynchronizedBoundedPriorityQueue<Neighbor>
      * Remove all neighbors with similarity inferior to threshold.
      * @param threshold
      */
-    public void prune(final double threshold) {
+    public final void prune(final double threshold) {
         Iterator<Neighbor> iterator = iterator();
         while (iterator.hasNext()) {
             Neighbor neighbor = iterator.next();
