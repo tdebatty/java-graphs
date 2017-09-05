@@ -19,7 +19,7 @@ Implemented processing algorithms:
 * Tarjan's algorithm to compute strongly connected subgraphs (where every node is reachable from every other node);
 * Weakly connected components.
 
-For the complete list, check the [documentation](http://api123.io/api/java-graphs/head/index.html) or the [examples](https://github.com/tdebatty/java-graphs/tree/master/src/main/java/info/debatty/java/graphs/examples).
+For the complete list, check the [documentation](http://www.javadoc.io/doc/info.debatty/java-graphs) or the [examples](https://github.com/tdebatty/java-graphs/tree/master/src/main/java/info/debatty/java/graphs/examples).
 
 
 ## Installation
@@ -146,4 +146,4 @@ Quality-equivalent speedup: 3.6012156401845385
 
 ```
 
-Check the [documentation](http://api123.io/api/java-graphs/head/index.html) or the [examples](https://github.com/tdebatty/java-graphs/tree/master/src/main/java/info/debatty/java/graphs/examples) for other building and processing possibilities...
+Check the [documentation](http://www.javadoc.io/doc/info.debatty/java-graphs) or the [examples](https://github.com/tdebatty/java-graphs/tree/master/src/main/java/info/debatty/java/graphs/examples) for other building and processing possibilities...
