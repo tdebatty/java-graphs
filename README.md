@@ -1,8 +1,8 @@
 # java-graphs
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs) [![Build Status](https://travis-ci.org/tdebatty/java-graphs.svg?branch=master)](https://travis-ci.org/tdebatty/java-graphs) [![Coverage Status](https://coveralls.io/repos/tdebatty/java-graphs/badge.svg?branch=master&service=github)](https://coveralls.io/github/tdebatty/java-graphs?branch=master) [![API](http://api123.web-d.be/api123-head.svg)](http://api123.web-d.be/api/java-graphs/head/index.html)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/java-graphs) [![Build Status](https://travis-ci.org/tdebatty/java-graphs.svg?branch=master)](https://travis-ci.org/tdebatty/java-graphs) [![Coverage Status](https://coveralls.io/repos/tdebatty/java-graphs/badge.svg?branch=master&service=github)](https://coveralls.io/github/tdebatty/java-graphs?branch=master) [![Javadocs](http://www.javadoc.io/badge/info.debatty/java-graphs.svg)](http://www.javadoc.io/doc/info.debatty/java-graphs)
 
-Java implementation of various algorithms that build and proces k-nearest neighbors graph (k-nn graph).
+Java implementation of various algorithms that build and process k-nearest neighbors graph (k-nn graph).
 
 Graph building algorithms:
 * (Multi-threaded) Brute-force: works with any similarity measure;
