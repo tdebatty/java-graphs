@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.io.Writer;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -59,27 +58,6 @@ public class Graph<T> implements Serializable {
      * Number of edges per node.
      */
     public static final int DEFAULT_K = 10;
-
-    /**
-     * Fast search: speedup compared to exhaustive search.
-     */
-    public static final double DEFAULT_SEARCH_SPEEDUP = 4.0;
-
-    /**
-     * Fast search: expansion parameter.
-     */
-    public static final double DEFAULT_SEARCH_EXPANSION = 1.2;
-
-    /**
-     * Fast search: number of random jumps per node (to simulate small world
-     * graph).
-     */
-    public static final int DEFAULT_SEARCH_RANDOM_JUMPS = 2;
-
-    /**
-     * Fast add or remove node: depth of search to update the graph.
-     */
-    public static final int DEFAULT_UPDATE_DEPTH = 3;
 
     private final HashMap<T, NeighborList> map;
     private SimilarityInterface<T> similarity;
@@ -378,7 +356,7 @@ public class Graph<T> implements Serializable {
     }
 
     /**
-     * Store the node, and it's parent.
+     * Store the node and it's parent.
      */
     private class NodeParent {
         private T node;
@@ -600,104 +578,41 @@ public class Graph<T> implements Serializable {
     /**
      * Approximate fast graph based search, as published in "Fast Online k-nn
      * Graph Building" by Debatty et al.
-     * Default speedup is 4.
      *
      * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
      * Building</a>
      * @param query
-     * @param k search K neighbors
      * @return
      */
-    public final NeighborList fastSearch(final T query, final int k) {
-        return fastSearch(query, k, DEFAULT_SEARCH_SPEEDUP);
+    public final NeighborList fastSearch(final T query) {
+        return fastSearch(query, FastSearchConfig.getDefault());
     }
 
     /**
      * Approximate fast graph based search, as published in "Fast Online k-nn
      * Graph Building" by Debatty et al.
      *
-     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
-     * Building</a>
-     * @param query
-     * @param k search k neighbors
-     * @param speedup speedup for searching (> 1, default 4)
-     * @return
-     */
-    public final NeighborList fastSearch(
-            final T query, final int k, final double speedup) {
-
-        return this.fastSearch(
-                query,
-                k,
-                speedup,
-                DEFAULT_SEARCH_RANDOM_JUMPS,
-                DEFAULT_SEARCH_EXPANSION);
-    }
-
-    /**
-     * Approximate fast graph based search, as published in "Fast Online k-nn
-     * Graph Building" by Debatty et al.
-     *
-     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
-     * Building</a>
-     * @param query
-     * @param k
-     * @param speedup
-     * @param long_jumps
-     * @param expansion
-     * @return
-     */
-    public final NeighborList fastSearch(
-            final T query,
-            final int k,
-            final double speedup,
-            final int long_jumps,
-            final double expansion) {
-
-        return this.fastSearch(
-                query,
-                k,
-                speedup,
-                DEFAULT_SEARCH_RANDOM_JUMPS,
-                DEFAULT_SEARCH_EXPANSION,
-                new StatisticsContainer());
-    }
-
-    /**
-     * Approximate fast graph based search, as published in "Fast Online k-nn
-     * Graph Building" by Debatty et al.
-     *
+     * @param conf
      * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
      * Building</a>
      * @param query query point
-     * @param k number of neighbors to find (the K from K-nn search)
-     * @param speedup (default: 4.0)
-     * @param long_jumps (default: 2)
-     * @param expansion (default: 1.2)
-     * @param stats
      *
      * @return
      */
     public final NeighborList fastSearch(
             final T query,
-            final int k,
-            final double speedup,
-            final int long_jumps,
-            final double expansion,
-            final StatisticsContainer stats) {
+            final FastSearchConfig conf) {
 
-        if (speedup <= 1.0) {
-            throw new InvalidParameterException("Speedup should be > 1.0");
-        }
+        StatisticsContainer stats = new StatisticsContainer();
 
-        int max_similarities = (int) (map.size() / speedup);
+        int max_similarities = (int) (map.size() / conf.getSpeedup());
 
         // Looking for more nodes than this graph contains...
         // Or fall back to exhaustive search
-        if (k >= map.size()
+        if (conf.getK() >= map.size()
                 || max_similarities >= map.size()) {
 
-            NeighborList nl = new NeighborList(k);
+            NeighborList nl = new NeighborList(conf.getK());
             for (T node : map.keySet()) {
                 nl.add(
                         new Neighbor(
@@ -737,7 +652,8 @@ public class Graph<T> implements Serializable {
                     query,
                     current_node);
             stats.incSearchSimilarities();
-            if (restart_similarity < global_highest_similarity / expansion) {
+            if (restart_similarity
+                    < global_highest_similarity / conf.getExpansion()) {
                 continue;
             }
 
@@ -754,7 +670,7 @@ public class Graph<T> implements Serializable {
                 T node_higher_similarity = null;
                 T other_node;
 
-                for (int i = 0; i < long_jumps; i++) {
+                for (int i = 0; i < conf.getLongJumps(); i++) {
                     // Check a random node (to simulate long jumps)
                     other_node = nodes.get(rand.nextInt(nodes.size()));
 
@@ -821,7 +737,7 @@ public class Graph<T> implements Serializable {
             }
         }
 
-        NeighborList neighbor_list = new NeighborList(k);
+        NeighborList neighbor_list = new NeighborList(conf.getK());
         for (Map.Entry<T, Double> entry : visited_nodes.entrySet()) {
             neighbor_list.add(new Neighbor(entry.getKey(), entry.getValue()));
         }
@@ -922,23 +838,7 @@ public class Graph<T> implements Serializable {
      * @param node
      */
     public final void fastAdd(final T node) {
-        fastAdd(node, DEFAULT_SEARCH_SPEEDUP);
-    }
-
-    /**
-     * Add a node to the online graph, using approximate online graph building
-     * algorithm presented in "Fast Online k-nn Graph Building" by Debatty
-     * et al. Uses default number of long jumps (2) and default expansion (1.2).
-     *
-     * @param node
-     * @param speedup
-     */
-    public final void fastAdd(final T node, final double speedup) {
-        fastAdd(
-                node,
-                speedup,
-                DEFAULT_SEARCH_RANDOM_JUMPS,
-                DEFAULT_SEARCH_EXPANSION);
+        fastAdd(node, OnlineConfig.getDefault());
     }
 
     /**
@@ -947,44 +847,11 @@ public class Graph<T> implements Serializable {
      * et al.
      *
      * @param new_node
-     * @param speedup compared to exhaustive search
-     * @param long_jumps
-     * @param expansion
+     * @param conf
      */
     public final void fastAdd(
             final T new_node,
-            final double speedup,
-            final int long_jumps,
-            final double expansion) {
-
-        fastAdd(
-                new_node,
-                speedup,
-                DEFAULT_SEARCH_RANDOM_JUMPS,
-                DEFAULT_SEARCH_EXPANSION,
-                DEFAULT_UPDATE_DEPTH,
-                new StatisticsContainer());
-    }
-
-    /**
-     * Add a node to the online graph, using approximate online graph building
-     * algorithm presented in "Fast Online k-nn Graph Building" by Debatty
-     * et al.
-     *
-     * @param new_node
-     * @param speedup compared to exhaustive search
-     * @param long_jumps
-     * @param expansion
-     * @param update_depth
-     * @param stats
-     */
-    public final void fastAdd(
-            final T new_node,
-            final double speedup,
-            final int long_jumps,
-            final double expansion,
-            final int update_depth,
-            final StatisticsContainer stats) {
+            final OnlineConfig conf) {
 
         if (containsKey(new_node)) {
             throw new IllegalArgumentException(
@@ -992,8 +859,8 @@ public class Graph<T> implements Serializable {
         }
 
         // 3. Search the neighbors of the new node
-        NeighborList neighborlist = fastSearch(
-                new_node, k, speedup, long_jumps, expansion, stats);
+        conf.setK(getK());
+        NeighborList neighborlist = fastSearch(new_node, conf);
         put(new_node, neighborlist);
 
         // 4. Update existing edges
@@ -1011,7 +878,9 @@ public class Graph<T> implements Serializable {
             analyze.add(neighbor.getNode());
         }
 
-        for (int d = 0; d < update_depth; d++) {
+        StatisticsContainer stats = new StatisticsContainer();
+
+        for (int d = 0; d < conf.getUpdateDepth(); d++) {
             while (!analyze.isEmpty()) {
                 T other = analyze.pop();
                 NeighborList other_neighborlist = getNeighbors(other);
@@ -1046,10 +915,7 @@ public class Graph<T> implements Serializable {
      * @param node_to_remove
      */
     public final void fastRemove(final T node_to_remove) {
-        fastRemove(
-                node_to_remove,
-                DEFAULT_UPDATE_DEPTH,
-                new StatisticsContainer());
+        fastRemove(node_to_remove, OnlineConfig.getDefault());
 
     }
 
@@ -1057,13 +923,11 @@ public class Graph<T> implements Serializable {
      * Remove a node from the graph (and update the graph) using fast
      * approximate algorithm.
      * @param node_to_remove
-     * @param update_depth
-     * @param stats
+     * @param conf
      */
     public final void fastRemove(
             final T node_to_remove,
-            final int update_depth,
-            final StatisticsContainer stats) {
+            final OnlineConfig conf) {
 
         // Build the list of nodes to update
         LinkedList<T> nodes_to_update = new LinkedList<T>();
@@ -1082,10 +946,12 @@ public class Graph<T> implements Serializable {
         initial_candidates.addAll(nodes_to_update);
 
         LinkedList<T> candidates = findNeighbors(
-                initial_candidates, update_depth);
+                initial_candidates, conf.getUpdateDepth());
         while (candidates.contains(node_to_remove)) {
             candidates.remove(node_to_remove);
         }
+
+        StatisticsContainer stats = new StatisticsContainer();
 
         // Update the nodes_to_update
         for (T node_to_update : nodes_to_update) {

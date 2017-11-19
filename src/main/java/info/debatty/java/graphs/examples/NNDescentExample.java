@@ -32,7 +32,7 @@ import java.util.Random;
 
 public class NNDescentExample {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         Random r = new Random();
         int count = 1000;
         int k = 10;
@@ -59,7 +59,7 @@ public class NNDescentExample {
         builder.setSimilarity(new SimilarityInterface<Integer>() {
 
             @Override
-            public double similarity(Integer v1, Integer v2) {
+            public double similarity(final Integer v1, final Integer v2) {
                 return 1.0 / (1.0 + Math.abs(v1 - v2));
             }
         });
@@ -84,12 +84,13 @@ public class NNDescentExample {
         System.out.println(graph.connectedComponents().size());
 
         // Search a query (fast approximative algorithm)
-        System.out.println(graph.fastSearch(r.nextInt(10 * count), 1));
+        System.out.println(graph.fastSearch(r.nextInt(10 * count)));
 
         // Count number of strongly connected components
         System.out.println(graph.stronglyConnectedComponents().size());
 
-        // Now we can add a node to the graph (using a fast approximate algorithm)
+        // Now we can add a node to the graph (using a fast approximate
+        // algorithm)
         graph.fastAdd(r.nextInt(10 * count));
     }
 }

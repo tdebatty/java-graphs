@@ -268,16 +268,15 @@ public class GraphTest extends TestCase {
         Graph<Double> graph = builder.computeGraph(data);
 
         System.out.println("perform evaluation...");
+        FastSearchConfig conf = FastSearchConfig.getDefault();
+        conf.setK(1);
         int correct = 0;
         for (int i = 0; i < 100; i++) {
             double query = 400.0 * rand.nextDouble();
 
-            NeighborList approximate_result = graph.fastSearch(
-                    query,
-                    1,
-                    30);
+            NeighborList approximate_result = graph.fastSearch(query, conf);
 
-            // Search the (real) most similar
+            // Search the exact most similar
             NeighborList exhaustive_result = graph.search(query, 1);
             correct += approximate_result.countCommons(exhaustive_result);
 
@@ -369,13 +368,7 @@ public class GraphTest extends TestCase {
             Double query = 400.0 * rand.nextDouble();
 
             StatisticsContainer stats = new StatisticsContainer();
-            graph.fastAdd(
-                    query,
-                    Graph.DEFAULT_SEARCH_SPEEDUP,
-                    Graph.DEFAULT_SEARCH_RANDOM_JUMPS,
-                    Graph.DEFAULT_SEARCH_EXPANSION,
-                    Graph.DEFAULT_UPDATE_DEPTH,
-                    stats);
+            graph.fastAdd(query);
             //System.out.println(stats);
             data.add(query);
         }
