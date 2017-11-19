@@ -29,18 +29,33 @@ package info.debatty.java.graphs;
  */
 public class OnlineConfig extends FastSearchConfig {
 
+    /**
+     * Depth for updating edges when adding or removing nodes.
+     */
     public static final int DEFAULT_UPDATE_DEPTH = 3;
 
     private int update_depth = DEFAULT_UPDATE_DEPTH;
 
-    public int getUpdateDepth() {
+    /**
+     *
+     * @return
+     */
+    public final int getUpdateDepth() {
         return update_depth;
     }
 
-    public void setUpdateDepth(int update_depth) {
+    /**
+     *
+     * @param update_depth
+     */
+    public final void setUpdateDepth(final int update_depth) {
         this.update_depth = update_depth;
     }
 
+    /**
+     *
+     * @return
+     */
     public static OnlineConfig getDefault() {
         OnlineConfig conf = new OnlineConfig();
         conf.setExpansion(DEFAULT_SEARCH_EXPANSION);

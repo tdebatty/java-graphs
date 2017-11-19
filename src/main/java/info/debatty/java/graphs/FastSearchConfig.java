@@ -56,7 +56,6 @@ public class FastSearchConfig {
         conf.speedup = DEFAULT_SEARCH_SPEEDUP;
         conf.long_jumps = DEFAULT_SEARCH_RANDOM_JUMPS;
         conf.k = 1;
-
         return conf;
     }
 
@@ -65,19 +64,35 @@ public class FastSearchConfig {
     private int long_jumps;
     private double expansion;
 
-    public int getK() {
+    /**
+     *
+     * @return
+     */
+    public final int getK() {
         return k;
     }
 
-    public void setK(int k) {
+    /**
+     *
+     * @param k
+     */
+    public final void setK(final int k) {
         this.k = k;
     }
 
-    public double getSpeedup() {
+    /**
+     *
+     * @return
+     */
+    public final double getSpeedup() {
         return speedup;
     }
 
-    public void setSpeedup(double speedup) {
+    /**
+     *
+     * @param speedup
+     */
+    public final void setSpeedup(final double speedup) {
         if (speedup <= 1.0) {
             throw new IllegalArgumentException("Speedup should be > 1.0");
         }
@@ -85,19 +100,35 @@ public class FastSearchConfig {
         this.speedup = speedup;
     }
 
-    public int getLongJumps() {
+    /**
+     *
+     * @return
+     */
+    public final int getLongJumps() {
         return long_jumps;
     }
 
-    public void setLongJumps(int long_jumps) {
+    /**
+     *
+     * @param long_jumps
+     */
+    public final void setLongJumps(final int long_jumps) {
         this.long_jumps = long_jumps;
     }
 
-    public double getExpansion() {
+    /**
+     *
+     * @return
+     */
+    public final double getExpansion() {
         return expansion;
     }
 
-    public void setExpansion(double expansion) {
+    /**
+     *
+     * @param expansion
+     */
+    public final void setExpansion(final double expansion) {
         this.expansion = expansion;
     }
 }
