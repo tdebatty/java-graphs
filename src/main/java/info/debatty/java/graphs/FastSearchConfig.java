@@ -63,6 +63,7 @@ public class FastSearchConfig {
     private double speedup;
     private int long_jumps;
     private double expansion;
+    private boolean restart_at_boundary = true;
 
     /**
      *
@@ -130,5 +131,21 @@ public class FastSearchConfig {
      */
     public final void setExpansion(final double expansion) {
         this.expansion = expansion;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public final boolean isRestartAtBoundary() {
+        return restart_at_boundary;
+    }
+
+    /**
+     *
+     * @param restart_at_boundary
+     */
+    public final void setRestartAtBoundary(final boolean restart_at_boundary) {
+        this.restart_at_boundary = restart_at_boundary;
     }
 }

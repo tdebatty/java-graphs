@@ -663,8 +663,13 @@ public class Graph<T> implements Serializable {
 
                 // Node has no neighbor (cross partition edge) => restart!
                 if (nl == null) {
-                    result.incBoundaryRestarts();
-                    break;
+                    if (conf.isRestartAtBoundary()) {
+                        result.incBoundaryRestarts();
+                        break;
+                    } else {
+                        result.setBoundaryNode(current_node);
+                        return result;
+                    }
                 }
 
                 T node_higher_similarity = null;

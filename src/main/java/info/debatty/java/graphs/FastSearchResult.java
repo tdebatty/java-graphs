@@ -26,13 +26,15 @@ package info.debatty.java.graphs;
 /**
  *
  * @author tibo
+ * @param <T> type of nodes in the graph
  */
-public class FastSearchResult {
+public class FastSearchResult<T> {
 
     private int similarities;
     private int restarts;
     private int boundary_restarts;
     private final NeighborList neighbors;
+    private T boundary_node;
 
     FastSearchResult(final int k) {
         this.neighbors = new NeighborList(k);
@@ -80,5 +82,22 @@ public class FastSearchResult {
 
     final void incBoundaryRestarts() {
         boundary_restarts++;
+    }
+
+    /**
+     * If we stopped searching because of a boundary, this will contain
+     * the boundary node.
+     * @return
+     */
+    public final T getBoundaryNode() {
+        return boundary_node;
+    }
+
+    /**
+     *
+     * @param boundary_node
+     */
+    final void setBoundaryNode(final T boundary_node) {
+        this.boundary_node = boundary_node;
     }
 }
