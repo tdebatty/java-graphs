@@ -274,7 +274,8 @@ public class GraphTest extends TestCase {
         for (int i = 0; i < 100; i++) {
             double query = 400.0 * rand.nextDouble();
 
-            NeighborList approximate_result = graph.fastSearch(query, conf);
+            NeighborList approximate_result = graph.fastSearch(query, conf)
+                    .getNeighbors();
 
             // Search the exact most similar
             NeighborList exhaustive_result = graph.search(query, 1);

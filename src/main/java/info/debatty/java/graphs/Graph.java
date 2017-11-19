@@ -584,7 +584,7 @@ public class Graph<T> implements Serializable {
      * @param query
      * @return
      */
-    public final NeighborList fastSearch(final T query) {
+    public final FastSearchResult fastSearch(final T query) {
         return fastSearch(query, FastSearchConfig.getDefault());
     }
 
@@ -599,11 +599,11 @@ public class Graph<T> implements Serializable {
      *
      * @return
      */
-    public final NeighborList fastSearch(
+    public final FastSearchResult fastSearch(
             final T query,
             final FastSearchConfig conf) {
 
-        StatisticsContainer stats = new StatisticsContainer();
+        FastSearchResult result = new FastSearchResult(conf.getK());
 
         int max_similarities = (int) (map.size() / conf.getSpeedup());
 
@@ -612,17 +612,17 @@ public class Graph<T> implements Serializable {
         if (conf.getK() >= map.size()
                 || max_similarities >= map.size()) {
 
-            NeighborList nl = new NeighborList(conf.getK());
+
             for (T node : map.keySet()) {
-                nl.add(
+                result.getNeighbors().add(
                         new Neighbor(
                                 node,
                                 similarity.similarity(
                                         query,
                                         node)));
-                stats.incSearchSimilarities();
+                result.incSimilarities();
             }
-            return nl;
+            return result;
         }
 
         // Node => Similarity with query node
@@ -633,11 +633,11 @@ public class Graph<T> implements Serializable {
 
         while (true) { // Restart...
 
-            if (stats.getSearchSimilarities() >= max_similarities) {
+            if (result.getSimilarities() >= max_similarities) {
                 break;
             }
 
-            stats.incSearchRestarts();
+            result.incRestarts();
 
             // Select a random node from the graph
             T current_node = nodes.get(rand.nextInt(nodes.size()));
@@ -651,19 +651,19 @@ public class Graph<T> implements Serializable {
             double restart_similarity = similarity.similarity(
                     query,
                     current_node);
-            stats.incSearchSimilarities();
+            result.incSimilarities();
             if (restart_similarity
                     < global_highest_similarity / conf.getExpansion()) {
                 continue;
             }
 
-            while (stats.getSearchSimilarities() < max_similarities) {
+            while (result.getSimilarities() < max_similarities) {
 
                 NeighborList nl = this.getNeighbors(current_node);
 
                 // Node has no neighbor (cross partition edge) => restart!
                 if (nl == null) {
-                    stats.incSearchCrossPartitionRestarts();
+                    result.incBoundaryRestarts();
                     break;
                 }
 
@@ -683,7 +683,7 @@ public class Graph<T> implements Serializable {
                     double sim = similarity.similarity(
                             query,
                             other_node);
-                    stats.incSearchSimilarities();
+                    result.incSimilarities();
                     visited_nodes.put(other_node, sim);
 
                     // If this node provides an improved similarity, keep it
@@ -709,7 +709,7 @@ public class Graph<T> implements Serializable {
                     double sim = similarity.similarity(
                             query,
                             other_node);
-                    stats.incSearchSimilarities();
+                    result.incSimilarities();
                     visited_nodes.put(other_node, sim);
 
                     // If this node provides an improved similarity, keep it
@@ -737,11 +737,12 @@ public class Graph<T> implements Serializable {
             }
         }
 
-        NeighborList neighbor_list = new NeighborList(conf.getK());
+
         for (Map.Entry<T, Double> entry : visited_nodes.entrySet()) {
-            neighbor_list.add(new Neighbor(entry.getKey(), entry.getValue()));
+            result.getNeighbors().add(
+                    new Neighbor(entry.getKey(), entry.getValue()));
         }
-        return neighbor_list;
+        return result;
     }
 
     /**
@@ -860,7 +861,7 @@ public class Graph<T> implements Serializable {
 
         // 3. Search the neighbors of the new node
         conf.setK(getK());
-        NeighborList neighborlist = fastSearch(new_node, conf);
+        NeighborList neighborlist = fastSearch(new_node, conf).getNeighbors();
         put(new_node, neighborlist);
 
         // 4. Update existing edges

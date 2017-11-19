@@ -81,7 +81,8 @@ public class SearchExample {
 
             // Perform GNNS
             System.out.println("Query: " + query);
-            NeighborList resultset_gnss = graph.fastSearch(query);
+            NeighborList resultset_gnss = graph.fastSearch(query)
+                    .getNeighbors();
             System.out.println(resultset_gnss);
 
             // Perform linear search
