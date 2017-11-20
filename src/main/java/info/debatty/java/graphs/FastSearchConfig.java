@@ -55,6 +55,22 @@ public class FastSearchConfig {
         conf.expansion = DEFAULT_SEARCH_EXPANSION;
         conf.speedup = DEFAULT_SEARCH_SPEEDUP;
         conf.long_jumps = DEFAULT_SEARCH_RANDOM_JUMPS;
+        conf.restart_at_boundary = true;
+        conf.k = 1;
+        return conf;
+    }
+
+    /**
+     * Get a configuration to perform naive search: expansion and long jumps
+     * are disabled, algorithm will stop and return at partition boundary.
+     * @return
+     */
+    public static FastSearchConfig getNaive() {
+        FastSearchConfig conf = new FastSearchConfig();
+        conf.expansion = Double.POSITIVE_INFINITY;
+        conf.speedup = DEFAULT_SEARCH_SPEEDUP;
+        conf.long_jumps = 0;
+        conf.restart_at_boundary = false;
         conf.k = 1;
         return conf;
     }

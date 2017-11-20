@@ -233,24 +233,19 @@ public class GraphTest extends TestCase {
                 File.createTempFile("graph", ".gexf").getAbsolutePath());
     }
 
+
     /**
      * Test of search method, of class Graph.
      *
      * @throws java.lang.InterruptedException
      * @throws java.util.concurrent.ExecutionException
      */
-    public void testSearch() throws InterruptedException, ExecutionException {
-        System.out.println("Search");
-        System.out.println("======");
+    public void testFastSearchNaive()
+            throws InterruptedException, ExecutionException {
+        System.out.println("Naive search");
+        System.out.println("============");
 
         int n = 4000;
-
-        SimilarityInterface<Double> similarity = new SimilarityInterface<Double>() {
-
-            public double similarity(Double value1, Double value2) {
-                return 1.0 / (1 + Math.abs(value1 - value2));
-            }
-        };
 
         System.out.println("create some random nodes...");
         Random rand = new Random();
@@ -264,7 +259,69 @@ public class GraphTest extends TestCase {
         System.out.println("compute graph...");
         GraphBuilder<Double> builder = new Brute<Double>();
         builder.setK(10);
-        builder.setSimilarity(similarity);
+        builder.setSimilarity(new DoubleSimilarity());
+        Graph<Double> graph = builder.computeGraph(data);
+
+        // Remove some nodes from the graph (so simulate partition boundaries)
+        for (int i = 0; i < 2; i++) {
+            graph.getHashMap().remove(
+                    data.remove(rand.nextInt(data.size())));
+        }
+
+
+        System.out.println("perform evaluation...");
+        FastSearchConfig conf = FastSearchConfig.getNaive();
+        conf.setK(1);
+        int correct = 0;
+        for (int i = 0; i < 100; i++) {
+            double query = 400.0 * rand.nextDouble();
+
+            FastSearchResult search_result = graph.fastSearch(query, conf);
+
+            if (search_result.getBoundaryNode() != null) {
+                System.out.println("Reached a boundary!");
+            }
+
+            NeighborList approximate_result = search_result
+                    .getNeighbors();
+
+            // Search the exact most similar
+            NeighborList exhaustive_result = graph.search(query, 1);
+            correct += approximate_result.countCommons(exhaustive_result);
+
+        }
+
+        //System.out.println(data.size());
+        System.out.println("Found " + correct + " correct results!");
+        assertTrue(correct > 10);
+    }
+
+    /**
+     * Test of search method, of class Graph.
+     *
+     * @throws java.lang.InterruptedException
+     * @throws java.util.concurrent.ExecutionException
+     */
+    public void testFastSearch()
+            throws InterruptedException, ExecutionException {
+        System.out.println("Search");
+        System.out.println("======");
+
+        int n = 4000;
+
+        System.out.println("create some random nodes...");
+        Random rand = new Random();
+        List<Double> data = new ArrayList<Double>();
+        while (data.size() < n) {
+            data.add(100.0 + 100.0 * rand.nextGaussian());
+            data.add(150.0 + 100.0 * rand.nextGaussian());
+            data.add(300.0 + 100.0 * rand.nextGaussian());
+        }
+
+        System.out.println("compute graph...");
+        GraphBuilder<Double> builder = new Brute<Double>();
+        builder.setK(10);
+        builder.setSimilarity(new DoubleSimilarity());
         Graph<Double> graph = builder.computeGraph(data);
 
         System.out.println("perform evaluation...");
