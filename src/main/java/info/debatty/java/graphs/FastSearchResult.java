@@ -23,12 +23,14 @@
  */
 package info.debatty.java.graphs;
 
+import java.io.Serializable;
+
 /**
  *
  * @author tibo
  * @param <T> type of nodes in the graph
  */
-public class FastSearchResult<T> {
+public class FastSearchResult<T> implements Serializable {
 
     private int similarities;
     private int restarts;
