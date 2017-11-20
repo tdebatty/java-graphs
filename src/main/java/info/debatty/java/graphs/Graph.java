@@ -63,6 +63,13 @@ public class Graph<T> implements Serializable {
     private SimilarityInterface<T> similarity;
     private int k = DEFAULT_K;
 
+    // These fields are not serialized...
+    // drawback: must be very carefull when using/modifying
+    private final transient Random rand = new Random();
+    // The nodes arraylist is a cache for map.keys()
+    // used for example to get a single random node
+    private transient ArrayList<T> nodes;
+
     /**
      * Copy constructor.
      *
@@ -146,6 +153,16 @@ public class Graph<T> implements Serializable {
      */
     public final T first() throws NoSuchElementException {
         return this.getNodes().iterator().next();
+    }
+
+    /**
+     * Return a random node from the graph.
+     * @return
+     */
+    public final T getRandomNode() {
+
+
+        return getNodes().get(rand.nextInt(getNodes().size()));
     }
 
     /**
@@ -440,8 +457,12 @@ public class Graph<T> implements Serializable {
      *
      * @return
      */
-    public final Iterable<T> getNodes() {
-        return map.keySet();
+    public final ArrayList<T> getNodes() {
+        if (nodes == null) {
+            nodes = new ArrayList<T>(map.keySet());
+        }
+
+        return nodes;
     }
 
     /**
@@ -514,19 +535,14 @@ public class Graph<T> implements Serializable {
     public final NeighborList search(final T query, final int k)
             throws InterruptedException, ExecutionException {
 
-        // Read all nodes
-        ArrayList<T> nodes = new ArrayList<T>();
-        for (T node : getNodes()) {
-            nodes.add(node);
-        }
-
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService pool = Executors.newFixedThreadPool(procs);
         List<Future<NeighborList>> results = new ArrayList();
 
         for (int i = 0; i < procs; i++) {
-            int start = nodes.size() / procs * i;
-            int stop = Math.min(nodes.size() / procs * (i + 1), nodes.size());
+            int start = getNodes().size() / procs * i;
+            int stop = Math.min(
+                    getNodes().size() / procs * (i + 1), getNodes().size());
 
             results.add(pool.submit(new SearchTask(nodes, query, start, stop)));
         }
@@ -565,7 +581,7 @@ public class Graph<T> implements Serializable {
         public NeighborList call() throws Exception {
             NeighborList nl = new NeighborList(k);
             for (int i = start; i < stop; i++) {
-                T other = nodes.get(i);
+                T other = getNodes().get(i);
                 nl.add(new Neighbor(
                         other,
                         similarity.similarity(query, other)));
@@ -626,10 +642,10 @@ public class Graph<T> implements Serializable {
         }
 
         // Node => Similarity with query node
-        HashMap<T, Double> visited_nodes = new HashMap<T, Double>();
+        // Max number of nodes we will visit is max_similarities
+        HashMap<T, Double> visited_nodes = new HashMap<T, Double>(
+                max_similarities);
         double global_highest_similarity = 0;
-        ArrayList<T> nodes = new ArrayList<T>(map.keySet());
-        Random rand = new Random();
 
         while (true) { // Restart...
 
@@ -640,7 +656,7 @@ public class Graph<T> implements Serializable {
             result.incRestarts();
 
             // Select a random node from the graph
-            T current_node = nodes.get(rand.nextInt(nodes.size()));
+            T current_node = getRandomNode();
 
             // Already been here => restart
             if (visited_nodes.containsKey(current_node)) {
@@ -832,6 +848,8 @@ public class Graph<T> implements Serializable {
         }
 
         this.put(new_node, nl);
+
+        nodes = null;
         return (size() - 1);
 
     }
@@ -913,6 +931,8 @@ public class Graph<T> implements Serializable {
             analyze = next_analyze;
             next_analyze = new LinkedList<T>();
         }
+
+        nodes = null;
     }
 
     /**
@@ -978,6 +998,7 @@ public class Graph<T> implements Serializable {
 
         // Remove node_to_remove
         map.remove(node_to_remove);
+        nodes = null;
     }
 
     /**
