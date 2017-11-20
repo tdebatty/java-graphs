@@ -274,7 +274,7 @@ public class GraphTest extends TestCase {
         conf.setK(1);
         int correct = 0;
         for (int i = 0; i < 100; i++) {
-            double query = 400.0 * rand.nextDouble();
+            double query = 250.0 * rand.nextDouble();
 
             FastSearchResult search_result = graph.fastSearch(query, conf);
 
@@ -304,8 +304,8 @@ public class GraphTest extends TestCase {
      */
     public void testFastSearch()
             throws InterruptedException, ExecutionException {
-        System.out.println("Search");
-        System.out.println("======");
+        System.out.println("FastSearch");
+        System.out.println("==========");
 
         int n = 4000;
 

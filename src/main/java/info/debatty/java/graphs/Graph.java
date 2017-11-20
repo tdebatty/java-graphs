@@ -608,7 +608,26 @@ public class Graph<T> implements Serializable {
      * Approximate fast graph based search, as published in "Fast Online k-nn
      * Graph Building" by Debatty et al.
      *
+     * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
+     * Building</a>
+     *
+     * @param query
      * @param conf
+     * @return
+     */
+    public final FastSearchResult fastSearch(
+            final T query,
+            final FastSearchConfig conf) {
+
+        return fastSearch(query, conf, getRandomNode());
+    }
+
+    /**
+     * Approximate fast graph based search, as published in "Fast Online k-nn
+     * Graph Building" by Debatty et al.
+     *
+     * @param conf
+     * @param start starting point
      * @see <a href="http://arxiv.org/abs/1602.06819">Fast Online k-nn Graph
      * Building</a>
      * @param query query point
@@ -617,17 +636,16 @@ public class Graph<T> implements Serializable {
      */
     public final FastSearchResult fastSearch(
             final T query,
-            final FastSearchConfig conf) {
+            final FastSearchConfig conf,
+            final T start) {
 
         FastSearchResult result = new FastSearchResult(conf.getK());
-
         int max_similarities = (int) (map.size() / conf.getSpeedup());
 
         // Looking for more nodes than this graph contains...
         // Or fall back to exhaustive search
         if (conf.getK() >= map.size()
                 || max_similarities >= map.size()) {
-
 
             for (T node : map.keySet()) {
                 result.getNeighbors().add(
@@ -641,121 +659,128 @@ public class Graph<T> implements Serializable {
             return result;
         }
 
+        T current_node = start;
         // Node => Similarity with query node
         // Max number of nodes we will visit is max_similarities
         HashMap<T, Double> visited_nodes = new HashMap<T, Double>(
                 max_similarities);
-        double global_highest_similarity = 0;
+        double highest_similarity = 0;
 
-        while (true) { // Restart...
+        while (result.getSimilarities() < max_similarities) { // Restart...
 
-            if (result.getSimilarities() >= max_similarities) {
-                break;
-            }
+            restart : {
+                // Already been here => restart
+                if (visited_nodes.containsKey(current_node)) {
+                    break restart;
+                }
 
+                // starting point too far (similarity too small) => restart!
+                double current_node_similarity = similarity.similarity(
+                        query,
+                        current_node);
+                result.incSimilarities();
+
+                if (current_node_similarity
+                        < highest_similarity / conf.getExpansion()) {
+
+                    break restart;
+                }
+
+                // Follow the chain of neighbors
+                while (result.getSimilarities() < max_similarities) {
+
+                    NeighborList nl = this.getNeighbors(current_node);
+
+                    // Node has no neighbor (cross partition edge) => restart or
+                    // return
+                    if (nl == null) {
+                        if (conf.isRestartAtBoundary()) {
+                            result.incBoundaryRestarts();
+                            break restart;
+
+                        } else {
+                            result.setBoundaryNode(current_node);
+                            return result;
+                        }
+                    }
+
+                    T best_neighbor = null;
+                    double best_neighbor_similarity = current_node_similarity;
+
+                    for (int i = 0; i < conf.getLongJumps(); i++) {
+                        // Check a random node (to simulate long jumps)
+                        T neighbor = getRandomNode();
+
+                        // Already been here => skip
+                        if (visited_nodes.containsKey(neighbor)) {
+                            continue;
+                        }
+
+                        // Compute similarity to query
+                        double neighbor_similarity = similarity.similarity(
+                                query,
+                                neighbor);
+                        result.incSimilarities();
+                        visited_nodes.put(neighbor, neighbor_similarity);
+
+                        // If this node provides an improved similarity, keep it
+                        if (neighbor_similarity > current_node_similarity) {
+                            best_neighbor = neighbor;
+                            best_neighbor_similarity = neighbor_similarity;
+
+                            // early break
+                            break;
+                        }
+                    }
+
+                    // Check the neighbors of current_node and try to find a
+                    // node with higher similarity
+                    Iterator<Neighbor> y_nl_iterator = nl.iterator();
+                    while (y_nl_iterator.hasNext()) {
+
+                        T neighbor = (T) y_nl_iterator.next().getNode();
+
+                        if (visited_nodes.containsKey(neighbor)) {
+                            continue;
+                        }
+
+                        // Compute similarity with query
+                        double neighbor_similarity = similarity.similarity(
+                                query,
+                                neighbor);
+                        result.incSimilarities();
+                        visited_nodes.put(neighbor, neighbor_similarity);
+
+                        // If this node provides an improved similarity, keep it
+                        if (neighbor_similarity > best_neighbor_similarity) {
+                            best_neighbor = neighbor;
+                            best_neighbor_similarity = neighbor_similarity;
+
+                            // early break...
+                            break;
+                        }
+                    }
+
+                    // record the similarity of this node if
+                    // it is the best seen so far
+                    // (will be used with expansion parameter at next iteraion)
+                    if (best_neighbor_similarity > highest_similarity) {
+                        highest_similarity = best_neighbor_similarity;
+                    }
+
+                    // No node provides higher similarity
+                    // => we reached the end of this track...
+                    // => restart and
+                    if (best_neighbor == null) {
+                        break restart;
+                    }
+
+                    current_node = best_neighbor;
+                }
+            } // restart
+
+            current_node = getRandomNode();
             result.incRestarts();
-
-            // Select a random node from the graph
-            T current_node = getRandomNode();
-
-            // Already been here => restart
-            if (visited_nodes.containsKey(current_node)) {
-                continue;
-            }
-
-            // starting point too far (similarity too small) => restart!
-            double restart_similarity = similarity.similarity(
-                    query,
-                    current_node);
-            result.incSimilarities();
-            if (restart_similarity
-                    < global_highest_similarity / conf.getExpansion()) {
-                continue;
-            }
-
-            while (result.getSimilarities() < max_similarities) {
-
-                NeighborList nl = this.getNeighbors(current_node);
-
-                // Node has no neighbor (cross partition edge) => restart!
-                if (nl == null) {
-                    if (conf.isRestartAtBoundary()) {
-                        result.incBoundaryRestarts();
-                        break;
-                    } else {
-                        result.setBoundaryNode(current_node);
-                        return result;
-                    }
-                }
-
-                T node_higher_similarity = null;
-                T other_node;
-
-                for (int i = 0; i < conf.getLongJumps(); i++) {
-                    // Check a random node (to simulate long jumps)
-                    other_node = nodes.get(rand.nextInt(nodes.size()));
-
-                    // Already been here => skip
-                    if (visited_nodes.containsKey(other_node)) {
-                        continue;
-                    }
-
-                    // Compute similarity to query
-                    double sim = similarity.similarity(
-                            query,
-                            other_node);
-                    result.incSimilarities();
-                    visited_nodes.put(other_node, sim);
-
-                    // If this node provides an improved similarity, keep it
-                    if (sim > restart_similarity) {
-                        node_higher_similarity = other_node;
-                        restart_similarity = sim;
-                    }
-
-                }
-
-                // Check the neighbors of current_node and try to find a node
-                // with higher similarity
-                Iterator<Neighbor> y_nl_iterator = nl.iterator();
-                while (y_nl_iterator.hasNext()) {
-
-                    other_node = (T) y_nl_iterator.next().getNode();
-
-                    if (visited_nodes.containsKey(other_node)) {
-                        continue;
-                    }
-
-                    // Compute similarity to query
-                    double sim = similarity.similarity(
-                            query,
-                            other_node);
-                    result.incSimilarities();
-                    visited_nodes.put(other_node, sim);
-
-                    // If this node provides an improved similarity, keep it
-                    if (sim > restart_similarity) {
-                        node_higher_similarity = other_node;
-                        restart_similarity = sim;
-
-                        // early break...
-                        break;
-                    }
-                }
-
-                // No node provides higher similarity
-                // => we reached the end of this track...
-                // => restart!
-                if (node_higher_similarity == null) {
-
-                    if (restart_similarity > global_highest_similarity) {
-                        global_highest_similarity = restart_similarity;
-                    }
-                    break;
-                }
-
-                current_node = node_higher_similarity;
-            }
         }
 
 
