@@ -23,11 +23,13 @@
  */
 package info.debatty.java.graphs;
 
+import java.io.Serializable;
+
 /**
  *
  * @author tibo
  */
-public class FastSearchConfig {
+public class FastSearchConfig implements Serializable {
 
     /**
      * Fast search: speedup compared to exhaustive search.
