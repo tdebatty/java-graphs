@@ -651,9 +651,7 @@ public class Graph<T> implements Serializable {
                 result.getNeighbors().add(
                         new Neighbor(
                                 node,
-                                similarity.similarity(
-                                        query,
-                                        node)));
+                                similarity.similarity(query, node)));
                 result.incSimilarities();
             }
             return result;
@@ -682,7 +680,6 @@ public class Graph<T> implements Serializable {
 
                 if (current_node_similarity
                         < highest_similarity / conf.getExpansion()) {
-
                     break restart;
                 }
 
