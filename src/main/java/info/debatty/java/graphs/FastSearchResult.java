@@ -24,6 +24,7 @@
 package info.debatty.java.graphs;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  *
@@ -38,7 +39,12 @@ public class FastSearchResult<T> implements Serializable {
     private final NeighborList neighbors;
     private T boundary_node;
 
-    FastSearchResult(final int k) {
+    /**
+     * Initialize a result for a NN list of size k.
+     *
+     * @param k
+     */
+    public FastSearchResult(final int k) {
         this.neighbors = new NeighborList(k);
     }
 
@@ -101,5 +107,35 @@ public class FastSearchResult<T> implements Serializable {
      */
     final void setBoundaryNode(final T boundary_node) {
         this.boundary_node = boundary_node;
+    }
+
+    /**
+     * Append the result contained in the other result to this object.
+     *
+     * @param other
+     */
+    public final void add(final FastSearchResult<T> other) {
+        this.similarities += other.similarities;
+        this.boundary_restarts += other.boundary_restarts;
+        this.neighbors.addAll(other.neighbors);
+        this.restarts += other.restarts;
+    }
+
+    /**
+     * Append all other results to this object.
+     * @param others
+     */
+    public final void addAll(final List<FastSearchResult<T>> others) {
+        for (FastSearchResult<T> other : others) {
+            this.add(other);
+        }
+    }
+
+    @Override
+    public final String toString() {
+        return "FastSearchResult{" + "similarities=" + similarities
+                + ", restarts=" + restarts + ", boundary_restarts="
+                + boundary_restarts + ", neighbors=" + neighbors
+                + ", boundary_node=" + boundary_node + '}';
     }
 }
