@@ -35,19 +35,6 @@ import junit.framework.TestCase;
  */
 public class NNDescentTest extends TestCase {
 
-    public NNDescentTest(String testName) {
-        super(testName);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
 
     public void testComputeGraph() {
         System.out.println("computeGraph");
@@ -94,6 +81,38 @@ public class NNDescentTest extends TestCase {
         System.out.println("" + 100.0 * correct / (n * k) + "%");
         assertTrue((1.0 * correct / (n * k)) > 0.8);
 
+    }
+
+    public void testComputeSameDistance() {
+        System.out.println("computeGraphSameDistance");
+
+        int n = 20000;
+        int k = 10;
+
+        // Generate some nodes
+        Random rand = new Random();
+        LinkedList<Integer> nodes = new LinkedList<Integer>();
+        for (int i = 0; i < n; i++) {
+            nodes.add(rand.nextInt());
+        }
+
+        // This dummy similarity measure always returns the same value
+        SimilarityInterface<Integer> sim = new SimilarityInterface<Integer>() {
+            public double similarity(Integer value1, Integer value2) {
+                return 0.5;
+            }
+        };
+
+        // Instantiate and configure the brute-force graph building algorithm
+        NNDescent<Integer> nndes = new NNDescent<Integer>();
+        nndes.setK(k);
+        nndes.setSimilarity(sim);
+        nndes.setDelta(0.001);
+        nndes.setMaxIterations(100);
+        nndes.setRho(0.6);
+
+        // Run the algorithm, and get the resulting neighbor lists
+        Graph<Integer> graph = nndes.computeGraph(nodes);
     }
 
 }
